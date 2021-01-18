@@ -1,0 +1,34 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+watchdog = "*"
+mtcnn = "*"
+keras-vggface = "*"
+sqlalchemy = "*"
+pillow = "*"
+scikit-learn = "*"
+flask = "*"
+sqlalchemy-serializer = "*"
+flask-sqlalchemy = "*"
+geopy = "*"
+python-dotenv = "*"
+keras-applications = "*"
+tensorflow = "*"
+keras = "*"
+tensorflow-hub = "*"
+certifi = "*"
+eventlet = "*"
+opencv-python-headless = "*"
+gunicorn = "*"
+celery = "*"
+pymysql = "*"
+flask-testing = "*"
+
+[dev-packages]
+pylint = "*"
+
+[requires]
+python_version = "3.8"

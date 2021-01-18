@@ -1,0 +1,137 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Init",
+            "type": "python",
+            "request": "launch",
+            "module": "timeline.manage",
+            "args": [
+                "init"
+            ]
+        },
+        {
+            "name": "Watchdog",
+            "type": "python",
+            "request": "launch",
+            "module": "timeline.manage",
+            "args": [
+                "watchdog"
+            ]
+        },
+        {
+            "name": "Purge Beat",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "args": [
+                "-A", 
+                "timeline.celery_all", 
+                "purge"
+                "-f"
+                "-Q",
+                "beat"
+            ]
+        },
+
+        {
+            "name": "Worker - Slow - Face",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "args": [
+                "-A", 
+                "timeline.celery_slow", 
+                "worker"
+                "-P",
+                "solo",
+                "-n",
+                "face@%n",
+                "-Q",
+                "face"
+            ]
+        },
+        {
+            "name": "Worker - Slow - Thing",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "args": [
+                "-A", 
+                "timeline.celery_slow", 
+                "worker"
+                "-P",
+                "solo",
+                "-n",
+                "thing@%n",
+                "-Q",
+                "thing"
+            ]
+        },
+
+        {
+            "name": "Worker - Fast",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "args": [
+                "-A", 
+                "timeline.celery_fast", 
+                "worker",
+                "-n",
+                "fast@%n",
+                "-Q",
+                "beat,geo_req,process,match,geo_resolve"
+            ]
+        },
+        {
+            "name": "Worker - All in one",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "args": [
+                "-A", 
+                "timeline.celery_all", 
+                "worker",
+                "-P", 
+                "eventlet",
+                "-n",
+                "fast@%n",
+                "-Q",
+                "beat,geo_req,process,match,face,thing,geo_resolve"
+            ]
+        },
+
+        {
+            "name": "Webapp",
+            "type": "python",
+            "request": "launch",
+            "module": "flask",
+            "env": {
+                "FLASK_APP": "timeline/app.py",
+                "FLASK_ENV": "development",
+                "FLASK_DEBUG": "0"
+            },
+            "args": [
+                "run",
+                "--no-debugger"
+            ],
+            "jinja": false
+        },
+    ]
+}

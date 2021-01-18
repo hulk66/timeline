@@ -1,0 +1,58 @@
+'''
+Copyright (C) 2021 Tobias Himstedt
+
+
+This file is part of Timeline.
+
+Timeline is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Timeline is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+'''
+
+from watchdog.events import PatternMatchingEventHandler
+import os
+from timeline.tasks.crud_tasks import delete_photo, move_photo, modify_photo
+from timeline.tasks.process_tasks import new_photo
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class EventHandler(PatternMatchingEventHandler):
+    patterns = ["*.jpg", "*.jpeg", "*.tiff", "*.tif"]
+    ignore = ["*@eaDir*", "*@__thumb*", "*@Recycle*"]
+
+    base_path = None
+    def __init__(self, base_path):
+        super(EventHandler, self).__init__(patterns=self.patterns, ignore_patterns=self.ignore)
+        self.base_path = base_path
+    def on_created(self, event):
+        abs_path = os.path.abspath(event.src_path)
+        logger.debug("on_created: %s", abs_path)
+        # new_photo.delay(event.src_path)
+        new_photo.apply_async( (event.src_path,), queue='process')
+        # new_photo(event.src_path)
+    def on_deleted(self, event):
+        path = os.path.abspath(event.src_path)
+        logger.debug("on_deleted: %s", path)
+        # delete_photo.delay(event.src_path)
+        delete_photo.apply_async( (event.src_path,), queue='process')
+    def on_modified(self, event):
+        path = os.path.abspath(event.src_path)
+        logger.debug("on_modified: %s", path)
+        # modify_photo.delay(event.src_path)
+        #modify_photo.apply_async( (event.src_path,), queue='process')
+
+    def on_moved(self, event):
+        path = os.path.abspath(event.src_path)
+        logger.debug("on_moved: %s", path)
+        # dest_path = os.path.abspath(event.dest_path)
+        # move_photo.delay(event.src_path, event.dest_path)
+        modify_photo.apply_async( (event.src_path, event.dest_path), queue='process')

@@ -1,0 +1,30 @@
+# -----
+# This is for usage with docker, which is the preferred setzp
+# Adjust and rename/copy it to .env
+# -----
+# This is where to look for your photos, nothing will be changed or modified here
+PHOTO_PATH=/Users/johndoe/photos
+
+# Here are previews created for providing downscaled version to be delivered by nginx
+PREVIEW_PATH=/Users/johndoe/timeline/data/preview
+
+# Where to put Log-Files
+LOG_PATH=/Users/johndoe/timeline/timeline/data/log
+
+# Where to put Files from mariaDB
+DATABASE_DATA=/Users/johndoe/timeline/data/db
+
+# Same for rabbitmq
+RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
+
+# Adjust this with the number of parallel threads / tasks to be allowed
+# Depends on your machine; for a NAS with 4GB and 4 processors a limit of 2
+# seems reasonable
+# On something more powerful 6-8 or 10 might be also ok
+# In general a good approach is to go with the number of physical processors
+THREADS=2
+
+# This is the password to access adminer
+# under http://<machine>:9091/adminer
+# with the root user
+DB_SUPER_USER_PW=example
