@@ -43,8 +43,8 @@ There is also a Dark Mode and an information panel showing what is happening in 
 
 # How to use it
 The easiest way is to use Docker, resp. docker-compose 
-1. `wget https://github.com/hulk66/timeline/raw/branch/master/docker-compose.yml` 
-2. `wget https://github.com/hulk66/timeline/raw/branch/master/env`, modify the env file according to your needs and save it as `.env`. The following things have to be changed:
+1. `wget https://raw.githubusercontent.com/hulk66/timeline/main/docker-compose.yml` 
+2. `wget https://raw.githubusercontent.com/hulk66/timeline/main/env`, modify the env file according to your needs and save it as `.env`. The following things have to be changed:
    1. `PHOTO_PATH` - this points to the directory where you photos are located. Timeline will recursively scan all all Photos (at the moment only JPG). This is read-only: Timeline will not change anything in here.
    2. `PREVIEW_PATH`- For performance reasons this directory is used to generate all kinds of previews.
    3. `LOG_PATH`- This is where Timeline does the logging. Most important here is the `worker.log`.
