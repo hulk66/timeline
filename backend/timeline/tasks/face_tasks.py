@@ -366,7 +366,7 @@ def match_all_unknown_faces():
                     distance = d[min_index]
                     found_face_id = int(known_ids[min_index])
                     found_face = Face.query.get(found_face_id)
-                    confidence = get_confidence_level(distance)
+                    # confidence = get_confidence_level(distance)
                     if classify_face(distance, found_face, unknown_face):
                         totalAssigned += 1
 
@@ -380,6 +380,20 @@ def match_all_unknown_faces():
 
 
 def classify_face(distance, found_face, unknown_face):
+    confidence = get_confidence_level(distance)
+
+    if distance < Face.DISTANCE_SAFE:
+        assign_new_person(unknown_face, found_face.person)
+        unknown_face.confidence_level = confidence
+        unknown_face.confidence = distance.item()
+        unknown_face.classified_by = Face.CLASSIFIER
+        unknown_face.distance_to_human_classified = 2
+        logger.debug("Found person classified by classifier with distance 1 to human classified; face %i is %s with confidence %f",
+                    unknown_face.id, found_face.person.name, unknown_face.confidence)
+        return True
+    return False
+
+def classify_face2(distance, found_face, unknown_face):
     confidence = get_confidence_level(distance)
 
     if found_face.distance_to_human_classified == 0:
