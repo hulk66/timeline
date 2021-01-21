@@ -171,8 +171,11 @@ def face_distance_euc(face_encodings, face_to_compare):
 
 
 def assign_new_person(face, person):
-    assert person is not None
-
+    if not face or not person:
+        # nothing we can do, can only happen due to parallel tasks
+        # working on the same entities
+        return
+        
     former_person = face.person
     if former_person:
         former_person.faces.remove(face)
