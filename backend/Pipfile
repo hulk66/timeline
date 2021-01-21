@@ -26,6 +26,7 @@ gunicorn = "*"
 celery = "*"
 pymysql = "*"
 flask-testing = "*"
+pylint = "*"
 
 [dev-packages]
 pylint = "*"
