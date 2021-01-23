@@ -13,19 +13,29 @@ elif [ $APP = 'worker' ]
       # export C_FORCE_ROOT='true'
       # celery -A timeline.celery_main purge -f -Q beat 
       celery -A timeline.celery_all amqp queue.purge beat
+      celery -A timeline.celery_all amqp queue.delete beat
       celery -A timeline.celery_all worker -P eventlet --concurrency=$THREADS -Q beat,geo_req,geo_resolve,process,face,thing,match
-elif [ $APP = 'init' ]
-  then
+elif [ $APP = 'worker_process' ]
+  then 
       ./wait
-      python -m timeline.manage init
+      # fix this warning by creating proper user and group in the container
+      # export C_FORCE_ROOT='true'
+      # celery -A timeline.celery_main purge -f -Q beat 
+      celery -A timeline.celery_fast amqp queue.purge beat
+      celery -A timeline.celery_fast amqp queue.delete beat
+      celery -A timeline.celery_fast worker --concurrency=$THREADS -Q beat,geo_req,geo_resolve,process,match
+elif [ $APP = 'worker_thing_face' ]
+  then 
+      ./wait
+      # fix this warning by creating proper user and group in the container
+      # export C_FORCE_ROOT='true'
+      # celery -A timeline.celery_main purge -f -Q beat 
+      celery -A timeline.celery_slow worker -P eventlet --concurrency=$THREADS -Q face,thing
+
 elif [ $APP = 'watchdog' ]
   then
       ./wait
       python -m timeline.manage watchdog
-elif [ $APP = 'beat' ]
-  then
-      ./wait
-      celery -A timeline.celery_beat:app beat
 else
     celery -A timeline.celery_main:app flower
 fi

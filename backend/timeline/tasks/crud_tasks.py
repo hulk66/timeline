@@ -199,7 +199,8 @@ def sort_old_photos():
     for photo in photos:
         #logger.debug("photo %i", photo.id)
         #logger.debug(min_date)
-        photo.created = min_date - timedelta(seconds=1)
+        photo.created = min_date 
+        min_date -= timedelta(seconds=1)
 
     db.session.commit()
 
@@ -225,6 +226,7 @@ def compute_sections():
         while len(photos) > 0:
             logger.debug("Sectioning next batch %i with %i initial photos", current_section, len(photos))
             photos_from_prev_batch = 0
+            add_limit = 0
             new_batch = True
             for photo in photos:
                 if new_batch and last_batch_date != photo.created.date():

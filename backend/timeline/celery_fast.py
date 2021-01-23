@@ -28,10 +28,8 @@ from timeline.tasks.face_tasks import schedule_next_grouping, schedule_next_matc
 from timeline.extensions import celery, db
 
 flask_app = create_app()
-# app = init_celery(flask_app)
 app = celery
 setup_logging(flask_app, 'fast_worker.log')
-
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
