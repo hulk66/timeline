@@ -205,7 +205,15 @@ def group_faces():
     result = find_unclassified_and_unclustered_faces(limit=3000)
 
     logger.debug("found %i to match", len(result))
-    if len(result) > 0:
+    if len(result) == 0:
+        logger.debug("All faces clustered already. Reset them")
+        # it seems all faces have been already subject of clustering
+        # let's start from the beginning then. 
+        # Therefore reset the clustering information
+        clustered_faces = find_unclassified_clustered_faces()
+        clustered_faces.update({Face.already_clustered:False})
+
+    else:
         face_ids, encodings = zip(*result)
         for fid in face_ids:
             Face.query.get(fid).already_clustered = True
@@ -248,8 +256,9 @@ def group_faces():
                     face.person = person
                 db.session.commit()
 
-    # Finally delete persons which have no related face anymore
-    Person.query.filter(~Person.faces.any()).delete(synchronize_session=False)
+        # Finally delete persons which have no related face anymore
+        Person.query.filter(~Person.faces.any()).delete(synchronize_session=False)
+
     db.session.commit()
     logger.debug("Grouping done")
 
@@ -274,6 +283,19 @@ def check_for_face_grouping():
         logger.debug("Already %i new faces found, clustering will be invoked")
         group_faces()
 
+
+def find_unclassified_clustered_faces():
+    # find all faces, which are not ignored and are 
+    # not assigned to a person and which have been already
+    # clustered
+
+    q = Face.query.filter(
+        and_(
+            Face.ignore == False,
+            Face.person_id == None,
+            Face.already_clustered == True
+        ))
+    return q
 
 def find_unclassified_and_unclustered_faces(limit=None):
     # Find all faces which
@@ -469,7 +491,7 @@ def match_unknown_face(face_id):
         id, distance = find_closest(unknown_face, classified_faces)
 
         found_face = Face.query.get(id)
-        logger.debug("Match unknown Face %i. Closest is %s with distance %f",face_id, found_face.person.name, distance)
+        # logger.debug("Match unknown Face %i. Closest is %s with distance %f",face_id, found_face.person.name, distance)
         # confidence = get_confidence_level(distance)
 
         classify_face(distance, found_face, unknown_face)

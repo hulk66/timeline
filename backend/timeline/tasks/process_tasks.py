@@ -29,7 +29,7 @@ from pymysql.err import InternalError
 logger = logging.getLogger(__name__)
 
 # retry in some cases the database throws a lock error
-@celery.task(autoretry_for=(InternalError,), name="Process Photo")
+@celery.task(autoretry_for=(InternalError,), name="Process Photo", ignore_result=True)
 def new_photo(path):
     if '@eaDir' in path or '@__thumb' in path or "@Recycle" in path:
         logger.debug("Not taking %s into account as this is some QNAP or Synology related file", path)
@@ -44,7 +44,7 @@ def new_photo(path):
             create_preview(photo.path, 200)
             create_preview(photo.path, 2160)
 
-@celery.task(name="Initial Scan")
+@celery.task(name="Initial Scan", ignore_result=True)
 def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.tif", "*.tiff"]):
     logger.debug("Performing initial scan for directory %s", path)
     files = []

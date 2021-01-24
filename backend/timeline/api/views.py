@@ -275,6 +275,7 @@ def photo_by_section(id):
     return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section"))
     # return flask.jsonify(photos.all())
 
+
 @blueprint.route('/face/assign_face_to_person', methods=['POST'])
 def assign_face_to_person():
     req_data = request.get_json()
@@ -374,6 +375,16 @@ def ignore_unknonw_person(person_id):
     db.session.commit()
     return all_persons()
 
+@blueprint.route('/person/forget/<int:person_id>', methods=['GET'])
+def forget_person(person_id):
+    person = Person.query.get(person_id)
+    for face in person.faces:
+        face.ignore = False
+        face.person = None
+        face.already_clustered = False
+    db.session.delete(person)
+    db.session.commit()
+    return all_persons()
 
 @blueprint.route('/person/merge/<int:src_person_id>/<int:target_person_id>', methods=['GET'])
 def merge_persons(src_person_id, target_person_id):
