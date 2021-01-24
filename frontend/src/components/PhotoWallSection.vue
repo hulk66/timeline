@@ -376,8 +376,9 @@
 
     .noscroll {
         position: relative;
-        /* height: calc(100vh - 118px); */
-        height: 100vh;
+        /*  fix this */
+        height: calc(100vh - 80px); 
+        /* height: 100vh; */
     }
 
     .scale {
