@@ -38,27 +38,27 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route('/reset_learning')
 def reset_learning():
-    reset_persons.apply_async((), queue="match")
+    reset_persons.apply_async((), queue="beat")
     return flask.jsonify(True)
 
 
 @blueprint.route('/group_faces', methods=['GET'])
 def group_faces_req():
     from timeline.tasks.face_tasks import group_faces
-    group_faces.apply_async((), queue="match")
+    group_faces.apply_async((), queue="beat")
     return flask.jsonify(True)
 
 
 @blueprint.route('/compute_sections', methods=['GET'])
 def trigger_section_compute():
     logger.debug("trigger new section computation")
-    compute_sections.apply_async((), queue="process")
+    compute_sections.apply_async((), queue="beat")
     return flask.jsonify(True)
 
 @blueprint.route('/match_unknown_faces', methods=['GET'])
 def trigger_match_unknown_faces():
     logger.debug("trigger match unknown faces")
-    match_all_unknown_faces.apply_async((), queue="match")
+    match_all_unknown_faces.apply_async((), queue="beat")
     return flask.jsonify(True)
 
 def remove_all_tasks():

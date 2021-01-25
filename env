@@ -22,7 +22,15 @@ RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 # seems reasonable
 # On something more powerful 6-8 or 10 might be also ok
 # In general a good approach is to go with the number of physical processors
-THREADS=2
+
+# --
+# Only used if the one fits all worker is used
+THREADS=4
+# but it seems to be better to split the workers into face and thing detection
+# and all the rest of the processing tasks
+THREADS_PROCESS=4
+THREADS_THING_FACE=4
+
 
 # This is the password to access adminer
 # under http://<machine>:9091/adminer

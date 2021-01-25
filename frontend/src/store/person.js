@@ -22,6 +22,15 @@ export const person = {
 
     actions: {
 
+        forgetPerson(context, person) {
+            let url = `/api/person/forget/${person.id}`
+            return new Promise((resolve => {
+                axios.get(url).then( result => {
+                    resolve(result.data);
+                })
+            }))
+        },
+
         ignoreUnknownPerson(context, person) {
             let url = `/api/person/ignore_unknown_person/${person.id}`
             return new Promise((resolve => {

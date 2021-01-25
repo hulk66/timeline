@@ -36,3 +36,18 @@ setup_logging(flask_app, 'slow_worker.log')
 def setup_direct_queue(sender, instance, **kwargs):
     init_face_services()
     init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
+
+@worker_process_init.connect
+def prep_db_pool(**kwargs):
+    """
+        When Celery fork's the parent process, the db engine & connection pool is included in that.
+        But, the db connections should not be shared across processes, so we tell the engine
+        to dispose of all existing connections, which will cause new ones to be opend in the child
+        processes as needed.
+        More info: https://docs.sqlalchemy.org/en/latest/core/pooling.html#using-connection-pools-with-multiprocessing
+    """
+    # The "with" here is for a flask app using Flask-SQLAlchemy.  If you don't
+    # have a flask app, just remove the "with" here and call .dispose()
+    # on your SQLAlchemy db engine.
+    with flask_app.app_context():
+        db.engine.dispose()

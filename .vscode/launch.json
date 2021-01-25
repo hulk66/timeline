@@ -81,6 +81,26 @@
         },
 
         {
+            "name": "Worker - Slow - Face and Thing",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/backend",
+            "args": [
+                "-A", 
+                "timeline.celery_slow", 
+                "worker"
+                "-P",
+                "eventlet",
+                "--concurrency=6",
+                "-n",
+                "face_thing@%n",
+                "-Q",
+                "face,thing"
+            ]
+        },
+        {
             "name": "Worker - Fast",
             "type": "python",
             "request": "launch",
@@ -91,6 +111,7 @@
                 "-A", 
                 "timeline.celery_fast", 
                 "worker",
+                "--concurrency=4",
                 "-n",
                 "fast@%n",
                 "-Q",
@@ -138,8 +159,7 @@
             "command": "npm run serve",
             "name": "Run npm serve",
             "request": "launch",
-            "cwd": "frontend",
-
+            "cwd": "${workspaceFolder}/frontend",
             "type": "node-terminal"
         }
     ]

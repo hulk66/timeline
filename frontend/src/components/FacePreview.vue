@@ -45,6 +45,7 @@
                         <v-text-field v-model="faceName" label="New Name"></v-text-field> 
                     </v-card-text>
                 <v-card-actions>
+                        <v-btn color="warning" icon @click="forgetPerson"><v-icon>mdi-update</v-icon></v-btn>
                         <v-spacer></v-spacer>
                         <v-btn color="primary" icon @click="showRename=false"><v-icon>mdi-close</v-icon></v-btn>
                         <v-btn color="primary" icon @click="rename"><v-icon>mdi-check</v-icon></v-btn>
@@ -74,7 +75,7 @@
                     
                 </v-card-text>
                 <v-card-actions>
-                    <v-btn color="warning" icon @click="ignoreUnknowPerson"><v-icon>mdi-delete</v-icon></v-btn>
+                    <v-btn color="error" icon @click="ignoreUnknowPerson"><v-icon>mdi-delete</v-icon></v-btn>
                     <v-spacer></v-spacer>
                         <v-btn color="primary" icon @click="showSelection=false"><v-icon>mdi-close</v-icon></v-btn>
                         <v-btn color="primary" :disabled="!faceName" icon @click="assignOrRenamePerson"><v-icon>mdi-check</v-icon></v-btn>
@@ -134,6 +135,13 @@
         },
 
         methods: {
+            forgetPerson() {
+                 this.$store.dispatch("forgetPerson", this.personObject).then((result) => {
+                        this.$store.commit("setAllPersons", result)
+                    });
+                this.showSelection = false;
+
+            },
             ignoreUnknowPerson() {
                  this.$store.dispatch("ignoreUnknownPerson", this.personObject).then((result) => {
                         this.$store.commit("setAllPersons", result)
