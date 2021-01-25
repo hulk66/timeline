@@ -201,19 +201,25 @@ def group_faces():
     status = Status.query.first()
     epsilon = current_app.config['FACE_CLUSTER_EPSILON']
     min_samples = current_app.config['FACE_CLUSTER_MIN_SAMPLES']
+    max_faces = current_app.config['FACE_CLUSTER_MAX_FACES']
     logger.debug("using EPSILON %f and MIN_SAMPLES %i", epsilon, min_samples)
-    result = find_unclassified_and_unclustered_faces(limit=3000)
+    result = find_unclassified_and_unclustered_faces(limit=max_faces)
 
+    mark_faces = len(result) == max_faces
     logger.debug("found %i to match", len(result))
-    if len(result) == 0:
+    if len(result) < max_faces:
         logger.debug("All faces clustered already. Reset them")
         # it seems all faces have been already subject of clustering
+        # or the set of faces is too small to do clustering
         # let's start from the beginning then. 
         # Therefore reset the clustering information
         clustered_faces = find_unclassified_clustered_faces()
-        clustered_faces.update({Face.already_clustered:False})
+        # clustered_faces.update({Face.already_clustered:False})
+        for f in clustered_faces:
+            f.already_clustered = False
+        result = find_unclassified_and_unclustered_faces(limit=max_faces)
 
-    else:
+    if len(result) > 0:
         face_ids, encodings = zip(*result)
         for fid in face_ids:
             Face.query.get(fid).already_clustered = True
