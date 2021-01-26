@@ -22,7 +22,6 @@ RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 # seems reasonable
 # On something more powerful 6-8 or 10 might be also ok
 # In general a good approach is to go with the number of physical processors
-
 # --
 # Only used if the one fits all worker is used
 THREADS=4

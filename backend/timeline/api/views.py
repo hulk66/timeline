@@ -388,8 +388,9 @@ def forget_person(person_id):
 
 @blueprint.route('/person/merge/<int:src_person_id>/<int:target_person_id>', methods=['GET'])
 def merge_persons(src_person_id, target_person_id):
+    logger.debug("Merge faces from person %i to %i", src_person_id, target_person_id)
     src_person = Person.query.get(src_person_id)
-    target_person = Person.query.get(src_person_id)
+    target_person = Person.query.get(target_person_id)
     for face in src_person.faces:
         face.person = target_person
     db.session.delete(src_person)
