@@ -161,6 +161,18 @@
             "request": "launch",
             "cwd": "${workspaceFolder}/frontend",
             "type": "node-terminal"
-        }
+        },
+
+        {
+            "name": "Test Ext",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/backend",
+            "module": "unittest",
+            "args": [
+                "tests.test_ext"
+            ]    
+        },
+
     ]
 }

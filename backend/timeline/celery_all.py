@@ -23,7 +23,7 @@ from datetime import timedelta
 import logging
 from logging.handlers import RotatingFileHandler
 from timeline.tasks.crud_tasks import schedule_next_compute_sections
-from timeline.tasks.face_tasks import schedule_next_grouping, schedule_next_match_all_unknown_faces
+from timeline.tasks.face_tasks import schedule_next_grouping, schedule_next_match_all_unknown_faces, do_background_face_tasks
 from timeline.extensions import celery 
 
 flask_app = create_app()
@@ -36,5 +36,7 @@ def setup_direct_queue(sender, instance, **kwargs):
     init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
 
     schedule_next_compute_sections()
-    schedule_next_grouping()
-    schedule_next_match_all_unknown_faces()
+    # schedule_next_grouping()
+    # schedule_next_match_all_unknown_faces()
+    do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
+

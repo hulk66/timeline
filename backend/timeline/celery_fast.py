@@ -14,8 +14,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
-
-
+ 
 from timeline.app import init_celery, create_app, setup_logging
 from timeline.tasks.face_tasks import init_face_services
 from timeline.tasks.classify_tasks import init_classify_services
@@ -34,8 +33,10 @@ setup_logging(flask_app, 'fast_worker.log')
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
     schedule_next_compute_sections()
-    schedule_next_grouping()
-    schedule_next_match_all_unknown_faces()
+    # schedule_next_grouping()
+    # schedule_next_match_all_unknown_faces()
+    do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
+
 
 @worker_process_init.connect
 def prep_db_pool(**kwargs):

@@ -221,11 +221,12 @@ def group_faces():
 
     if len(result) > 0:
         face_ids, encodings = zip(*result)
-        for fid in face_ids:
-            Face.query.get(fid).already_clustered = True
+        #for fid in face_ids:
+        #    Face.query.get(fid).already_clustered = True
 
         face_ids = numpy.asarray(face_ids)
         encodings = numpy.asarray(encodings)
+        logger.debug("Group Faces - Starting DBSCAN - might take a minute or two")
         cluster_data = DBSCAN(eps=epsilon, min_samples=min_samples).fit(encodings)
         labels = cluster_data.labels_
 
@@ -240,6 +241,7 @@ def group_faces():
                 for index in indices[0][:MAX_CLUSTER_SIZE]:
                     face_id = int(face_ids[index])
                     face = Face.query.get(face_id)
+                    face.already_clustered = True
                     if not face.person or not face.person.confirmed:
                         face.classified_by = Face.CLUSTER_GEN
                         face.distance_to_human_classified = 2
@@ -408,6 +410,14 @@ def match_all_unknown_faces():
 
 
     logger.debug("Match Faces - could classify %i faces", totalAssigned)
+
+
+@celery.task(ignore_result=True)
+def do_background_face_tasks():
+    match_all_unknown_faces()
+    group_faces()
+    match_faces_schedule = int(current_app.config['MATCH_FACES_EVERY_MINUTES'])
+    do_background_face_tasks.apply_async((), queue="beat", countdown=match_faces_schedule*60)
 
 
 def classify_face(distance, found_face, unknown_face):
