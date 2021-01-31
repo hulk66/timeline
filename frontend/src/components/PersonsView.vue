@@ -40,7 +40,7 @@
                 v-for="person in persons" :key="person.id"
                 class="d-flex child-flex"
                 xs="3" md="2" lg="1" xl="1">
-                    <face-preview :person="person"></face-preview>
+                    <person-preview :person="person"></person-preview>
             </v-col>
         </v-row>
     </v-container>
@@ -61,10 +61,9 @@
         <v-row dense>
         
             <v-col
-                v-for="face in unknownFaces.items" :key="face.id"
-                class="d-flex child-flex"
+                v-for="face in unknownFaces.items" :key="face.id" class="d-flex child-flex"
                 xs="3" md="2" lg="1" xl="1">
-                     <v-img :src="faceUrl(face.id)"></v-img>
+                <face-view :face="face"></face-view>
             </v-col>
         </v-row>
         <v-row>
@@ -72,6 +71,7 @@
                 <v-pagination
                     v-model="page"
                     :length="unknownFaces.pages"
+                    
                 ></v-pagination>
             </v-col>
         </v-row>
@@ -83,13 +83,15 @@
 </template>
 <script>
     import axios from "axios";
-    import FacePreview from "./FacePreview";
+    import PersonPreview from "./PersonPreview";
     import { mapState } from 'vuex'
+import FaceView from './FaceView.vue';
     export default {
         name: "PersonsView",
 
         components: {
-            FacePreview
+            PersonPreview,
+            FaceView
         },
 
         props: {
@@ -129,10 +131,6 @@
             }),
         },
         methods: {
-
-            faceUrl(id) {
-                return "/api/face/preview/200/" + id + ".png";
-            },
 
             setFacesSeen() {
                 axios.get("/api/setFacesSeen");

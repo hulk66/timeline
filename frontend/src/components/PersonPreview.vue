@@ -91,7 +91,7 @@
     import axios from "axios";
     import { mapState } from 'vuex'
     export default {
-        name: "FacePreview",
+        name: "PersonPreview",
 
         components: {
         },
@@ -138,7 +138,7 @@
             forgetPerson() {
                  this.$store.dispatch("forgetPerson", this.personObject).then((result) => {
                         this.$store.commit("setAllPersons", result)
-                    });
+                    }); 
                 this.showSelection = false;
 
             },

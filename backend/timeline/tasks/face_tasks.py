@@ -530,7 +530,7 @@ def match_unknown_face(face_id):
 
 def find_all_classified_faces():
     classified_faces = Face.query.join(Person) \
-            .filter(and_(Face.person_id == Person.id, Face.distance_to_human_classified != None)) \
+            .filter(and_(Face.person_id == Person.id, Person.confirmed == True)) \
             .with_entities(Face.id, Face.encoding).all()
     return classified_faces
 

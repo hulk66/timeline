@@ -456,18 +456,6 @@ def thing_preview_photo():
 
     return flask.jsonify(photo.to_dict())
 
-
-def jsonify_pagination(q, page, size):
-    paginate = q.paginate(page=page, per_page=size, error_out=False)
-    result = {
-        "items": [item.to_dict() for item in paginate.items],
-        "pages": paginate.pages,
-        "total": paginate.total
-    }
-    json = flask.jsonify(result)
-    return json
-
-
 @blueprint.route('/face/data/by_person/<int:person_id>', methods=['GET'])
 def faces_by_person(person_id):
     faces = Person.query.get(person_id).faces
@@ -507,12 +495,14 @@ def get_unknown_faces(page, size):
     logger.debug(q)
     return jsonify_pagination(q, size=size, page=page)
 
-@blueprint.route('/face/nearestKnowFaces/<int:face_id>', methods=['GET'])
+@blueprint.route('/face/nearestKnownFaces/<int:face_id>', methods=['GET'])
 def nearest_known_faces(face_id):
     face = Face.query.get(face_id)
     known_faces = find_all_classified_faces()
     id, distance = find_closest(face, known_faces)
-    return flask.jsonify((id, distance.item()))
+    nearest = Face.query.get(id).person
+    result = { "person": nearest.to_dict(), "distance": distance.item() }
+    return flask.jsonify(result)
 
 
 def de_tupelize(list_of_tupel):
