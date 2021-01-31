@@ -50,33 +50,13 @@ services:
       - db
       - rabbitmq
 
-  worker_process:
-    image: hulk66/timeline_be:0.5-dev
+  worker:
+    image: hulk66/timeline_be
     # build: backend
     restart: always
     environment:
-      APP: "worker_process"
-      THREADS: ${THREADS_PROCESS}
-      WAIT_HOSTS: db:3306, rabbitmq:5672, webapp:5000 
-      WAIT_HOSTS_TIMEOUT: 120
-      WAIT_SLEEP_INTERVAL: 3     
-      WAIT_AFTER_HOSTS: 2
-    volumes:
-      - ${PHOTO_PATH}:/photos:ro
-      - ${PREVIEW_PATH}:/preview
-      - ${LOG_PATH}:/log
-    depends_on:
-      - webapp
-      - db
-      - rabbitmq
-
-  worker_thing_face:
-    image: hulk66/timeline_be:0.5-dev
-    # build: backend
-    restart: always
-    environment:
-      APP: "worker_thing_face"
-      THREADS: ${THREADS_THING_FACE}
+      APP: "worker"
+      THREADS: ${THREADS}
       WAIT_HOSTS: db:3306, rabbitmq:5672, webapp:5000 
       WAIT_HOSTS_TIMEOUT: 120
       WAIT_SLEEP_INTERVAL: 3     

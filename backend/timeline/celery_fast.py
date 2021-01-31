@@ -23,7 +23,7 @@ from datetime import timedelta
 import logging
 from logging.handlers import RotatingFileHandler
 from timeline.tasks.crud_tasks import schedule_next_compute_sections
-from timeline.tasks.face_tasks import schedule_next_grouping, schedule_next_match_all_unknown_faces
+from timeline.tasks.face_tasks import schedule_next_grouping, schedule_next_match_all_unknown_faces, do_background_face_tasks
 from timeline.extensions import celery, db
 
 flask_app = create_app()

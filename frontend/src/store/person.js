@@ -3,7 +3,8 @@ export const person = {
     state: {
         newFaces: false,
         allPersons: [],
-        knownPersons: []
+        knownPersons: [],
+        unknownFaces: []
     },
 
     mutations: {
@@ -16,6 +17,9 @@ export const person = {
         },
         setKnownPersons(state, known) {
             state.knownPersons = known;
+        },
+        setUnknownFaces(state, unknown) {
+            state.unknownFaces = unknown;
         }
 
     },
@@ -40,6 +44,13 @@ export const person = {
             }))
         },
 
+        getAllUnknownFaces(context, {page, size}) {
+            let url = `/api/face/all_unknown/${page}/${size}`;
+            axios.get(url).then( result => {
+                context.commit("setUnknownFaces", result.data);    
+            })
+            
+        },
         assignFaceToPerson(context, { person, name, faceId }) {
             let pid = null;
             if (person)

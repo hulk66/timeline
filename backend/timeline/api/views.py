@@ -496,6 +496,24 @@ def get_faces_by_photo(photo_id):
     faces = Photo.query.get(photo_id).faces
     return jsonify_items(faces)
 
+@blueprint.route('/face/all_unknown/<int:page>/<int:size>', methods=['GET'])
+def get_unknown_faces(page, size):
+    q = Face.query.join(Person, isouter=True).filter(and_(
+            Face.ignore == False, 
+            or_(
+                Face.person_id == None,
+                and_(Face.person_id == Person.id, Person.confirmed == False)
+                )))
+    logger.debug(q)
+    return jsonify_pagination(q, size=size, page=page)
+
+@blueprint.route('/face/nearestKnowFaces/<int:face_id>', methods=['GET'])
+def nearest_known_faces(face_id):
+    face = Face.query.get(face_id)
+    known_faces = find_all_classified_faces()
+    id, distance = find_closest(face, known_faces)
+    return flask.jsonify((id, distance.item()))
+
 
 def de_tupelize(list_of_tupel):
     l = [v for v, in list_of_tupel]
@@ -562,14 +580,6 @@ def delete_empty_persons():
 @blueprint.route('getTotalPhotoCount', methods=['GET'])
 def total_photos():
     return flask.jsonify(Photo.query.count())
-
-
-@blueprint.route('/nearestKnowFaces/<int:face_id>', methods=['GET'])
-def nearest_known_faces(face_id):
-    face = Face.query.get(face_id)
-    known_faces = find_all_classified_faces()
-    id, distance = find_closest(face, known_faces)
-    return flask.jsonify((id, distance.item()))
 
 
 @blueprint.route('/matchAllUnknownFaces', methods=['GET'])

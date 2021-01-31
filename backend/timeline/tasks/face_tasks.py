@@ -205,7 +205,7 @@ def group_faces():
     logger.debug("using EPSILON %f and MIN_SAMPLES %i", epsilon, min_samples)
     result = find_unclassified_and_unclustered_faces(limit=max_faces)
 
-    mark_faces = len(result) == max_faces
+    # mark_faces = len(result) == max_faces
     logger.debug("found %i to match", len(result))
     if len(result) < max_faces:
         logger.debug("All faces clustered already. Reset them")
@@ -323,17 +323,20 @@ def find_unclassified_and_unclustered_faces(limit=None):
     logger.debug(q)
     return q.with_entities(Face.id, Face.encoding).all()
 
-def find_all_non_manual_classified_faces():
+def find_all_non_manual_classified_or_unclassified_faces(limit=None):
     # Find all faces which
     # are not to be ignored and
     #   have either person assigned or
     #      if a person is assigned then this is a person which is is not confirmed by the user
-
+ 
     q = Face.query.join(Photo).join(Person, isouter=True) \
         .filter(and_(Face.ignore == False,
                      Face.photo_id == Photo.id,
                      or_(Face.person == None,
                          and_(Face.person_id == Person.id, Person.confirmed == False))))
+
+    if limit:
+        q = q.order_by(db.func.random()).limit(limit)
 
     logger.debug(q)
     return q.with_entities(Face.id, Face.encoding).all()
@@ -368,46 +371,43 @@ def match_all_unknown_faces():
     logger.debug("Match all unknown faces")
 
     totalAssigned = 0
-    try:
 
-        unmatched = find_all_non_manual_classified_faces()
-        if len(unmatched) > 0:
-            unknown_ids, unkown_encodings = get_ids_and_encodings(unmatched)
-            # logger.debug("Found %i unclassified faces", len(unmatched))
+    max_faces = current_app.config['FACE_CLUSTER_MAX_FACES']
+    unmatched = find_all_non_manual_classified_or_unclassified_faces(limit=max_faces)
+    if len(unmatched) > 0:
+        unknown_ids, unkown_encodings = get_ids_and_encodings(unmatched)
+        # logger.debug("Found %i unclassified faces", len(unmatched))
 
-            known_faces = find_all_classified_known_faces()
-            if len(known_faces) > 0:
+        # Make the limit configurable
+        known_faces = find_all_classified_known_faces(limit=15000)
+        if len(known_faces) > 0:
 
-                known_ids, known_encodings = get_ids_and_encodings(known_faces)
-                logger.debug("Found %i unclassified faces to match against %i classified faces", len(unmatched), len(known_faces))
+            known_ids, known_encodings = get_ids_and_encodings(known_faces)
+            logger.debug("Found %i unclassified faces to match against %i classified faces", len(unmatched), len(known_faces))
 
-                logger.debug("Calc Distances")
-                distances = cdist(unkown_encodings, known_encodings, metric="euclidean")
-                logger.debug("Calc Distances done")
+            logger.debug("Calc Distances")
+            distances = cdist(unkown_encodings, known_encodings, metric="euclidean")
+            logger.debug("Calc Distances done")
 
-                l = len(distances)
-                counter = 0
-                for d in distances:
-                    percent = int(counter/l * 100)
-                    if percent % 10 == 0:
-                        logger.debug("Checking unknown face %i percent", percent)
-                    unknown_face_id = int(unknown_ids[counter])
-                    unknown_face = Face.query.get(unknown_face_id)
-                    counter += 1
+            l = len(distances)
+            counter = 0
+            for d in distances:
+                percent = int(counter/l * 100)
+                if percent % 10 == 0:
+                    logger.debug("Checking unknown face %i percent", percent)
+                unknown_face_id = int(unknown_ids[counter])
+                unknown_face = Face.query.get(unknown_face_id)
+                counter += 1
 
-                    min_index = numpy.argmin(d)
-                    distance = d[min_index]
-                    found_face_id = int(known_ids[min_index])
-                    found_face = Face.query.get(found_face_id)
-                    # confidence = get_confidence_level(distance)
-                    if classify_face(distance, found_face, unknown_face):
-                        totalAssigned += 1
+                min_index = numpy.argmin(d)
+                distance = d[min_index]
+                found_face_id = int(known_ids[min_index])
+                found_face = Face.query.get(found_face_id)
+                # confidence = get_confidence_level(distance)
+                if classify_face(distance, found_face, unknown_face):
+                    totalAssigned += 1
 
-                    db.session.commit()
-    except AssertionError as exc:
-        # remove this when it's clear what is happening
-        logger.error(exc)
-
+                db.session.commit()
 
     logger.debug("Match Faces - could classify %i faces", totalAssigned)
 
@@ -490,7 +490,7 @@ def get_ids_and_encodings(face_list):
 
 
 
-@celery.task(name="Match unknown Face against known ones", autoretry_for=(InternalError,))
+@celery.task(name="Identify Faces", autoretry_for=(InternalError,))
 def match_unknown_face(face_id):
     """Tries to find an already classified face for one that that is not yet classified
     face_id - The Face ID which is to classified against existing other faces
@@ -534,11 +534,12 @@ def find_all_classified_faces():
             .with_entities(Face.id, Face.encoding).all()
     return classified_faces
 
-def find_all_classified_known_faces():
+def find_all_classified_known_faces(limit=None):
     classified_faces = Face.query.join(Person) \
-            .filter(and_(Face.person_id == Person.id, Person.confirmed == True)) \
-            .with_entities(Face.id, Face.encoding).all()
-    return classified_faces
+            .filter(and_(Face.person_id == Person.id, Person.confirmed == True)) 
+    if limit:
+        classified_faces = classified_faces.order_by(db.func.random()).limit(limit)
+    return classified_faces.with_entities(Face.id, Face.encoding).all()
 
 def find_manual_classified_faces():
     classified_faces =  Face.query.join(Person) \
