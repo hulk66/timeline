@@ -45,7 +45,7 @@ def new_photo(path):
             create_preview(photo.path, 2160)
 
 @celery.task(name="Initial Scan", ignore_result=True)
-def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.tif", "*.tiff"]):
+def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]):
     logger.debug("Performing initial scan for directory %s", path)
     files = []
     for file_type in patterns:
