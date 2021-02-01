@@ -66,13 +66,12 @@
                 <v-card>
                     <v-card-title>Select existing or create new</v-card-title>
                     <v-card-text>
-                            <v-combobox :search-input.sync="faceName"
-                                                            :items="knownPersons"
-                                                            item-text="name"
-                                                            item-value="id"                                                
-                                                            v-model="newPerson">                                                                                                            
-                            </v-combobox>    
-                    
+                        <v-combobox :search-input.sync="faceName"
+                                                        :items="knownPersons"
+                                                        item-text="name"
+                                                        item-value="id"                                                
+                                                        v-model="newPerson">                                                                                                            
+                        </v-combobox>                        
                 </v-card-text>
                 <v-card-actions>
                     <v-btn color="error" icon @click="ignoreUnknowPerson"><v-icon>mdi-delete</v-icon></v-btn>
@@ -110,7 +109,8 @@
                 newPerson: null,
                 showRename: false,
                 showSelection: false,
-                personObject: Object
+                personObject: Object,
+                closestPerson: Object
             };
         },
 
@@ -121,17 +121,25 @@
             })
         },
         mounted() {
-            let self = this;
             this.personObject = this.person;
-            if (this.personObject)
+            if (this.personObject) {
                 axios.get("/api/face/data/by_person/" + this.person.id).then (result => {
-                    self.face = result.data;
-                    self.src = "/api/face/preview/200/" + self.face.id + ".png";
+                    this.face = result.data;
+                    this.src = "/api/face/preview/200/" + this.face.id + ".png";
+
                 });
+
+            }
         },
 
         watch: {
 
+            showSelection(v) {
+                if (v)
+                    this.$store.dispatch("getClosestPerson", this.face).then(result => {
+                        this.newPerson = result.person;
+                    });
+            }
         },
 
         methods: {
@@ -149,7 +157,7 @@
                 this.showSelection = false;
             },
             assignOrRenamePerson() {
-                if (! this.newPerson || this.newPerson instanceof String) {
+                if (! this.newPerson || this.newPerson instanceof String || this.faceName != this.newPerson.name) {
                     // The unknown person will receive a name
                     this.rename();
 

@@ -1,16 +1,37 @@
+/*
+ * Copyright (C) 2021 Tobias Himstedt
+ * 
+ * 
+ * This file is part of Timeline.
+ * 
+ * Timeline is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * Timeline is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
 <template>
     <v-card flat>
         <v-img :src="src"></v-img>
+        <face-name-selector  @update="update" :face="face">Whos is this</face-name-selector>
+        <!--
         <v-card-subtitle>Closest {{closestPerson.name}} with Distance {{distance}}</v-card-subtitle>
+        -->
     </v-card>
 </template>
 
 <script>
-
+    import FaceNameSelector from "./FaceNameSelector"
     export default {
-        name: "FacePreview",
+        name: "FaceView",
 
         components: {
+            FaceNameSelector
         },
 
         props: {
@@ -29,6 +50,7 @@
                 return "/api/face/preview/200/" + this.face.id + ".png";
             },
 
+
         },
         mounted() {
             this.$store.dispatch("getClosestPerson", this.face).then(result => {
@@ -43,7 +65,10 @@
         },
 
         methods: {
-
+            update() {
+                // there is a better way of doing this with event bus
+                this.$emit("update")
+            }
 
         }
     }

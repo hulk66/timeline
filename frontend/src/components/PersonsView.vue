@@ -62,8 +62,8 @@
         
             <v-col
                 v-for="face in unknownFaces.items" :key="face.id" class="d-flex child-flex"
-                xs="3" md="2" lg="1" xl="1">
-                <face-view :face="face"></face-view>
+                xs="3" md="2" lg="2" xl="1">
+                <face-view @update="updateUnknownFaces" :face="face"></face-view>
             </v-col>
         </v-row>
         <v-row>
@@ -85,7 +85,7 @@
     import axios from "axios";
     import PersonPreview from "./PersonPreview";
     import { mapState } from 'vuex'
-import FaceView from './FaceView.vue';
+    import FaceView from './FaceView.vue';
     export default {
         name: "PersonsView",
 
@@ -136,6 +136,11 @@ import FaceView from './FaceView.vue';
                 axios.get("/api/setFacesSeen");
                 this.$store.commit("setNewFaces", false);
             },
+
+            updateUnknownFaces() {
+                this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
+                this.$store.dispatch("getAllPersons");
+            }
             
         }
     }

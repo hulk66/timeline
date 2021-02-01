@@ -26,6 +26,15 @@ export const person = {
 
     actions: {
 
+        ignoreFace(context, face) {
+            let url = `/api/face/ignore/${face.id}`
+            return new Promise((resolve => {
+                axios.get(url).then( result => {
+                    resolve(result.data);
+                })
+            }))
+
+        },
         getClosestPerson(context, face) {
             let url = `/api/face/nearestKnownFaces/${face.id}`
             return new Promise((resolve => {
