@@ -46,6 +46,7 @@ services:
       WAIT_HOSTS_TIMEOUT: 120
       WAIT_SLEEP_INTERVAL: 3    
       WAIT_AFTER_HOSTS: 2
+      DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
     depends_on:
       - db
       - rabbitmq
@@ -61,6 +62,7 @@ services:
       WAIT_HOSTS_TIMEOUT: 120
       WAIT_SLEEP_INTERVAL: 3     
       WAIT_AFTER_HOSTS: 2
+      DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
     volumes:
       - ${PHOTO_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
@@ -81,6 +83,7 @@ services:
       WAIT_HOSTS_TIMEOUT: 120
       WAIT_SLEEP_INTERVAL: 3     
       WAIT_AFTER_HOSTS: 2
+      DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
     volumes:
       - ${PHOTO_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
@@ -119,6 +122,7 @@ services:
       WAIT_HOSTS_TIMEOUT: 120
       WAIT_SLEEP_INTERVAL: 3     
       WAIT_AFTER_HOSTS: 2
+      DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
     volumes:
       - ${PHOTO_PATH}:/photos:ro
       - ${LOG_PATH}:/log

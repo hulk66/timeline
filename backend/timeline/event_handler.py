@@ -26,13 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class EventHandler(PatternMatchingEventHandler):
-    patterns = ["*.jpg", "*.jpeg", "*.tiff", "*.tif"]
+    patterns = ["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]
     ignore = ["*@eaDir*", "*@__thumb*", "*@Recycle*"]
 
     base_path = None
     def __init__(self, base_path):
         super(EventHandler, self).__init__(patterns=self.patterns, ignore_patterns=self.ignore)
         self.base_path = base_path
+
     def on_created(self, event):
         abs_path = os.path.abspath(event.src_path)
         logger.debug("on_created: %s", abs_path)

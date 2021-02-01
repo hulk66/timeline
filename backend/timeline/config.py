@@ -19,7 +19,7 @@ import os
 
 import dotenv
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True, verbose=True)
 
 DEBUG = False
 TESTING = False
@@ -35,9 +35,9 @@ FACE_CLUSTER_EPSILON = 0.5
 FACE_CLUSTER_MIN_SAMPLES = 4
 FACE_CLUSTER_MAX_FACES = 3000
 LOG_PATH = os.getenv("LOG_PATH")
-CREATE_DATABASE = os.getenv("LOG_PATH")
+CREATE_DATABASE = True
 DB_HOST = os.getenv("DB_HOST")
-DB_SUPER_USER = os.getenv("DB_HOST")
+DB_SUPER_USER = os.getenv("DB_SUPER_USER_PW")
 CREATE_DATABASE = os.getenv("CREATE_DATABASE")
 COMPUTE_SECTIONS_EVERY_MINUTES = os.getenv("COMPUTE_SECTIONS_EVERY_MINUTES")
 GROUP_FACES_EVERY_MINUTES = os.getenv("GROUP_FACES_EVERY_MINUTES")

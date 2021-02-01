@@ -113,7 +113,8 @@ def create_db(app):
     create = app.config["CREATE_DATABASE"]
     if create:
         db_host = app.config["DB_HOST"]
-        engine = sqlalchemy.create_engine("mysql+pymysql://root:example@" + db_host)
+        db_pw = app.config["DB_SUPER_USER"]
+        engine = sqlalchemy.create_engine("mysql+pymysql://root:" + db_pw + "@" + db_host)
         engine.execute("CREATE DATABASE if not exists timeline CHARACTER SET utf8 COLLATE utf8_general_ci")
         engine.execute("CREATE USER IF NOT EXISTS timeline@'%%' IDENTIFIED BY 'timeline'")
         engine.execute("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON timeline.* TO timeline@'%%'")
