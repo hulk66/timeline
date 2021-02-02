@@ -30,7 +30,7 @@ elif [ $APP = 'worker_thing_face' ]
       # fix this warning by creating proper user and group in the container
       # export C_FORCE_ROOT='true'
       # celery -A timeline.celery_main purge -f -Q beat 
-      celery -A timeline.celery_slow worker -P eventlet --concurrency=$THREADS -Q face,thing
+      celery -A timeline.celery_slow worker -P eventlet --concurrency=$THREADS -Q face,thing,iq
 
 elif [ $APP = 'watchdog' ]
   then

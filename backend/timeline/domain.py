@@ -147,6 +147,9 @@ class Photo(db.Model, SerializerMixin):
     width = db.Column(db.Integer)
     height = db.Column(db.Integer)
     stars = db.Column(db.Integer)
+    score_aesthetic = db.Column(db.Float)
+    score_technical = db.Column(db.Float)
+
 
     gps = db.relationship("GPS", uselist=False, cascade="all, delete, delete-orphan", single_parent=True)
     gps_id = db.Column(db.Integer, db.ForeignKey('gps.id'))

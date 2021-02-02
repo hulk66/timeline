@@ -25,6 +25,7 @@ from timeline.tasks.face_tasks import find_faces
 from timeline.tasks.classify_tasks import analyze_photo
 from pathlib import Path
 from pymysql.err import InternalError
+from timeline.tasks.iq_tasks import predict
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ def new_photo(path):
             analyze_photo.apply_async((photo_id,), queue='thing')
             create_preview(photo.path, 200)
             create_preview(photo.path, 2160)
+            predict.apply_async((photo_id,), queue="iq")
 
 @celery.task(name="Initial Scan", ignore_result=True)
 def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]):
