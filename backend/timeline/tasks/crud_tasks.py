@@ -217,49 +217,53 @@ def compute_sections():
         logger.debug("compute_sections - nothing to do")
         return
 
-    try:
-        sort_old_photos()
+    sort_old_photos()
 
-        offset = 0
-        batch_size = 300
-        current_section = 0
-        photos = Photo.query.order_by(Photo.created.desc()).limit(batch_size).all()
-        last_batch_date = None
-        section = None
-        while len(photos) > 0:
-            logger.debug("Sectioning next batch %i with %i initial photos", current_section, len(photos))
-            photos_from_prev_batch = 0
-            add_limit = 0
-            new_batch = True
-            for photo in photos:
-                if new_batch and last_batch_date != photo.created.date():
-                    if section:
-                        section.num_photos = len(section.photos)
-                        logger.debug("Compute Sections - Closing Section with %i photos", section.num_photos)
-                        section.start_date = None
-                    add_limit = photos_from_prev_batch
-                    section = Section.query.get(current_section)
-                    if not section:
-                        logger.debug("Creating new Section")
-                        section = Section()
-                        db.session.add(section)
-                        section.id = current_section
+    offset = 0
+    batch_size = 300
+    current_section = 0
+    photos = Photo.query.order_by(Photo.created.desc()).limit(batch_size).all()
+    prev_batch_date = None
+    last_batch_date = None
+    section = None
+    
+    while len(photos) > 0:
+        logger.debug("Sectioning next batch %i with %i initial photos", current_section, len(photos))
+        photos_from_prev_batch = 0
+        add_limit = 0
+        new_batch = True
+        for photo in photos:
+            if new_batch and last_batch_date.date() != photo.created.date():
+                if section:
+                    section.num_photos = len(section.photos)
+                    logger.debug("Compute Sections - Closing Section with %i photos", section.num_photos)
+                    section.start_date = None
+                add_limit = photos_from_prev_batch
+                section = Section.query.get(current_section)
+                if not section:
+                    logger.debug("Creating new Section")
+                    section = Section()
+                    db.session.add(section)
+                    section.id = current_section
 
-                    current_section += 1
-                    new_batch = False
-                else:
-                    photos_from_prev_batch += 1
-                offset += 1
-                photo.section = section
+                current_section += 1
+                new_batch = False
+            else:
+                photos_from_prev_batch += 1
+            offset += 1
+            photo.section = section
 
-            last_batch_date = photos[-1].created.date()
-            photos = Photo.query.filter(Photo.created < photos[-1].created).order_by(Photo.created.desc()).limit(batch_size + add_limit).all()
-
-    except Exception as exc:
-        # this is bad, actually nothing should happen => refine this
-        logger.error(exc)
-        db.session.rollback()
-
+        last_batch_date = photos[-1].created
+        if prev_batch_date == last_batch_date:
+            # make sure to always have a date break in the set of photos
+            # otherwise we might come into an endless loop
+            # let's see if this solves this strange problem
+            last_batch_date -= timedelta(milliseconds=1)
+        prev_batch_date = last_batch_date
+        photos = Photo.query \
+            .filter(Photo.created < last_batch_date) \
+            .order_by(Photo.created.desc()).limit(batch_size + add_limit).all()
+    
     status.sections_dirty = False
     db.session.commit()
     logger.debug("Compute Sections - Done")

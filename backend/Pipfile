@@ -27,6 +27,7 @@ celery = "*"
 pymysql = "*"
 flask-testing = "*"
 flake8 = "*"
+libsvm = "*"
 
 [dev-packages]
 flake8 = "*"

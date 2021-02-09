@@ -15,10 +15,10 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-card flat>
+    <v-card flat v-if="closestPerson">
         <v-list>
 
-            <v-list-item v-if="closestPerson">
+            <v-list-item>
                 <v-list-item-content>
                     <v-list-item-subtitle>
                             <v-btn @click="confirm()" block text color="primary">
@@ -113,6 +113,7 @@
         name: "FaceNameSelector",
         props: {
             face: Object,
+            loaded: Boolean
         },
 
         data() {
@@ -121,7 +122,7 @@
                 selectedPerson: null,
                 showSelection: false,
                 distance: 0.0,
-                closestPerson: Object
+                closestPerson: null
 
             }
         },

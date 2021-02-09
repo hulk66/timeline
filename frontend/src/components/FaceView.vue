@@ -17,8 +17,17 @@
 
 <template>
     <v-card flat>
-        <v-img :src="src"></v-img>
-        <face-name-selector  @update="update" :face="face">Whos is this</face-name-selector>
+        <v-img :src="src" height="200px" contain @load="loaded=true">
+            <template v-slot:placeholder>
+                <v-row
+                class="fill-height ma-0"
+                align="center"
+                justify="center">
+                <v-progress-circular color="primary" indeterminate></v-progress-circular>
+        </v-row>
+      </template>
+        </v-img>
+        <face-name-selector :loaded="loaded" @update="update" :face="face">Whos is this</face-name-selector>
         <!--
         <v-card-subtitle>Closest {{closestPerson.name}} with Distance {{distance}}</v-card-subtitle>
         -->
@@ -40,7 +49,8 @@
         data() {
             return {
                 closestPerson: Object,
-                distance: 0.0
+                distance: 0.0,
+                loaded: false
             };
         },
 
