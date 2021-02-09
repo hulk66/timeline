@@ -62,7 +62,6 @@
                             <div v-if="photo_faces.length > 0">
                                 <v-card-text>
                                     <div class="font-weight-bold">People</div>
-                                </v-card-text>
                                 
                                 <v-list-item  v-for="face in photo_faces" :key="face.id" two-line>
                                     <v-list-item-avatar size="60">
@@ -98,12 +97,13 @@
                                     </v-list-item-action>
 
                                 </v-list-item>
+                                </v-card-text>
+
                             </div>
 
                             <div v-if="things.length > 0">
                                 <v-card-text>
                                     <div class="font-weight-bold">Things</div>
-                                </v-card-text>
                                 <v-list-item>
                                     <v-list-item-content>
                                         <v-list-item-subtitle> 
@@ -114,11 +114,12 @@
                                         </v-list-item-subtitle>
                                     </v-list-item-content>
                                 </v-list-item>
+                                </v-card-text>
+
                             </div>
                             <div>
                                 <v-card-text>
                                     <div class="font-weight-bold">Details</div>
-                                </v-card-text>
                                 <v-list-item two-line>
                                     <v-list-item-avatar>
                                         <v-icon>mdi-calendar</v-icon>
@@ -157,6 +158,8 @@
                                         </v-list-item-subtitle>
                                     </v-list-item-content>            
                                 </v-list-item>
+                                </v-card-text>
+
                             </div>
 
                             <div v-if="gps.display_address">
@@ -192,10 +195,10 @@
                                 </v-card-text>
                                 <v-list-item three-line>
                                     <v-list-item-avatar>
-                                        <v-icon>mdi-calendar</v-icon>
+                                        <v-icon>mdi-poll-box</v-icon>
                                     </v-list-item-avatar>
                                     <v-list-item-content>
-                                        <v-list-item-title>Aesthetic {{photo.score_aesthetic}}</v-list-item-title>
+                                        <v-list-item-subtitle>Aesthetic {{photo.score_aesthetic}}</v-list-item-subtitle>
                                         <v-list-item-subtitle>
                                             Technical {{photo.score_technical}}
                                         </v-list-item-subtitle>

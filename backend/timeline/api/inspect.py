@@ -145,7 +145,9 @@ def status():
         "match": get_queue_len("match"),
         "iq": get_queue_len("iq"),
         "totalFaces": numFaces,
-        "totalThings": numThings
+        "totalThings": numThings,
+        "totalPhotos": Photo.query.count()
+
     }
 
     result_jobs = {}

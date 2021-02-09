@@ -89,6 +89,13 @@
 
                           <v-list-item>
                                <v-list-item-content>
+                                    <v-list-item-title>Processed Photos</v-list-item-title>
+                              </v-list-item-content>
+                              <v-list-item-action>{{totalPhotos}}</v-list-item-action>
+                          </v-list-item>
+
+                          <v-list-item>
+                               <v-list-item-content>
                                     <v-list-item-title>Identified Faces</v-list-item-title>
                               </v-list-item-content>
                               <v-list-item-action>{{totalFaces}}</v-list-item-action>
@@ -154,8 +161,7 @@
                                         </v-dialog>
                               </v-list-item-content>
                           </v-list-item>
-                          <v-divider></v-divider>
-                          <v-list-group v-mode="infoGroup" no-action>
+                          <v-list-group  @click.stop>
                             <template v-slot:activator>
                                 <v-list-item-content>
                                     <v-list-item-title>Queued Jobs</v-list-item-title>
@@ -198,8 +204,15 @@
                           </v-list-item>
                                                   </v-list-group>
 
-                           <v-divider></v-divider>
+                            <v-list-group   @click.stop>
+                            <template v-slot:activator>
+                                <v-list-item-content>
+                                    <v-list-item-title>Currently Processing</v-list-item-title>
+                                </v-list-item-content>
+                            </template>
+                            <!--
                           <v-subheader>Currently processing</v-subheader>
+                          -->
                           <v-list-item v-for="(job, key, index) in active" :key="index">
                               <v-list-item-content>
                               <v-list-item-title v-text="key"></v-list-item-title>
@@ -207,7 +220,7 @@
                               </v-list-item-content>
 
                           </v-list-item>
-
+                            </v-list-group>
                       </v-list>
 
                   </v-menu>
@@ -245,6 +258,7 @@
                 about: false,
                 totalFaces: 0,
                 totalThings: 0,
+                totalPhotos: 0,
                 iq_count: 0
             };
         },
@@ -313,6 +327,7 @@
                     this.inStatusCheck = false,
                     this.totalFaces = result.data.totalFaces;
                     this.totalThings = result.data.totalThings;
+                    this.totalPhotos = result.data.totalPhotos;
                 })
 
             },
