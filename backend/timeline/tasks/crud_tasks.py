@@ -233,7 +233,7 @@ def compute_sections():
         add_limit = 0
         new_batch = True
         for photo in photos:
-            if new_batch and last_batch_date.date() != photo.created.date():
+            if new_batch and last_batch_date and last_batch_date.date() != photo.created.date():
                 if section:
                     section.num_photos = len(section.photos)
                     logger.debug("Compute Sections - Closing Section with %i photos", section.num_photos)
