@@ -184,7 +184,29 @@
                                     </vl-feature>
                                 </vl-map>
                                 </v-card-text>
-                            </div>                        
+                            </div>     
+
+                            <div v-if="photo.score_aesthetic || photo.score_technical || photo.score_brisque">
+                                <v-card-text >
+                                    <div class="font-weight-bold">Scores</div>
+                                </v-card-text>
+                                <v-list-item three-line>
+                                    <v-list-item-avatar>
+                                        <v-icon>mdi-calendar</v-icon>
+                                    </v-list-item-avatar>
+                                    <v-list-item-content>
+                                        <v-list-item-title>Aesthetic {{photo.score_aesthetic}}</v-list-item-title>
+                                        <v-list-item-subtitle>
+                                            Technical {{photo.score_technical}}
+                                        </v-list-item-subtitle>
+                                        <v-list-item-subtitle>
+                                            Brisque {{photo.score_brisque}}
+                                        </v-list-item-subtitle>
+
+                                    </v-list-item-content>
+                                </v-list-item>
+
+                            </div>                   
                         </v-card>
                     </div>
                 </v-card>
@@ -290,23 +312,10 @@
                     this.photo_faces = faces;
                 }));
             },
-            /*
-            getPersonsByPhoto(photo) {
-                this.$store.dispatch("getPersonsByPhoto", photo).then((persons => {
-                    this.photo_persons = persons;
-                }));   
-            },  
-            */
 
             getKnownPersons() {
-                /*
-                this.$store.dispatch("getPersonsByPhoto", photo).then((knownPersons => {
-                    this.knownPersons = knownPersons;
-                }));
-                */
                 this.$store.dispatch("getAllPersons");
                 this.editId = 0;
-                // this.oldPersonId = null;
                 this.faceName = "";
             },
 
@@ -314,7 +323,7 @@
                 return moment(d).format("DD.MM.YYYY");
             },
             time(d) {
-                return moment(d).format("dd, H:mm");
+                return moment(d).format("dddd, H:mm");
             },
             photoUrl(photo) {
                 if (photo)

@@ -83,8 +83,9 @@ def create_photo(path, commit=True):
         return None
 
     photo = Photo()
-    photo.score_aesthetic = 0.0
-    photo.score_technical = 0.0
+    #photo.score_aesthetic = 0.0
+    # photo.score_technical = 0.0
+    # photo.score_brisque = 0.0
     photo.exif = []
     photo.path = img_path
     photo.filename = os.path.basename(img_path)

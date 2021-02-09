@@ -27,6 +27,7 @@ from timeline.extensions import celery
 
 blueprint = Blueprint("inspect", __name__, url_prefix="/inspect")
 logger = logging.getLogger(__name__)
+connection = None
 
 @blueprint.route('/active', methods=['GET'])
 def active():
@@ -60,12 +61,14 @@ def stats():
 
 
 def get_queue_len(qname):
-    connection = celery.connection()
-    try:
-        channel = connection.channel()
-        name, jobs, consumers = channel.queue_declare(queue=qname, passive=True)
-    finally:
-        connection.close()
+    global connection 
+    if not connection:
+        connection = celery.connection()
+    #try:
+    channel = connection.channel()
+    name, jobs, consumers = channel.queue_declare(queue=qname, passive=True)
+    #finally:
+    #    connection.close()
     return jobs
 
 # @blueprint.route('/rmq/<string:qname>', methods=['GET'])
@@ -140,6 +143,7 @@ def status():
         "geo": get_queue_len("geo_resolve"),
         "process": get_queue_len("process"),
         "match": get_queue_len("match"),
+        "iq": get_queue_len("iq"),
         "totalFaces": numFaces,
         "totalThings": numThings
     }

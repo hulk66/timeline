@@ -20,14 +20,18 @@ import logging
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.applications.mobilenet import preprocess_input
-from timeline.domain import Face, Photo, Status, Person
+from timeline.domain import Photo
 from timeline.extensions import db, celery
 from timeline.util.path_util import get_full_path
 
 from idealo.handlers.model_builder import Nima
 from idealo.utils.utils import calc_mean_score
 
+
+from brisque.brisque import BRISQUE
+
 logger = logging.getLogger(__name__)
+
 
 class ImageQualifier:
 
@@ -39,6 +43,7 @@ class ImageQualifier:
         self.nima_technical = Nima("MobileNet", weights=None)
         self.nima_technical.build()
         self.nima_technical.nima_model.load_weights("model/weights_mobilenet_technical_0.11.hdf5")
+        self.brisque = BRISQUE()
 
     def _preprocess(self, img):
         preprocessed_img = tf.keras.preprocessing.image.load_img(img, target_size=(224, 224))
@@ -47,9 +52,6 @@ class ImageQualifier:
         preprocessed = preprocess_input(expended_img_arrary)
         return preprocessed
     
-    def _predict_quality(self, img):
-        return score
-
     def predict(self, photo_id):
         photo = Photo.query.get(photo_id)
         logger.debug("Image Aesthetics qualification for %s", photo.path)
@@ -65,9 +67,21 @@ class ImageQualifier:
 
         db.session.commit()
 
+    def calculate_brisque(self, photo_id):
+        photo = Photo.query.get(photo_id)
+        logger.debug("Brisque score for %s", photo.path)
+        path = get_full_path(photo.path)
+        photo.score_brisque = self.brisque.get_score(path)
+        db.session.commit()
+        logger.debug("Brisque score for %s: %f", photo.path, photo.score_brisque)
+
 
 qualifier = ImageQualifier()
 
 @celery.task(ignore_result=True)
-def predict(photo_id):
+def predict_quality(photo_id):
     qualifier.predict(photo_id)
+
+@celery.task(ignore_result=True)
+def brisque_score(photo_id):
+    qualifier.calculate_brisque(photo_id)

@@ -25,7 +25,7 @@ from timeline.tasks.face_tasks import find_faces
 from timeline.tasks.classify_tasks import analyze_photo
 from pathlib import Path
 from pymysql.err import InternalError
-from timeline.tasks.iq_tasks import predict
+from timeline.tasks.iq_tasks import predict_quality, brisque_score
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +39,21 @@ def new_photo(path):
         photo_id = create_photo(path)
         if photo_id:
             photo = Photo.query.get(photo_id)
-            set_display_address.apply_async((photo_id,), queue='geo_req')
-            find_faces.apply_async((photo_id,), queue='face')
-            analyze_photo.apply_async((photo_id,), queue='thing')
+            #set_display_address.apply_async((photo_id,), queue='geo_req')
+            #find_faces.apply_async((photo_id,), queue='face')
+            #analyze_photo.apply_async((photo_id,), queue='thing')
             create_preview(photo.path, 200)
             create_preview(photo.path, 2160)
-            predict.apply_async((photo_id,), queue="iq")
+            #predict_quality.apply_async((photo_id,), queue="iq")
+            #brisque_score.apply_async((photo_id,), queue="iq")
+            chain = (
+                set_display_address.si(photo_id).set(queue="geo_req") |
+                find_faces.si(photo_id).set(queue="face") |
+                analyze_photo.si(photo_id).set(queue="thing") |
+                predict_quality.si(photo_id).set(queue="iq") | 
+                brisque_score.si(photo_id).set(queue="iq") 
+            )
+            chain.delay()
 
 @celery.task(name="Initial Scan", ignore_result=True)
 def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]):

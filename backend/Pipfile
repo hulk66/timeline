@@ -26,10 +26,10 @@ gunicorn = "*"
 celery = "*"
 pymysql = "*"
 flask-testing = "*"
-pylint = "*"
+flake8 = "*"
 
 [dev-packages]
-pylint = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.8"

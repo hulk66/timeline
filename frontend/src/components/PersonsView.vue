@@ -18,11 +18,11 @@
     <v-card>
     <v-tabs v-model="tab">
         <v-tabs-slider></v-tabs-slider>
-        <v-tab key="groups">Groups</v-tab>
+        <v-tab key="known">Known</v-tab>
         <v-tab key="unknown">Unknown</v-tab>
     </v-tabs>
     <v-tabs-items v-model="tab">
-        <v-tab-item key="group">
+        <v-tab-item key="known">
         <v-container fluid >
         <v-row>
             <v-col>

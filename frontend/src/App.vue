@@ -80,7 +80,7 @@
                         </v-btn>
                       </template>
 
-                      <v-list subheader flat width="300">
+                      <v-list subheader width="300">
                           <v-list-item>
                               <v-list-item-content>
                                   <v-switch v-model="darkmode" label="Dark Mode"></v-switch>
@@ -155,7 +155,16 @@
                               </v-list-item-content>
                           </v-list-item>
                           <v-divider></v-divider>
+                          <v-list-group v-mode="infoGroup" no-action>
+                            <template v-slot:activator>
+                                <v-list-item-content>
+                                    <v-list-item-title>Queued Jobs</v-list-item-title>
+                                </v-list-item-content>
+                            </template>
+
+                          <!--
                           <v-subheader>Queued Jobs</v-subheader>
+                          -->
                           <v-list-item>
                               <v-list-item-content>
                                     <v-list-item-title>Processing</v-list-item-title>
@@ -181,6 +190,13 @@
                               </v-list-item-content>
                               <v-list-item-action v-text="geo_count"></v-list-item-action>
                           </v-list-item>
+                          <v-list-item>
+                              <v-list-item-content>
+                              <v-list-item-title>Quality Assessment</v-list-item-title>
+                              </v-list-item-content>
+                              <v-list-item-action v-text="iq_count"></v-list-item-action>
+                          </v-list-item>
+                                                  </v-list-group>
 
                            <v-divider></v-divider>
                           <v-subheader>Currently processing</v-subheader>
@@ -228,7 +244,8 @@
                 inStatusCheck: false,
                 about: false,
                 totalFaces: 0,
-                totalThings: 0
+                totalThings: 0,
+                iq_count: 0
             };
         },
 
@@ -292,6 +309,7 @@
                     this.faces_count = result.data.faces;
                     this.things_count = result.data.things;
                     this.process_count = result.data.process;
+                    this.iq_count = result.data.iq;
                     this.inStatusCheck = false,
                     this.totalFaces = result.data.totalFaces;
                     this.totalThings = result.data.totalThings;

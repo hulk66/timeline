@@ -97,7 +97,7 @@
                 "-n",
                 "face_thing@%n",
                 "-Q",
-                "face,thing"
+                "face,thing,iq"
             ]
         },
         {
