@@ -47,6 +47,7 @@ services:
       WAIT_SLEEP_INTERVAL: 3    
       WAIT_AFTER_HOSTS: 2
       DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
+      THREADS: ${THREADS}
     depends_on:
       - db
       - rabbitmq

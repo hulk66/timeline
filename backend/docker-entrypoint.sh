@@ -5,7 +5,7 @@ if [ $APP = 'web' ]
       ./wait
       # gunicorn -b 0.0.0.0:5000 --log-file /log/gunicorn.log --access-logfile /log/gunicorn_access.log timeline.wsgi:app
       python -m timeline.manage init
-      gunicorn -b 0.0.0.0:5000 timeline.wsgi:app
+      gunicorn -b 0.0.0.0:5000 --concurrency=$THREADS timeline.wsgi:app
 elif [ $APP = 'worker' ]
   then 
       ./wait
