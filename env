@@ -24,14 +24,21 @@ RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 # In general a good approach is to go with the number of physical processors
 # --
 # Only used if the one fits all worker is used
-THREADS=4
+# THREADS=4
 # but it seems to be better to split the workers into face and thing detection
 # and all the rest of the processing tasks
 THREADS_PROCESS=4
 THREADS_THING_FACE=4
 
-
 # This is the password to access adminer
 # under http://<machine>:9091/adminer
 # with the root user
 DB_SUPER_USER_PW=example
+
+# This controll the Flask Webapp and the number and type of workers
+# You might want to play with the number of workers
+# According to the gunicorn documentation this should be between 1 and 2 per core
+# but most if the load is handled by nginx, so this shouldn't be necessary
+GUNICORN_WORKERS=4
+# This is the default, other options like eventlet can also be used
+GUNICORN_WORKER_CLASS=sync

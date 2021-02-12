@@ -15,13 +15,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-import certifi
-import ssl
-import geopy.geocoders
 import logging
+import ssl
+
+import certifi
+import geopy.geocoders
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from timeline.domain import Photo
 from timeline.extensions import celery, db
-from timeline.domain import Photo, Exif, GPS
-from geopy.exc import GeocoderTimedOut
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ def set_display_address(photo_id):
         logger.debug("No GPS data for %s, nothing to lookup", photo.path)
 
 
-@celery.task(rate_limit="1/s", autoretry_for=(GeocoderTimedOut,), name="Address Detection", ignore_result=True)
+@celery.task(rate_limit="1/s", autoretry_for=(GeocoderTimedOut,GeocoderServiceError), name="Address Detection", ignore_result=True)
 def resolve_address(photo_id):
     photo = Photo.query.get(photo_id)
     if not photo:

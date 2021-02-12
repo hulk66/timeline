@@ -63,12 +63,20 @@ export const person = {
         },
 
         getAllUnknownFaces(context, {page, size}) {
-            let url = `/api/face/all_unknown/${page}/${size}`;
+            let url = `/api/face/allUnknownAndClosest/${page}/${size}`;
             axios.get(url).then( result => {
                 context.commit("setUnknownFaces", result.data);    
             })
             
         },
+        /*
+        getAllUnknownFaces(context, {page, size}) {
+            let url = `/api/face/all_unknown/${page}/${size}`;
+            axios.get(url).then( result => {
+                context.commit("setUnknownFaces", result.data);    
+            })
+            
+        },*/
         assignFaceToPerson(context, { person, name, faceId }) {
             let pid = null;
             if (person)

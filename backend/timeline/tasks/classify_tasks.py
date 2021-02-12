@@ -16,22 +16,22 @@ GNU General Public License for more details.
 '''
 
 import logging
-from timeline.domain import Photo, Thing
-from timeline.extensions import celery, db
+import os
 import tempfile
-from PIL import Image
+
 import tensorflow as tf
 import tensorflow_hub as hub
-import logging
+from PIL import Image
 from pymysql.err import OperationalError
-import os
+from timeline.domain import Photo, Thing
+from timeline.extensions import celery, db
 from timeline.util.path_util import get_full_path
 
 logger = logging.getLogger(__name__)
 CLASSIFICATION_SCORE = 0.5
 object_detector = None
-
 logger = logging.getLogger(__name__)
+
 
 def init_classify_services(path_to_model):
 

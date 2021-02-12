@@ -18,12 +18,14 @@ GNU General Public License for more details.
 import csv
 import json
 import logging
-from timeline.extensions import db
+
 from timeline.domain import Thing
+from timeline.extensions import db
 
 LABEL_NAME = 'LabelName'
 SUBCATEGORY = 'Subcategory'
 log = logging.getLogger(__name__)
+
 
 def insert_things(csv_thing_file):
     log.info("insert things from CSV")

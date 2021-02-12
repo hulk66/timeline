@@ -15,10 +15,10 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-card flat v-if="closestPerson">
+    <v-card flat>
         <v-list>
 
-            <v-list-item>
+            <v-list-item  v-if="closestPerson">
                 <v-list-item-content>
                     <v-list-item-subtitle>
                             <v-btn @click="confirm()" block text color="primary">
@@ -62,47 +62,6 @@
 
             </v-list-item>
         </v-list>
-        <!--
-        <span v-if="closestPerson">
-            <v-card-subtitle>
-                {{closestPerson.name}}
-            </v-card-subtitle>
-            <v-card-actions>
-                    <v-btn color="primary" small icon @click="closestPerson = null"><v-icon>mdi-close</v-icon></v-btn>
-                    <v-btn color="primary" small icon @click="confirm()"><v-icon>mdi-check</v-icon></v-btn>
-
-            </v-card-actions>
-        </span>
-        -->
-        <!--
-        <v-menu v-else :close-on-content-click="false" v-model="showSelection" offset-y>
-            <template v-slot:activator="{ on, attrs }">
-                <div class="text-center">
-                <v-btn small text color="primary" v-bind="attrs" v-on="on">
-                    <slot></slot>
-                </v-btn>
-                </div>
-            </template>
-
-            <v-card>
-                <v-card-title>Select existing or create new</v-card-title>
-                <v-card-text>
-                    <v-combobox :search-input.sync="name"
-                                :items="knownPersons"
-                                item-text="name"
-                                item-value="id"                                                
-                                v-model="selectedPerson">                                                                                                            
-                    </v-combobox>            
-            </v-card-text>
-            <v-card-actions>
-                <v-btn color="error" icon @click="ignoreFace()"><v-icon>mdi-delete</v-icon></v-btn>
-                <v-spacer></v-spacer>
-                    <v-btn color="primary" icon @click="close()"><v-icon>mdi-close</v-icon></v-btn>
-                    <v-btn color="primary" :disabled="!name" icon @click="assignFaceToPerson()"><v-icon>mdi-check</v-icon></v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-menu>
-        -->
     </v-card>
 </template>
 <script>
@@ -113,7 +72,8 @@
         name: "FaceNameSelector",
         props: {
             face: Object,
-            loaded: Boolean
+            loaded: Boolean,
+            closestPerson: Object
         },
 
         data() {
@@ -122,17 +82,17 @@
                 selectedPerson: null,
                 showSelection: false,
                 distance: 0.0,
-                closestPerson: null
+                // closestPerson: null
 
             }
         },
         mounted() {
-           
+           /*
            this.$store.dispatch("getClosestPerson", this.face).then(result => {
                 this.closestPerson = result.person;
                 this.distance = result.distance;
             });
-
+            */
         },
         computed: {
             ...mapState({

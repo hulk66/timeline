@@ -26,8 +26,8 @@ from timeline.domain import Photo
 from flask import request
 from PIL import Image
 from pathlib import Path
-from timeline.util.path_util import get_full_path
-from timeline.util.path_util import get_preview_path
+from timeline.util.path_util import get_full_path, get_preview_path
+
 
 blueprint = Blueprint("photos", __name__, url_prefix="/photos")
 logger = logging.getLogger(__name__)

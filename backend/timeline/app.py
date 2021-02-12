@@ -15,25 +15,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-import click
-import dotenv
 import flask
-import os
-import sys
-
-from flask import cli
-
-
-from timeline.event_handler import EventHandler
 from timeline.extensions import db, celery
 from timeline.api import views, photos, admin, inspect
-from watchdog.observers import Observer
-from watchdog.observers.polling import PollingObserver
 import logging
 import pymysql
 import numpy
-import timeline.config 
-from flask.logging import default_handler
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 import sqlalchemy

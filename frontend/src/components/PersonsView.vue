@@ -61,9 +61,9 @@
         <v-row dense>
         
             <v-col
-                v-for="face in unknownFaces.items" :key="face.id" class="d-flex child-flex"
+                v-for="element in unknownFaces.items" :key="element.face.id" class="d-flex child-flex"
                 xs="3" md="2" lg="2" xl="1">
-                <face-view @update="updateUnknownFaces" :face="face"></face-view>
+                <face-view @update="updateUnknownFaces" :element="element"></face-view>
             </v-col>
         </v-row>
         <v-row>

@@ -15,16 +15,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-from timeline.app import init_celery, create_app, setup_logging
-from timeline.tasks.face_tasks import init_face_services
-from timeline.tasks.classify_tasks import init_classify_services
+
 from celery.signals import celeryd_after_setup
-from datetime import timedelta
-import logging
-from logging.handlers import RotatingFileHandler
+
+from timeline.app import create_app, setup_logging
+from timeline.extensions import celery
+from timeline.tasks.classify_tasks import init_classify_services
 from timeline.tasks.crud_tasks import schedule_next_compute_sections
-from timeline.tasks.face_tasks import schedule_next_grouping, schedule_next_match_all_unknown_faces, do_background_face_tasks
-from timeline.extensions import celery 
+from timeline.tasks.face_tasks import init_face_services
+from timeline.tasks.match_tasks import do_background_face_tasks
 
 flask_app = create_app()
 app = celery

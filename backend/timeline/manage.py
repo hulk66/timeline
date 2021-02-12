@@ -23,8 +23,9 @@ from watchdog.observers.polling import PollingObserver
 from timeline.util.init_things import insert_things, set_hierarchy
 from timeline.app import create_app
 from flask import current_app
-from timeline.tasks.process_tasks import inital_scan
+from timeline.tasks.initial_scan import inital_scan
 import time
+
 
 def create_timeline(info):
     return create_app(cli=True)
@@ -50,6 +51,7 @@ def watchdog():
         click.echo("Initial Scan done")
 
     start_watchdog(polling, path)
+
 
 def start_watchdog(polling, path):
     observer = Observer()

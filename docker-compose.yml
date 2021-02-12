@@ -31,7 +31,7 @@ services:
       - ${RABBITMQ_DATA}:/var/lib/rabbitmq
 
   webapp:
-    image: hulk66/timeline_be
+    image: hulk66/timeline_be:0.61-dev
     # build: backend
     restart: always
     ports: 
@@ -47,13 +47,14 @@ services:
       WAIT_SLEEP_INTERVAL: 3    
       WAIT_AFTER_HOSTS: 2
       DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
-      THREADS: ${THREADS}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS}
+      GUNICORN_WORKER_CLASS: ${GUNICORN_WORKER_CLASS}
     depends_on:
       - db
       - rabbitmq
 
   worker_process:
-    image: hulk66/timeline_be
+    image: hulk66/timeline_be:0.61-dev
     # build: backend
     restart: always
     environment:
@@ -74,7 +75,7 @@ services:
       - rabbitmq
 
   worker_thing_face:
-    image: hulk66/timeline_be
+    image: hulk66/timeline_be:0.61-dev
     # build: backend
     restart: always
     environment:
@@ -95,7 +96,7 @@ services:
       - rabbitmq
      
   frontend:
-    image: hulk66/timeline_fe
+    image: hulk66/timeline_fe:0.61-dev
     # build: frontend
     restart: always
     ports:
@@ -114,7 +115,7 @@ services:
       - webapp
 
   watchdog:
-    image: hulk66/timeline_be
+    image: hulk66/timeline_be:0.61-dev
     # build: backend
     restart: always
     environment:

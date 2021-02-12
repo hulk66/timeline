@@ -20,26 +20,29 @@ import os
 import flask
 from flask import Blueprint
 
-from timeline.tasks.face_tasks import match_known_face, find_all_classified_faces, find_closest, match_all_unknown_faces, \
-    group_faces
-from timeline.util.image_ops import exif_transpose, read_and_transpose, resize_width
+from timeline.tasks.match_tasks import  \
+        find_all_classified_faces, find_closest, match_all_unknown_faces, \
+        group_faces
+from timeline.util.image_ops import read_and_transpose, resize_width
 from sqlalchemy import and_, or_
 import random
 import logging
-from timeline.domain import Photo, Face, Section, Status, Person, Thing, photo_thing, GPS
+from timeline.domain import Photo, Face, Section, Status, Person, Thing, \
+    photo_thing, GPS
 from timeline.extensions import db
 from flask import request
 from PIL import Image, ImageDraw
 from timeline.api.photos import send_image
 from timeline.util.path_util import get_full_path, get_preview_path
 from datetime import datetime
-from timeline.tasks.face_tasks import assign_new_person
+from timeline.tasks.match_tasks import assign_new_person
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 logger = logging.getLogger(__name__)
 
 exif_filter = ["FocalLength", "ExifImageWidth", "ExifImageHeight", 
         "Make", "Model", "ExposureTime", "Copyright", "FNumber", "  ","LensModel", "Artist"]
+
 
 def jsonify_pagination(q, page, size):
     paginate = q.paginate(page=page, per_page=size, error_out=False)
@@ -491,6 +494,34 @@ def ignore_face(face_id):
     db.session.commit()
     return flask.jsonify(True)
 
+@blueprint.route('/face/allUnknownAndClosest/<int:page>/<int:size>', methods=['GET'])
+def get_unknown_faces_and_closest(page, size):
+    q = Face.query.filter(and_(
+            Face.ignore == False, 
+            Face.person_id == None))
+    logger.debug(q)
+    paginate = q.paginate(page=page, per_page=size, error_out=False)
+    known_faces = find_all_classified_faces()
+
+    list = []
+    for face in paginate.items:
+        result = {}
+        if len(known_faces) > 0:
+            id, distance = find_closest(face, known_faces)
+            nearest = Face.query.get(id).person
+            result = { "person": nearest.to_dict(), "distance": distance.item() }
+        result["face"] = face.to_dict()
+        list.append(result)
+    
+    result = {
+        "items": list,
+        "pages": paginate.pages,
+        "total": paginate.total
+    }
+    json = flask.jsonify(result)
+    return json
+
+    return jsonify_pagination(q, size=size, page=page)
 
 @blueprint.route('/face/all_unknown/<int:page>/<int:size>', methods=['GET'])
 def get_unknown_faces(page, size):

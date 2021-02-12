@@ -76,7 +76,7 @@ class Face(db.Model, SerializerMixin):
 
     distance_to_human_classified = db.Column(db.Integer, index=True)
     created = db.Column(db.DateTime)
-    ignore = db.Column(db.Boolean)
+    ignore = db.Column(db.Boolean, index=True)
 
     x = db.Column(db.Integer)
     y = db.Column(db.Integer)

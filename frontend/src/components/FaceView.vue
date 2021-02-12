@@ -27,7 +27,7 @@
         </v-row>
       </template>
         </v-img>
-        <face-name-selector :loaded="loaded" @update="update" :face="face">Whos is this</face-name-selector>
+        <face-name-selector :loaded="loaded" :closestPerson="closestPerson" @update="update" :face="face">Whos is this</face-name-selector>
         <!--
         <v-card-subtitle>Closest {{closestPerson.name}} with Distance {{distance}}</v-card-subtitle>
         -->
@@ -44,32 +44,48 @@
         },
 
         props: {
-            face: Object
+            element: Object
         },
         data() {
             return {
+                /*
                 closestPerson: Object,
                 distance: 0.0,
+                face: Object,
+                */
                 loaded: false
             };
         },
 
 
         computed: {
+            
             src() {
-                return "/api/face/preview/200/" + this.face.id + ".png";
+                return this.element ? "/api/face/preview/200/" + this.face.id + ".png" : "";
+            },
+            face() {
+                return this.element ? this.element.face : null;
             },
 
+            closestPerson() {
+                return this.element ? this.element.person: null;
+            },
 
+            distance() {
+                return this.element ? this.element.distance : null;
+            }
+            
         },
+        
         mounted() {
+            /*    
             this.$store.dispatch("getClosestPerson", this.face).then(result => {
                 this.closestPerson = result.person;
                 this.distance = result.distance;
             });
-
+            */
         },
-
+        
         watch: {
 
         },

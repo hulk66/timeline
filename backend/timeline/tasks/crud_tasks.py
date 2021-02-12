@@ -15,23 +15,21 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-from timeline.domain import Photo, Exif, GPS, Status, Section, Person
 import logging
-from timeline.extensions import db, celery
 import os
-from PIL import Image, UnidentifiedImageError
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from timeline.util.gps import get_labeled_exif, get_geotagging, get_coordinates, get_exif_value, get_lat_lon
-from sqlalchemy import and_
-
-from timeline.util.image_ops import read_and_transpose, resize_width
-from timeline.util.path_util import get_rel_path, get_full_path, get_preview_path
-from datetime import timedelta
-from flask import current_app
 from celery import chain
-
+from flask import current_app
+from PIL import Image, UnidentifiedImageError
+from timeline.domain import GPS, Exif, Person, Photo, Section, Status
+from timeline.extensions import celery, db
+from timeline.util.gps import (get_exif_value, get_geotagging,
+                               get_labeled_exif, get_lat_lon)
+from timeline.util.image_ops import read_and_transpose
+from timeline.util.path_util import (get_full_path, get_preview_path,
+                                     get_rel_path)
 
 logger = logging.getLogger(__name__)
 
