@@ -24,10 +24,11 @@ from pymysql.err import InternalError
 from scipy.spatial.distance import cdist
 from sklearn.cluster import DBSCAN
 from sqlalchemy import and_, or_
-from timeline.domain import Face, Person
+from timeline.domain import Face, Person, Status, Photo
 from timeline.extensions import celery, db
 
 logger = logging.getLogger(__name__)
+MAX_CLUSTER_SIZE = 50
 
 
 def assign_new_person(face, person):
@@ -70,11 +71,13 @@ def face_distance_euc(face_encodings, face_to_compare):
 
     return numpy.linalg.norm(face_encodings - face_to_compare, axis=1)
 
+
 def remove_unconfirmed_persons():
     persons = Person.query.filter(Person.confirmed == False)
     for person in persons:
         person.faces = []
     persons.delete()
+
 
 @celery.task(name="Group Faces", ignore_result=True)
 def group_faces():
@@ -151,10 +154,9 @@ def group_faces():
     db.session.commit()
     logger.debug("Grouping done")
 
-        
+
 @celery.task(ignore_result=True)
-def schedule_next_grouping(minutes=None):
-    
+def schedule_next_grouping(minutes=None):   
     if minutes:
         group_schedule = minutes
     else:    

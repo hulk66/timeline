@@ -36,7 +36,6 @@ from timeline.util.path_util import get_preview_path
 logger = logging.getLogger(__name__)
 
 MIN_DIMENSION_SIZE = 50
-MAX_CLUSTER_SIZE = 50
 face_detector = None
 face_identifier = None
 
