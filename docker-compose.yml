@@ -54,7 +54,7 @@ services:
       - rabbitmq
 
   worker_process:
-    image: hulk66/timeline_be:0.61-dev
+    image: hulk66/timeline_be:0.65-dev
     # build: backend
     restart: always
     environment:
