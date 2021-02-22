@@ -15,33 +15,32 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
+import logging
 import os
+import random
+from datetime import datetime
 
 import flask
-from flask import Blueprint
-
-from timeline.tasks.match_tasks import  \
-        find_all_classified_faces, find_closest, match_all_unknown_faces, \
-        group_faces
-from timeline.util.image_ops import read_and_transpose, resize_width
-from sqlalchemy import and_, or_
-import random
-import logging
-from timeline.domain import Photo, Face, Section, Status, Person, Thing, \
-    photo_thing, GPS
-from timeline.extensions import db
-from flask import request
+from flask import Blueprint, request
 from PIL import Image, ImageDraw
+from sqlalchemy import and_, or_
 from timeline.api.photos import send_image
+from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
+                             photo_thing)
+from timeline.extensions import db
+from timeline.tasks.match_tasks import (assign_new_person, distance_maybe,
+                                        distance_safe, distance_very_safe,
+                                        find_all_classified_faces,
+                                        find_closest, group_faces,
+                                        match_all_unknown_faces)
+from timeline.util.image_ops import read_and_transpose, resize_width
 from timeline.util.path_util import get_full_path, get_preview_path
-from datetime import datetime
-from timeline.tasks.match_tasks import assign_new_person
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 logger = logging.getLogger(__name__)
 
-exif_filter = ["FocalLength", "ExifImageWidth", "ExifImageHeight", 
-        "Make", "Model", "ExposureTime", "Copyright", "FNumber", "  ","LensModel", "Artist"]
+exif_filter = ["FocalLength", "ExifImageWidth", "ExifImageHeight",
+               "Make", "Model", "ExposureTime", "Copyright", "FNumber", "  ", "LensModel", "Artist"]
 
 
 def jsonify_pagination(q, page, size):
@@ -53,6 +52,7 @@ def jsonify_pagination(q, page, size):
     }
     json = flask.jsonify(result)
     return json
+
 
 @blueprint.errorhandler(404)
 def page_not_found(e):
@@ -94,6 +94,7 @@ def crop_face(image, max_dim, x, y, w, h):
     result.thumbnail((max_dim, max_dim))
     return result
 
+
 def save_preview(id, dim, image):
     preview_path = get_preview_path(str(id) + ".png", "faces/" + str(dim))
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
@@ -129,7 +130,8 @@ def face(id):
 def face_by_person(id):
     # faces = Person.query.get(id).faces
     # faces = Face.query.filter(and_(Face.person_id == id, Face.confidence <= Face.DISTANCE_SAFE)).all()
-    faces = Face.query.join(Person).filter(and_(Face.person_id == Person.id, Person.id == id, or_(Face.confidence <= Face.DISTANCE_SAFE, Person.confirmed == False))).all()
+    faces = Face.query.join(Person).filter(and_(Face.person_id == Person.id, Person.id == id, or_(
+        Face.confidence <= distance_safe(), Person.confirmed == False))).all()
     return jsonify_items(faces)
 
 
@@ -146,6 +148,7 @@ def photo_preview(id, max_dim):
 
     return send_image(image, False)
 
+
 @blueprint.route('/photo/gps/<int:id>', methods=['GET'])
 def get_gps(id):
     photo = Photo.query.get(id)
@@ -153,10 +156,12 @@ def get_gps(id):
         return flask.jsonify(photo.gps.to_dict())
     return None
 
+
 @blueprint.route('/photo/things/<int:id>', methods=['GET'])
 def get_things_for_photo(id):
     photo = Photo.query.get(id)
-    return jsonify_items(photo.things);
+    return jsonify_items(photo.things)
+
 
 @blueprint.route('/photo/all/<int:page>/<int:size>', methods=['GET'])
 def all_photos(page=0, size=30):
@@ -177,6 +182,7 @@ def all_faces():
     face_ids = Face.query.with_entities(Face.id).all()
     return flask.jsonify(face_ids)
 
+
 @blueprint.route('/photo/exif/<int:id>', methods=['GET'])
 def exif_for_photo(id):
     logger.debug("Get exif %i", id)
@@ -184,7 +190,8 @@ def exif_for_photo(id):
     for e in Photo.query.get(id).exif:
         if e.key in exif_filter:
             exif[e.key] = e.value
-    return flask.jsonify(exif);
+    return flask.jsonify(exif)
+
 
 @blueprint.route('/photo/by_face/<int:id>', methods=['GET'])
 def photo_by_face(id):
@@ -196,6 +203,7 @@ def photo_by_face(id):
 def list_as_json(list, excludes=None):
     return flask.jsonify([element.to_dict(rules=excludes) for element in list])
 
+
 def amend_query(request, q):
     person_id = request.args.get("person_id")
     thing_id = request.args.get("thing_id")
@@ -205,9 +213,12 @@ def amend_query(request, q):
     state = request.args.get("state")
 
     if person_id:
-        q = q.join(Face, and_(Face.person_id == person_id, Face.photo_id == Photo.id))
+        q = q.join(Face, and_(Face.person_id ==
+                              person_id, Face.photo_id == Photo.id,
+                              Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
     if thing_id:
-        q = q.join(photo_thing, and_(photo_thing.c.photo_id == Photo.id, photo_thing.c.thing_id == thing_id))
+        q = q.join(photo_thing, and_(photo_thing.c.photo_id ==
+                                     Photo.id, photo_thing.c.thing_id == thing_id))
     if city:
         q = q.join(GPS).filter(GPS.city == city)
     if county:
@@ -225,8 +236,9 @@ def all_sections():
     logger.debug("all sections")
     # compute_sections.delay()
 
-    q = db.session.query(Section.id.label("id"), db.func.count(Photo.id).label("num_photos")).join(Photo,
-                                                                        Photo.section_id == Section.id)
+    q = db.session.query(Section.id.label("id"), 
+        db.func.count(Photo.id).label("num_photos")).join(Photo,
+        Photo.section_id == Section.id)
     q = amend_query(request, q)
 
     sections = q.group_by(Section.id).all()
@@ -241,12 +253,14 @@ def all_sections():
     total_photos = 0
     if len(sec_array) > 0:
         sec_start_id = sec_array[0]['id']
-        photo_recent = Photo.query.filter(Photo.section_id == sec_start_id).order_by(Photo.created.desc()).first()
-        most_recent_date = photo_recent.created;
+        photo_recent = Photo.query.filter(
+            Photo.section_id == sec_start_id).order_by(Photo.created.desc()).first()
+        most_recent_date = photo_recent.created
 
         # and last/oldest photo of last section for the timeline
         sec_end_id = sec_array[-1]['id']
-        oldest_photo = Photo.query.filter(and_(Photo.section_id == sec_end_id, Photo.created != None)).order_by(Photo.created.asc()).first()
+        oldest_photo = Photo.query.filter(and_(
+            Photo.section_id == sec_end_id, Photo.created != None)).order_by(Photo.created.asc()).first()
         oldest_date = oldest_photo.created
 
         total = Photo.query
@@ -263,7 +277,8 @@ def all_sections():
 def get_section_by_date(date_str):
     logger.debug("section/find_by_date")
     date = datetime.strptime(date_str, "%Y-%m-%d")
-    photo = Photo.query.filter(Photo.created < date).order_by(Photo.created.desc()).first()
+    photo = Photo.query.filter(Photo.created < date).order_by(
+        Photo.created.desc()).first()
     return flask.jsonify(photo.section.id)
 
 
@@ -294,12 +309,14 @@ def assign_face_to_person():
 
     face = Face.query.get(face_id)
     assign_new_person(face, person)
-    face.distance_to_human_classified = 0
-    face.classified_by = Face.HUMAN
-    
+    face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED
+    #face.distance_to_human_classified = 0
+    # face.classified_by = Face.HUMAN
+
     db.session.commit()
     # return flask.jsonify(face.to_dict())
     return flask.jsonify(True)
+
 
 def set_name_faces(personId, newPersonId, name, face_ids):
     logger.debug("Set Face Name for %s", name)
@@ -317,8 +334,9 @@ def set_name_faces(personId, newPersonId, name, face_ids):
                 # person.faces.remove(face)
                 to_be_removed.append(face.id)
             else:
-                face.classified_by = Face.HUMAN
-                face.distance_to_human_classified = 0
+                #face.classified_by = Face.HUMAN
+                #face.distance_to_human_classified = 0
+                face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED
 
         for to_be_removed_id in to_be_removed:
             face = Face.query.get(to_be_removed_id)
@@ -332,19 +350,22 @@ def set_name_faces(personId, newPersonId, name, face_ids):
         newPerson = Person.query.get(newPersonId)
         for fid in face_ids:
             face = Face.query.get(fid)
-            face.classified_by = Face.HUMAN
-            face.distance_to_human_classified = 0
+            #face.classified_by = Face.HUMAN
+            #face.distance_to_human_classified = 0
+            face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED
             face.person = newPerson
 
         # Now remove those faces that have not been confirmed bye the user and remove the person
         # therefore iterate over the person, remove the face relationship and delete the person
         for face in person.faces:
             face.person = None
-            face.classified_by = None
-            face.distance_to_human_classified = None
+            face.confidence_level = None
+            #face.classified_by = None
+            #face.distance_to_human_classified = None
 
         db.session.delete(person)
     db.session.commit()
+
 
 @blueprint.route('/face/setname', methods=['POST'])
 def set_facename():
@@ -363,10 +384,11 @@ def set_facename():
         set_name_faces(personId, None, newPerson, ids)
 
     # after we add new names we need to match the unknown faces against the new face
-    #for face_id in ids:
+    # for face_id in ids:
     #    match_known_face.apply_async((face_id,), queue='match')
 
     return flask.jsonify(True)
+
 
 @blueprint.route('/person/ignore_unknown_person/<int:person_id>', methods=['GET'])
 def ignore_unknonw_person(person_id):
@@ -377,6 +399,7 @@ def ignore_unknonw_person(person_id):
     db.session.delete(person)
     db.session.commit()
     return all_persons()
+
 
 @blueprint.route('/person/forget/<int:person_id>', methods=['GET'])
 def forget_person(person_id):
@@ -389,9 +412,11 @@ def forget_person(person_id):
     db.session.commit()
     return all_persons()
 
+
 @blueprint.route('/person/merge/<int:src_person_id>/<int:target_person_id>', methods=['GET'])
 def merge_persons(src_person_id, target_person_id):
-    logger.debug("Merge faces from person %i to %i", src_person_id, target_person_id)
+    logger.debug("Merge faces from person %i to %i",
+                 src_person_id, target_person_id)
     src_person = Person.query.get(src_person_id)
     target_person = Person.query.get(target_person_id)
     for face in src_person.faces:
@@ -419,16 +444,19 @@ def all_persons():
     persons = Person.query.order_by(Person.name).all()
     return flask.jsonify([p.to_dict() for p in persons])
 
+
 @blueprint.route('/person/known', methods=['GET'])
 def known_persons():
-    persons = Person.query.filter(Person.confirmed == True).order_by(Person.name).all()
+    persons = Person.query.filter(
+        Person.confirmed == True).order_by(Person.name).all()
     return flask.jsonify([p.to_dict() for p in persons])
 
 
 @blueprint.route('/things/all', methods=['GET'])
 def all_things():
     # things = Thing.query.order_by(Thing.label_en).all()
-    things = Thing.query.filter(Thing.photos != None).order_by(Thing.label_en).all()
+    things = Thing.query.filter(
+        Thing.photos != None).order_by(Thing.label_en).all()
     return jsonify_items(things)
 
 
@@ -446,25 +474,30 @@ def thing_preview_photo():
 
     else:
         if country:
-            photos = Photo.query.join(GPS).filter(GPS.country == country).order_by(GPS.country).all()
+            photos = Photo.query.join(GPS).filter(
+                GPS.country == country).order_by(GPS.country).all()
         elif county:
-            photos = Photo.query.join(GPS).filter(GPS.county == county).order_by(GPS.county).all()
+            photos = Photo.query.join(GPS).filter(
+                GPS.county == county).order_by(GPS.county).all()
         elif city:
-            photos = Photo.query.join(GPS).filter(GPS.city == city).order_by(GPS.city).all()
+            photos = Photo.query.join(GPS).filter(
+                GPS.city == city).order_by(GPS.city).all()
         elif state:
-            photos = Photo.query.join(GPS).filter(GPS.state == state).order_by(GPS.state).all()
+            photos = Photo.query.join(GPS).filter(
+                GPS.state == state).order_by(GPS.state).all()
 
     photos_index = random.randrange(0, len(photos))
     photo = photos[photos_index]
 
     return flask.jsonify(photo.to_dict())
 
+
 @blueprint.route('/face/data/by_person/<int:person_id>', methods=['GET'])
 def faces_by_person(person_id):
     faces = Person.query.get(person_id).faces
     index = 0
     #index = request.args.get("index")
-    #if not index:
+    # if not index:
     #    index = random.randrange(len(faces))
     return flask.jsonify(faces[index].to_dict())
 
@@ -478,7 +511,8 @@ def photos_by_person(person_id, page, size):
 
 @blueprint.route('/person/by_photo/<int:photo_id>', methods=['GET'])
 def get_persons_by_photo(photo_id):
-    persons = Person.query.join(Face, and_(Face.photo_id == photo_id, Person.id == Face.person_id))
+    persons = Person.query.join(Face, and_(
+        Face.photo_id == photo_id, Person.id == Face.person_id))
     return jsonify_items(persons)
 
 
@@ -487,18 +521,21 @@ def get_faces_by_photo(photo_id):
     faces = Photo.query.get(photo_id).faces
     return jsonify_items(faces)
 
+
 @blueprint.route('/face/ignore/<int:face_id>', methods=['GET'])
 def ignore_face(face_id):
     face = Face.query.get(face_id)
     face.ignore = True
+    face.person = None
     db.session.commit()
     return flask.jsonify(True)
+
 
 @blueprint.route('/face/allUnknownAndClosest/<int:page>/<int:size>', methods=['GET'])
 def get_unknown_faces_and_closest(page, size):
     q = Face.query.filter(and_(
-            Face.ignore == False, 
-            Face.person_id == None))
+        Face.ignore == False,
+        Face.person_id == None))
     logger.debug(q)
     paginate = q.paginate(page=page, per_page=size, error_out=False)
     known_faces = find_all_classified_faces()
@@ -509,10 +546,10 @@ def get_unknown_faces_and_closest(page, size):
         if len(known_faces) > 0:
             id, distance = find_closest(face, known_faces)
             nearest = Face.query.get(id).person
-            result = { "person": nearest.to_dict(), "distance": distance.item() }
+            result = {"person": nearest.to_dict(), "distance": distance.item()}
         result["face"] = face.to_dict()
         list.append(result)
-    
+
     result = {
         "items": list,
         "pages": paginate.pages,
@@ -521,15 +558,25 @@ def get_unknown_faces_and_closest(page, size):
     json = flask.jsonify(result)
     return json
 
+
+@blueprint.route('/face/facesToConfirm/<int:page>/<int:size>', methods=['GET'])
+def get_faces_to_confirm(page, size):
+    q = Face.query.filter(and_(
+            Face.ignore == False,
+            Face.person_id != None,
+            Face.confidence_level == Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
+    logger.debug(q)
     return jsonify_pagination(q, size=size, page=page)
+
 
 @blueprint.route('/face/all_unknown/<int:page>/<int:size>', methods=['GET'])
 def get_unknown_faces(page, size):
     q = Face.query.filter(and_(
-            Face.ignore == False, 
-            Face.person_id == None))
+        Face.ignore == False,
+        Face.person_id == None))
     logger.debug(q)
     return jsonify_pagination(q, size=size, page=page)
+
 
 @blueprint.route('/face/nearestKnownFaces/<int:face_id>', methods=['GET'])
 def nearest_known_faces(face_id):
@@ -539,7 +586,7 @@ def nearest_known_faces(face_id):
     if len(known_faces) > 0:
         id, distance = find_closest(face, known_faces)
         nearest = Face.query.get(id).person
-        result = { "person": nearest.to_dict(), "distance": distance.item() }
+        result = {"person": nearest.to_dict(), "distance": distance.item()}
     return flask.jsonify(result)
 
 
@@ -547,26 +594,35 @@ def de_tupelize(list_of_tupel):
     l = [v for v, in list_of_tupel]
     return flask.jsonify(l)
 
+
 @blueprint.route('/location/countries', methods=['GET'])
 def locations_country():
-    countries = GPS.query.filter(GPS.country != None).with_entities(GPS.country).distinct()
+    countries = GPS.query.filter(
+        GPS.country != None).with_entities(GPS.country).distinct()
     # with_entities return tupel, we are only interested in the first and only one, so get rid of the tupel
     return de_tupelize(countries.all())
 
+
 @blueprint.route('/location/cities', methods=['GET'])
 def locations_city():
-    cities = GPS.query.filter(GPS.city != None).with_entities(GPS.city).distinct()
+    cities = GPS.query.filter(
+        GPS.city != None).with_entities(GPS.city).distinct()
     return de_tupelize(cities.all())
+
 
 @blueprint.route('/location/counties', methods=['GET'])
 def locations_county():
-    counties = GPS.query.filter(GPS.county != None).with_entities(GPS.county).distinct()
+    counties = GPS.query.filter(
+        GPS.county != None).with_entities(GPS.county).distinct()
     return de_tupelize(counties.all())
+
 
 @blueprint.route('/location/states', methods=['GET'])
 def locations_states():
-    counties = GPS.query.filter(GPS.state != None).with_entities(GPS.state).distinct()
+    counties = GPS.query.filter(
+        GPS.state != None).with_entities(GPS.state).distinct()
     return de_tupelize(counties.all())
+
 
 def jsonify_items(items):
     return flask.jsonify([item.to_dict() for item in items])
@@ -580,7 +636,7 @@ def index():
 @blueprint.route('/time/scale', methods=['GET'])
 def get_time_scale():
     qry = db.session.query(db.func.max(Photo.created).label("max"),
-                        db.func.min(Photo.created).label("min"))
+                           db.func.min(Photo.created).label("min"))
     res = qry.one()
 
     result = {"min": res.min, "max": res.max}
@@ -592,6 +648,7 @@ def check_new_faces():
     status = Status.query.first()
     return flask.jsonify(status.new_faces)
 
+
 @blueprint.route('/setFacesSeen', methods=['GET'])
 def set_faces_seen():
     status = Status.query.first()
@@ -599,11 +656,13 @@ def set_faces_seen():
     db.session.commit()
     return flask.jsonify(True)
 
+
 @blueprint.route('/deleteEmptyPersons', methods=['GET'])
 def delete_empty_persons():
     Person.query.filter(~Person.faces.any()).delete(synchronize_session=False)
     db.session.commit()
     return flask.jsonify(True)
+
 
 @blueprint.route('getTotalPhotoCount', methods=['GET'])
 def total_photos():
@@ -616,10 +675,9 @@ def match_all_unknown():
     # match_all_fast(force=True)
     return flask.jsonify(True)
 
+
 @blueprint.route('/group_faces', methods=['GET'])
 def group():
     group_faces.apply_async((True,), queue='match')
     # match_all_fast(force=True)
     return flask.jsonify(True)
-
-

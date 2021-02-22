@@ -19,7 +19,6 @@ GNU General Public License for more details.
 import logging
 from timeline.extensions import celery
 from pathlib import Path
-from timeline.tasks.process_tasks import new_photo
 
 logger = logging.getLogger(__name__)
 
@@ -33,5 +32,6 @@ def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]):
 
     logger.info("Found %i files", len(files))
     for file in files:
-        new_photo.apply_async((str(file),), queue="process")
+        celery.send_task("Process Photo", (str(file),), queue="process" )
+        # new_photo.apply_async((str(file),), queue="process")
     logger.debug("Initial Scan done")

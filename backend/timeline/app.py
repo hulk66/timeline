@@ -29,7 +29,7 @@ import sqlalchemy
 def create_app(testing=False, cli=False, env=None):
     """Application factory, used to create application"""
     app = Flask(__name__)
-        
+          
     app.config.from_object("timeline.config")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

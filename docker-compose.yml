@@ -31,7 +31,7 @@ services:
       - ${RABBITMQ_DATA}:/var/lib/rabbitmq
 
   webapp:
-    image: hulk66/timeline_be:0.61-dev
+    image: hulk66/timeline_be:0.65-dev
     # build: backend
     restart: always
     ports: 
@@ -65,6 +65,12 @@ services:
       WAIT_SLEEP_INTERVAL: 3     
       WAIT_AFTER_HOSTS: 2
       DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
+      FACE_CLUSTER_EPSILON: ${FACE_CLUSTER_EPSILON}
+      FACE_CLUSTER_MIN_SAMPLES: ${FACE_CLUSTER_MIN_SAMPLES}
+      FACE_CLUSTER_MAX_FACES: ${FACE_CLUSTER_MAX_FACES}
+      FACE_DISTANCE_VERY_SAFE: ${FACE_DISTANCE_VERY_SAFE}
+      FACE_DISTANCE_SAFE: ${FACE_DISTANCE_SAFE}
+      FACE_DISTANCE_MAYBE: ${FACE_DISTANCE_MAYBE}
     volumes:
       - ${PHOTO_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
@@ -75,7 +81,7 @@ services:
       - rabbitmq
 
   worker_thing_face:
-    image: hulk66/timeline_be:0.61-dev
+    image: hulk66/timeline_be:0.65-dev
     # build: backend
     restart: always
     environment:
@@ -96,7 +102,7 @@ services:
       - rabbitmq
      
   frontend:
-    image: hulk66/timeline_fe:0.61-dev
+    image: hulk66/timeline_fe:0.65-dev
     # build: frontend
     restart: always
     ports:
@@ -115,7 +121,7 @@ services:
       - webapp
 
   watchdog:
-    image: hulk66/timeline_be:0.61-dev
+    image: hulk66/timeline_be:0.65-dev
     # build: backend
     restart: always
     environment:

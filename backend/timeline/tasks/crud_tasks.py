@@ -206,7 +206,7 @@ def sort_old_photos():
     db.session.commit()
 
 
-@celery.task(name="Compute Sections and Sort Photos", ignore_result=True)
+@celery.task(ignore_result=True)
 def compute_sections():
     logger.debug("Compute Sections")
     status = Status.query.first()
@@ -258,7 +258,7 @@ def compute_sections():
             # make sure to always have a date break in the set of photos
             # otherwise we might come into an endless loop
             # let's see if this solves this strange problem
-            last_batch_date -= timedelta(milliseconds=1)
+            last_batch_date -= timedelta(seconds=1)
         prev_batch_date = last_batch_date
         photos = Photo.query \
             .filter(Photo.created < last_batch_date) \

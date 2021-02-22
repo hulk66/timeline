@@ -48,29 +48,29 @@ class Person(db.Model, SerializerMixin):
 class Face(db.Model, SerializerMixin):
     __tablename__ = 'faces'
 
-    HUMAN = "manual"
-    CLASSIFIER = "auto"
-    CLUSTER_GEN = "cluster"
-    NOT_ADDED = "not added"
+    #HUMAN = "manual"
+    #CLASSIFIER = "auto"
+    #CLUSTER_GEN = "cluster"
+    #NOT_ADDED = "not added"
 
-    BY_HUMAN = 0
+    #BY_HUMAN = 0
 
+    CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED = 4
     CLASSIFICATION_CONFIDENCE_LEVEL_VERY_SAFE = 3
     CLASSIFICATION_CONFIDENCE_LEVEL_SAFE = 2
     CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE = 1
     CLASSIFICATION_CONFIDENCE_NONE = 0
 
-    DISTANCE_VERY_SAFE = 0.5
-    DISTANCE_SAFE = 0.6
-    DISTANCE_MAYBE = 0.7
-
+    #DISTANCE_VERY_SAFE = 0.5
+    #DISTANCE_SAFE = 0.6
+    #DISTANCE_MAYBE = 0.7
 
     id = db.Column(db.Integer, primary_key=True)
 
     person_id = db.Column(db.Integer, db.ForeignKey('persons.id'))
     photo_id = db.Column(db.Integer, db.ForeignKey('photos.id'))
     encoding = db.Column(NumpyType)
-    classified_by = db.Column(db.String(15))
+    # classified_by = db.Column(db.String(15))
     confidence_level = db.Column(db.Integer)
     already_clustered = db.Column(db.Boolean)
 
@@ -89,22 +89,29 @@ class Face(db.Model, SerializerMixin):
 
     serialize_rules = ('-encoding', '-photo')
 
+
 photo_album = db.Table('photo_album', db.Model.metadata,
-                       db.Column('photo_id', db.ForeignKey('photos.id'), primary_key=True),
-                       db.Column('album_id', db.ForeignKey('albums.id'), primary_key=True)
+                       db.Column('photo_id', db.ForeignKey(
+                           'photos.id'), primary_key=True),
+                       db.Column('album_id', db.ForeignKey(
+                           'albums.id'), primary_key=True)
                        )
+
 
 class Album(db.Model, SerializerMixin):
     __tablename__ = 'albums'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    photos = db.relationship('Photo', secondary=photo_album, back_populates='albums')
+    photos = db.relationship(
+        'Photo', secondary=photo_album, back_populates='albums')
     serialize_rules = ('-photos',)
+
 
 class SmartAlbumDateCriteria(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
+
 
 class SmartAlbum(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -116,9 +123,12 @@ class SmartAlbum(db.Model, SerializerMixin):
 
     serialize_rules = ('-photos',)
 
+
 photo_thing = db.Table('photo_thing', db.Model.metadata,
-                       db.Column('photo_id', db.ForeignKey('photos.id'), primary_key=True),
-                       db.Column('thing_id', db.ForeignKey('things.id'), primary_key=True)
+                       db.Column('photo_id', db.ForeignKey(
+                           'photos.id'), primary_key=True),
+                       db.Column('thing_id', db.ForeignKey(
+                           'things.id'), primary_key=True)
                        )
 
 
@@ -128,11 +138,14 @@ class Thing(db.Model, SerializerMixin):
     id = db.Column(db.String(50), primary_key=True)
     label_en = db.Column(db.String(100))  # ) , unique=True)
 
-    photos = db.relationship('Photo', secondary=photo_thing, back_populates='things')
-    parent = db.relationship("Thing", uselist=False, cascade="all, delete, delete-orphan")
+    photos = db.relationship(
+        'Photo', secondary=photo_thing, back_populates='things')
+    parent = db.relationship("Thing", uselist=False,
+                             cascade="all, delete, delete-orphan")
     parent_id = db.Column(db.String(50), db.ForeignKey('things.id'))
 
     serialize_rules = ('-photos',)
+
 
 class Photo(db.Model, SerializerMixin):
     __tablename__ = 'photos'
@@ -141,7 +154,8 @@ class Photo(db.Model, SerializerMixin):
     path = db.Column(db.String(512), unique=True)
 
     filename = db.Column(db.String(100))
-    faces = db.relationship("Face", back_populates="photo", cascade="all, delete, delete-orphan")
+    faces = db.relationship("Face", back_populates="photo",
+                            cascade="all, delete, delete-orphan")
     exif = db.relationship("Exif", cascade="all, delete, delete-orphan")
     created = db.Column(db.DateTime, index=True)
     width = db.Column(db.Integer)
@@ -151,11 +165,14 @@ class Photo(db.Model, SerializerMixin):
     score_technical = db.Column(db.Float)
     score_brisque = db.Column(db.Float)
 
-    gps = db.relationship("GPS", uselist=False, cascade="all, delete, delete-orphan", single_parent=True)
+    gps = db.relationship(
+        "GPS", uselist=False, cascade="all, delete, delete-orphan", single_parent=True)
     gps_id = db.Column(db.Integer, db.ForeignKey('gps.id'))
 
-    things = db.relationship('Thing', secondary=photo_thing, back_populates='photos')
-    albums = db.relationship('Album', secondary=photo_album, back_populates='photos')
+    things = db.relationship(
+        'Thing', secondary=photo_thing, back_populates='photos')
+    albums = db.relationship(
+        'Album', secondary=photo_album, back_populates='photos')
 
     section_id = db.Column(db.Integer, db.ForeignKey('section.id'))
     section = db.relationship("Section", back_populates="photos")
@@ -181,7 +198,7 @@ class Section(db.Model, SerializerMixin):
     serialize_rules = ('-photos',)
     start_date = db.Column(db.DateTime)
 
-#class Sec(db.Model, SerializerMixin):
+# class Sec(db.Model, SerializerMixin):
 #    __tablename__ = 'sec'
 #
 #    id = db.Column(db.Integer, primary_key=True, autoincrement=False)

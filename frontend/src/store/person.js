@@ -4,7 +4,8 @@ export const person = {
         newFaces: false,
         allPersons: [],
         knownPersons: [],
-        unknownFaces: []
+        unknownFaces: [],
+        facesToConfirm: []
     },
 
     mutations: {
@@ -20,6 +21,9 @@ export const person = {
         },
         setUnknownFaces(state, unknown) {
             state.unknownFaces = unknown;
+        },
+        setFacesToConfirm(state, unknown) {
+            state.facesToConfirm = unknown;
         }
 
     },
@@ -69,14 +73,14 @@ export const person = {
             })
             
         },
-        /*
-        getAllUnknownFaces(context, {page, size}) {
-            let url = `/api/face/all_unknown/${page}/${size}`;
+
+        getFacesToConfirm(context, {page, size}) {
+            let url = `/api/face/facesToConfirm/${page}/${size}`;
             axios.get(url).then( result => {
-                context.commit("setUnknownFaces", result.data);    
+                context.commit("setFacesToConfirm", result.data);    
             })
-            
-        },*/
+        },
+
         assignFaceToPerson(context, { person, name, faceId }) {
             let pid = null;
             if (person)

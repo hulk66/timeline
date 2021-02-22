@@ -20,8 +20,6 @@ import logging
 import flask
 from flask import Blueprint
 from timeline.extensions import celery
-#from timeline.tasks.crud_tasks import compute_sections
-#from timeline.tasks.match_tasks import match_all_unknown_faces, reset_persons
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
@@ -38,15 +36,14 @@ def reset_learning():
 
 @blueprint.route('/group_faces', methods=['GET'])
 def group_faces_req():
-    from timeline.tasks.face_tasks import group_faces
-    group_faces.apply_async((), queue="beat")
+    celery.send_task(
+        "Group Faces", queue="beat")
     return flask.jsonify(True)
 
 
 @blueprint.route('/compute_sections', methods=['GET'])
 def trigger_section_compute():
     logger.debug("trigger new section computation")
-    # compute_sections.apply_async((), queue="beat")
     celery.send_task(
         "timeline.tasks.crud_tasks.compute_sections", queue="beat")
     return flask.jsonify(True)
@@ -57,7 +54,7 @@ def trigger_match_unknown_faces():
     logger.debug("trigger match unknown faces")
     # match_all_unknown_faces.apply_async((), queue="beat")
     celery.send_task(
-        "timeline.tasks.match_tasks.match_all_unknown_faces", queue="beat")
+        "Match all unknown Faces", queue="beat")
 
     return flask.jsonify(True)
 
