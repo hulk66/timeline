@@ -224,14 +224,16 @@ def compute_sections():
     prev_batch_date = None
     last_batch_date = None
     section = None
-    
+    initial = True
+
     while len(photos) > 0:
         logger.debug("Sectioning next batch %i with %i initial photos", current_section, len(photos))
         photos_from_prev_batch = 0
         add_limit = 0
         new_batch = True
         for photo in photos:
-            if new_batch and last_batch_date and last_batch_date.date() != photo.created.date():
+            if initial or (new_batch and last_batch_date and last_batch_date.date() != photo.created.date()):
+                initial = False
                 if section:
                     section.num_photos = len(section.photos)
                     logger.debug("Compute Sections - Closing Section with %i photos", section.num_photos)
