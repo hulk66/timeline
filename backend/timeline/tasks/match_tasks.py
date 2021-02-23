@@ -240,11 +240,12 @@ def find_all_non_manual_classified_or_unclassified_faces(limit=None):
     #      if a person is assigned then this is a person which is is not confirmed by the user
 
     q = Face.query.join(Photo).join(Person, isouter=True) \
-        .filter(and_(Face.ignore == False,
+        .filter(and_(
+            Face.ignore == False,
             Face.photo_id == Photo.id,
             or_(Face.person == None,
-            Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED == Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE,
-            and_(Face.person_id == Person.id, Person.confirmed == False))))
+                Face.confidence_level == Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE,
+                and_(Face.person_id == Person.id, Person.confirmed == False))))
 
     if limit:
         q = q.order_by(db.func.random()).limit(limit)
@@ -282,7 +283,7 @@ def match_all_unknown_faces():
 
     totalAssigned = 0
 
-    max_faces = current_app.config['FACE_CLUSTER_MAX_FACES']
+    max_faces = int(current_app.config['FACE_CLUSTER_MAX_FACES'])
     unmatched = find_all_non_manual_classified_or_unclassified_faces(
         limit=max_faces)
     if len(unmatched) > 0:
@@ -290,7 +291,7 @@ def match_all_unknown_faces():
         # logger.debug("Found %i unclassified faces", len(unmatched))
 
         # Make the limit configurable
-        known_faces = find_all_classified_known_faces(limit=15000)
+        known_faces = find_all_classified_known_faces(limit=max_faces)
         if len(known_faces) > 0:
 
             known_ids, known_encodings = get_ids_and_encodings(known_faces)
@@ -343,7 +344,7 @@ def classify_face(distance, found_face, unknown_face):
         unknown_face.confidence = distance.item()
         # unknown_face.classified_by = Face.CLASSIFIER
         # unknown_face.distance_to_human_classified = 2
-        logger.debug("Face %i is %s with confidence %f",
+        logger.debug("Face %i is %s with distance %f",
                      unknown_face.id, found_face.person.name, 
                      unknown_face.confidence)
         return True
