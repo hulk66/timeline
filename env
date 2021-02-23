@@ -47,16 +47,16 @@ GUNICORN_WORKER_CLASS=sync
 # This values determines the range of which faces are consided to be the Same
 # during the clustering. A greater value results in a more 
 # "generous" face clustering
-FACE_CLUSTER_EPSILON = 0.55
+FACE_CLUSTER_EPSILON=0.55
 # This determines how many similar faces are required to form a cluster
-FACE_CLUSTER_MIN_SAMPLES = 4
+FACE_CLUSTER_MIN_SAMPLES=4
 # How many faces are considered for the clustering
 # The more, the better but it has an effect and performance and memory consumption
-FACE_CLUSTER_MAX_FACES = 3000
+FACE_CLUSTER_MAX_FACES=3000
 
 # This determines the boundaries when a face is considered to be identical
 # Smaller values result more false negative matches => Faces are not named at all
 # Bigger values result in more false positive matches => Faces are are named wrong
-FACE_DISTANCE_VERY_SAFE = 0.55
-FACE_DISTANCE_SAFE = 0.625
-FACE_DISTANCE_MAYBE = 0.725
+FACE_DISTANCE_VERY_SAFE=0.55
+FACE_DISTANCE_SAFE=0.625
+FACE_DISTANCE_MAYBE=0.725
