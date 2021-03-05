@@ -17,7 +17,7 @@ a resolved address along with a little map and some important Exif data)
 
 ### New (0.7)
 * Selection of Photos via left and right cursor keys
-* Rating of Photos via the usual Rating stars either by clicking the rating while hovering over a photo or selecting a photo via cursor left/right and use the 0-5 keys
+* Rating of Photos via the usual Rating stars either by clicking the rating while hovering over a photo or selecting a photo via cursor left/right and use the 0-5 keys (filtering for the so rated photos will follow)
 * Option to change the preview size to accommodate more or less on the photo wall
 
 
