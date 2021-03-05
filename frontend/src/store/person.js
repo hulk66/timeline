@@ -6,7 +6,8 @@ export const person = {
         knownPersons: [],
         unknownFaces: [],
         facesToConfirm: [],
-        markMode: false
+        markMode: false,
+        previewHeight: 200,
 
     },
 
@@ -30,8 +31,11 @@ export const person = {
 
         markMode(state, v) {
             state.markMode = v;
-        } 
+        },
 
+        setPreviewHeight(state, v) {
+            state.previewHeight = v;
+        }
     },
 
     actions: {

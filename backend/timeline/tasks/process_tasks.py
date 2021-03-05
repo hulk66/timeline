@@ -43,7 +43,7 @@ def new_photo(path):
             # set_display_address.apply_async((photo_id,), queue='geo_req')
             # find_faces.apply_async((photo_id,), queue='face')
             # analyze_photo.apply_async((photo_id,), queue='thing')
-            create_preview(photo.path, 200)
+            create_preview(photo.path, 400)
             create_preview(photo.path, 2160)
             # predict_quality.apply_async((photo_id,), queue="iq")
             # brisque_score.apply_async((photo_id,), queue="iq")

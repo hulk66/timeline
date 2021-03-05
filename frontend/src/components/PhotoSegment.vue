@@ -28,7 +28,6 @@
                 <photo-brick 
                     :photo="item" 
                     :index="index" 
-                    :target-height="targetHeight" 
                     v-intersect="{handler:onIntersect}" 
                     :ref="'p' + index"
                     @set-rating="setRating"

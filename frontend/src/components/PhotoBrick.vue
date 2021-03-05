@@ -15,41 +15,15 @@
  * GNU General Public License for more details.
  */
 <template>
-    <!---
-    <div class="container" >
-        <img @click="selectPhoto" :src="thumbSrc" 
-                height="100%" width="100%" 
-                @mouseover="hover = true" 
-                @mouseleave="hover=false"
-                ref="img"
-                v-intersect="{handler:onIntersect}" >       
-                        <v-fade-transition>
-                 <div v-if="hover" class="d-flex bottom-gradient fill-height align-end">
-                    <v-rating 
-                        class="align-end" 
-                        background-color="grey" 
-                        color="white" 
-                        small 
-                        length="5"
-                        dense 
-                        @input="ratePhoto"
-                        @click.native.stop
-                        clearable
-                        :value="photo.stars"></v-rating>
-                </div>
-                </v-fade-transition>
-     
-    </div>  
-    -->
         <div v-intersect="{handler:onIntersect, options: {threshold: 0.75}}">
         <v-img @click="selectPhoto" 
                 :src="thumbSrc" 
                 eager
                 :class="marked"
-                height="100%" width="100%" 
                 @mouseover="hover = true" 
                 @mouseleave="hover = false"
-                ref="img">
+                ref="img"
+                >
                 <v-fade-transition>
                  <div v-if="hover || marked" class="d-flex bottom-gradient fill-height align-end">
                     
@@ -84,7 +58,6 @@
         props: {
             photo: Object,
             index: Number,
-            targetHeight: Number,
         },
         data() {
             return {
@@ -99,7 +72,8 @@
 
         computed: {
             thumbSrc() {
-                return encodeURI("/photos/preview/" + this.targetHeight + "/" + this.photo.path);
+                // return encodeURI("/photos/preview/" + this.targetHeight + "/" + this.photo.path);
+                return encodeURI("/photos/preview/400/" + this.photo.path);
             },
 
         },

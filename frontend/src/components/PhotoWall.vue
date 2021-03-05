@@ -37,7 +37,7 @@
                                 v-for="section in sections"
                                 :ref="'section' + section.id"
                                 :section="section"
-                                :target-height="targetHeight"
+                                :target-height="previewHeight"
                                 :key="section.id"
                                 :initial-height="height(section)"
                                 :filter-person-id="personId"
@@ -117,7 +117,6 @@
                 currentSection: null,
                 currentIndex: -1,
                 // ---
-                targetHeight: 200,
                 sections: [],
                 personId: this.$route.query.person_id,
                 thingId: this.$route.query.thing_id,
@@ -157,6 +156,7 @@
 
             ...mapState({
                 markMode: state => state.person.markMode,
+                previewHeight: state => state.person.previewHeight
             }),
             cssProps() {
                 return {
@@ -420,10 +420,10 @@
             },
 
             height(section) {
-                const unwrappedWidth = (3 / 2) * section.num_photos * this.targetHeight * (7 / 10);
+                const unwrappedWidth = (3 / 2) * section.num_photos * this.previewHeight * (7 / 10);
                 const rows = Math.ceil(unwrappedWidth / this.$refs.wall.clientWidth);
                 // const rows = Math.ceil(unwrappedWidth / this.$refs.wall.clientWidth);
-                const height = rows * this.targetHeight;
+                const height = rows * this.previewHeight;
                 return height;
             },
 
