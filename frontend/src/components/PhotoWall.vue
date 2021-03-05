@@ -16,9 +16,19 @@
  */
 <template>
     <v-container fluid>
+
         <v-row no-gutters >
             <v-col ref="wall" class="noscroll">
-                    <div class="scroller">
+                    <div class="scroller" tabindex="0"  
+                            ref="scroller"
+
+                            @mousedown="clearNav()"
+                            @keydown="keyboardAction($event)">
+                            <!--
+                            @keydown.esc="clearNav()"
+                            @keydown.left="navigate(-1)"
+                            @keydown.right="navigate(1)"
+                            -->
                         <v-card>
                             <v-card-title>{{totalPhotos}} Photos</v-card-title>
                         </v-card>
@@ -59,6 +69,7 @@
                 @keydown.left="advancePhoto(-1)"
                 @keydown.right="advancePhoto(1)"
                 >
+
                 <image-viewer :photo="selectedPhoto" ref="viewer"
                               @left="advancePhoto(-1)"
                               @right="advancePhoto(1)"
@@ -78,10 +89,11 @@
     import ImageViewer from "./ImageViewer";
     import moment from "moment"
     import Tick from "./Tick";
+    import { mapState } from 'vuex'
 
     const logBase = (n, base) => Math.log(n) / Math.log(base);
     export default {
-        name: "PhotoWallSection",
+        name: "PhotoWall",
 
         components: {
             PhotoSection,
@@ -95,11 +107,16 @@
         data() {
             return {
                 photoFullscreen: false,
+                // for the image viewer
                 selectedSegment: null,
                 selectedSection: null,
                 selectedIndex: 0,
                 selectedPhoto: null,
-                // photos: [],
+                // for navigation and selection
+                currentSegment: null,
+                currentSection: null,
+                currentIndex: -1,
+                // ---
                 targetHeight: 200,
                 sections: [],
                 personId: this.$route.query.person_id,
@@ -124,6 +141,11 @@
             if (!this.sections || this.sections.length == 0)
                 this.loadAllSections();
 
+            
+            this.$nextTick(function() {
+                this.$refs.scroller.focus();
+
+            });
         },
 
 
@@ -133,6 +155,9 @@
 
         computed: {
 
+            ...mapState({
+                markMode: state => state.person.markMode,
+            }),
             cssProps() {
                 return {
                     '--current-tick': this.currentTick + "px",
@@ -265,14 +290,112 @@
                 this.selectedSection = section;
                 this.selectedSegment = segment;
                 this.selectedIndex = photoIndex;
-                this.selectedPhoto = segment.photos[this.selectedIndex];
+                this.selectedPhoto = segment.data.photos[this.selectedIndex];
                 this.photoFullscreen = true;
             },
 
+            setRating(value) {
+                if (value <= 5 && this.currentSegment && this.currentIndex >= 0) {
+                     this.currentSegment.setRating(this.currentIndex, value);        
+                }
+            },
+            keyboardAction(event) {
+                // are these values somewhere defined as constants?
+                if (event.code == "ArrowLeft")
+                    this.navigate(-1);
+                else if (event.code == "ArrowRight")
+                    this.navigate(1);
+                else if (event.code == "Escape")
+                    this.clearNav();
+                else if (event.code.startsWith("Digit")) {
+                    let value = parseInt(event.key);
+                    this.setRating(value);
+                }
+            },
+            clearNav() {
+                if (this.currentSegment) {
+                    this.currentSegment.markPhoto(this.currentIndex, false);
+                    this.currentIndex = -1;
+                }
+                this.$store.commit("markMode", false);
+
+            },
+            findFirstVisibleSegment(dir) {
+
+                if (this.currentSegment && this.currentSegment.isVisible() && 
+                    this.currentIndex >= 0 && this.currentSegment.photoIsVisible(this.currentIndex)) {
+                    // we are still in the same area, so no change here
+                    this.currentIndex += dir;
+                } else {
+                    let sectionElement = null;
+                    for (let i=0; i<this.sections.length; i++) {
+                        sectionElement = this.$refs['section' + i][0];
+                        if (sectionElement.isVisible())
+                            break;
+                    }
+
+                    if (sectionElement) {
+                        // now we have the first visible section
+                        // let's find the fist visible segment
+                        this.currentSection = sectionElement;
+                        this.currentSegment = this.currentSection.findFirstVisibleSegment();
+                        this.currentIndex = this.currentSegment.indexOfFirstVisiblePhoto();
+                    }
+                }
+            },
+
+            navigate(dir) {
+                this.$store.commit("markMode", true);
+
+                if (this.currentSegment && this.currentIndex >= 0)
+                    this.currentSegment.markPhoto(this.currentIndex, false);
+
+                this.findFirstVisibleSegment(dir);
+                // this.currentIndex += dir;
+                if (! this.currentSegment) {
+                    this.currentSection = this.$refs.section0[0]
+                    this.currentSegment = this.currentSection.getFirstSegment()
+                }
+
+                if (this.currentIndex < 0 || this.currentIndex >= this.currentSegment.data.photos.length) {
+                    // Photo is in next segment or next section
+                    // first go for next segment in same section
+                    let el = this.currentSection;
+                    this.currentSegment = el.nextSegment(this.currentSegment, dir);
+
+                    if (this.currentSegment) {
+                        if (dir == 1)
+                            this.currentIndex = 0;
+                        else 
+                            this.currentIndex = this.currentSegment.getPhotoLength()-1;
+                    } else {
+                        // next or previous photo is not in the current section, so go one section ahead or back
+                        let next_section_id = this.currentSection.id + dir;
+                        if (next_section_id >= 0 && next_section_id < this.sections.length) {
+                            // find vue component holding the next/prev section
+                            el = this.$refs['section' + next_section_id][0];
+                            if (dir == 1) {
+                                this.currentSegment = el.getFirstSegment();
+                                this.currentIndex = 0;
+                            } else {
+                                this.currentSegment = el.getLastSegment();
+                                this.currentIndex = this.currentSegment.getPhotoLength();
+                            }
+                        }
+
+                    }
+                }
+                if (this.currentSegment)
+                    this.currentSegment.markPhoto(this.currentIndex, true);
+                else
+                    this.currentIndex = -1;
+
+            },
             advancePhoto: function (dir) {
                 this.selectedIndex += dir;
-                if (this.selectedIndex >= 0 && this.selectedIndex  < this.selectedSegment.photos.length) {
-                    this.selectedPhoto = this.selectedSegment.photos[this.selectedIndex];
+
+                if (this.selectedIndex >= 0 && this.selectedIndex  < this.selectedSegment.data.photos.length) {
+                    this.selectedPhoto = this.selectedSegment.data.photos[this.selectedIndex];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
@@ -293,7 +416,7 @@
                     }
 
                 }
-
+                
             },
 
             height(section) {
@@ -309,9 +432,7 @@
                 let self = this;
                 let params = {};
                 let config = { params: params};
-                // if (this.personId)
                 params["person_id"] = this.personId;
-                // if (this.thingId)
                 params["thing_id"] = this.thingId; // this.$route.params.thing_id; // this.thingId;
                 params["city"] = this.city;
                 params["county"] = this.county;
@@ -329,15 +450,7 @@
                     self.tickDates = self.getTickDates();
 
                 });
-                /*
-                axios.get("/api/time/scale", config).then((result) => {
-                    self.max_date = moment(result.data.max);
-                    self.min_date = moment(result.data.min);
 
-                    self.total_duration = moment.duration(self.max_date.diff(self.min_date));
-                    self.tickDates = self.getTickDates();
-                });
-                */
             }
 
         }
@@ -359,6 +472,9 @@
         display: none;
     }
 
+    .scroller:focus {
+        outline-width: 0;
+    }
     .wallcontainer {
         position: relative;
         overflow: hidden;

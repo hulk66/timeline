@@ -5,7 +5,9 @@ export const person = {
         allPersons: [],
         knownPersons: [],
         unknownFaces: [],
-        facesToConfirm: []
+        facesToConfirm: [],
+        markMode: false
+
     },
 
     mutations: {
@@ -24,14 +26,28 @@ export const person = {
         },
         setFacesToConfirm(state, unknown) {
             state.facesToConfirm = unknown;
-        }
+        },
+
+        markMode(state, v) {
+            state.markMode = v;
+        } 
 
     },
 
     actions: {
 
+        setRating(context, {photo, stars}) {
+            let url = `/api/photo/setRating/${photo.id}/${stars}`;
+            return new Promise((resolve => {
+                axios.get(url).then( result => {
+                    resolve(result.data);
+                })
+            }))
+
+        },
+
         ignoreFace(context, face) {
-            let url = `/api/face/ignore/${face.id}`
+            let url = `/api/face/ignore/${face.id}`;
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);

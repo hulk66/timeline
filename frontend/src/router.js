@@ -16,7 +16,7 @@
  */
 import Vue from 'vue'
 import Router from 'vue-router'
-import PhotoWallSection from "./components/PhotoWallSection";
+import PhotoWall from "./components/PhotoWall";
 import PersonsView from "./components/PersonsView";
 import SimilarPersons from "./components/SimilarPersons";
 import ThingsView from "./components/ThingsView";
@@ -29,7 +29,7 @@ export default new Router({
     {
       path: '/wall',
       name: 'photoWall',
-      component: PhotoWallSection,
+      component: PhotoWall,
       props:true
     },
 

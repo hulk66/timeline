@@ -135,6 +135,14 @@ def face_by_person(id):
     return jsonify_items(faces)
 
 
+@blueprint.route('/photo/setRating/<int:photo_id>/<int:rating>', methods=['GET'])
+def set_rating(photo_id, rating):
+    excludes=("-exif", "-gps", "-faces", "-things", "-section")
+    photo = Photo.query.get(photo_id)
+    photo.stars = rating
+    db.session.commit()
+    return flask.jsonify(photo.to_dict(rules=excludes))
+
 @blueprint.route('/photo/preview/<int:max_dim>/<int:id>.jpg', methods=['GET'])
 def photo_preview(id, max_dim):
     photo = Photo.query.get(id)
