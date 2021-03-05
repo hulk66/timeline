@@ -52,7 +52,7 @@ FACE_CLUSTER_EPSILON=0.55
 FACE_CLUSTER_MIN_SAMPLES=4
 # How many faces are considered for the clustering
 # The more, the better but it has an effect and performance and memory consumption
-FACE_CLUSTER_MAX_FACES=3000
+FACE_CLUSTER_MAX_FACES=5000
 
 # This determines the boundaries when a face is considered to be identical
 # Smaller values result more false negative matches => Faces are not named at all
