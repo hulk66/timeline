@@ -88,6 +88,16 @@
                           </v-list-item>
 
                           <v-list-item>
+
+                              <v-list-item-content>
+                                  <v-list-item-title>Preview Size</v-list-item-title>
+                                  <v-list-item-subtitle>
+                                  <v-slider v-model="previewHeight"  hint="Preview Size" max="400" min="80" ></v-slider>
+                                  </v-list-item-subtitle>
+                              </v-list-item-content>
+                          </v-list-item>
+
+                          <v-list-item>
                                <v-list-item-content>
                                     <v-list-item-title>Processed Photos</v-list-item-title>
                               </v-list-item-content>
@@ -259,7 +269,8 @@
                 totalFaces: 0,
                 totalThings: 0,
                 totalPhotos: 0,
-                iq_count: 0
+                iq_count: 0,
+                targetHeight: 200
             };
         },
 
@@ -269,6 +280,16 @@
                 knownPersons: state => state.person.knownPersons,
                 newFaces: state => state.person.newFaces
             }),
+
+            previewHeight: {
+                set(v) {
+                    this.$store.commit("setPreviewHeight", v);
+                },
+                get() {
+                    return this.$store.state.person.previewHeight;
+                }
+            },
+
         },
         watch: {
 

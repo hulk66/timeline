@@ -48,22 +48,11 @@ class Person(db.Model, SerializerMixin):
 class Face(db.Model, SerializerMixin):
     __tablename__ = 'faces'
 
-    #HUMAN = "manual"
-    #CLASSIFIER = "auto"
-    #CLUSTER_GEN = "cluster"
-    #NOT_ADDED = "not added"
-
-    #BY_HUMAN = 0
-
     CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED = 4
     CLASSIFICATION_CONFIDENCE_LEVEL_VERY_SAFE = 3
     CLASSIFICATION_CONFIDENCE_LEVEL_SAFE = 2
     CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE = 1
     CLASSIFICATION_CONFIDENCE_NONE = 0
-
-    #DISTANCE_VERY_SAFE = 0.5
-    #DISTANCE_SAFE = 0.6
-    #DISTANCE_MAYBE = 0.7
 
     id = db.Column(db.Integer, primary_key=True)
 

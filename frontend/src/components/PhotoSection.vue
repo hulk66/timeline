@@ -16,13 +16,14 @@
  */
 <template>
 
-    <v-card v-intersect="{handler:onIntersect, options: {rootMargin:'1000px'}}" :min-height="initialHeight"  elevation="0">
+    <v-card v-intersect="{handler:onIntersect, options: {rootMargin:'1000px'}}" :min-height="initialHeight"  elevation="0" > 
         <div v-if="visible" ref="segmentContainer">
-            <photo-segment :ref="'segment' + index"
+            <photo-segment  :ref="'segment' + index"
                             v-for="(segment, index) in segments"
-                           :segment="segment"
-                           :key="index"
-                           :target-height="targetHeight"
+                            :seg-index="index"
+                            :data="segment"
+                            :key="index"
+                            :target-height="targetHeight"
                             @select-photo="selectPhoto"
                             @update-timeline="updateTimeline">
             </photo-segment>
@@ -36,6 +37,7 @@
 
     import axios from "axios";
     import moment from "moment"
+    import {isReallyVisible} from "./Util";
 
     import PhotoSegment from "./PhotoSegment";
     export default {
@@ -77,6 +79,16 @@
 
         methods: {
 
+            findFirstVisibleSegment() {
+                let segementElement = null;
+                for (let i=0; i<this.segments.length; i++) {
+                    segementElement = this.$refs['segment' + i][0]
+                    if (isReallyVisible(segementElement.$el, false, this.targetHeight))        
+                        break;
+                }
+                return segementElement;              
+            },
+
             updateTimeline(currentDate) {
                 this.$emit("update-timeline", currentDate)
             },
@@ -84,18 +96,38 @@
                 this.$emit("select-photo", this.section, segment, photoIndex)
             },
 
-            advanceSegment(segment, dir) {
-                let segment_nr = segment.nr + dir;
+            getFirstSegment() {
+                return this.$refs.segment0[0];
+            },
+
+            getLastSegment() {
+                let len = this.segments.length-1
+                return this.$refs.segment0[len];
+            },
+
+            isVisible() {
+                return this.visible
+            },
+
+            nextSegment(segment, dir) {
+
+                let segment_nr = segment.data.nr + dir;
                 if (segment_nr >= 0 && segment_nr < this.segments.length) {
                     let el = this.$refs['segment' + segment_nr][0]
+                    return el;
+                }
+                return null;
+            },
+            advanceSegment(segment, dir) {
+                let el = this.nextSegment(segment, dir);
+                if (el) {
                     if (dir == 1)
                         el.selectPhoto(0)
                     else
                         el.selectLastPhoto()
-                    return el.segment;
-                }
-                return null;
 
+                }
+                return el;
             },
 
             selectFirstPhoto() {

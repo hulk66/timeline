@@ -15,40 +15,50 @@
  * GNU General Public License for more details.
  */
 <template>
-    <div ref="container" v-resize="resize">
-        <v-subheader>{{segmentDate}}</v-subheader>
+    <div ref="segmentCont" v-resize="resize">
+        <v-subheader>{{segmentDate}} Segment {{segIndex}}</v-subheader>
         <vue-justified-layout
-                :items="segment.photos"
+                :items="data.photos"
                 v-slot="{item, index}"
                 :options="{
                     targetRowHeight: targetHeight,
                     containerWidth: contWidth,
                     boxSpacing: 5,
-                    containerPadding:10}">
-            <img @click="selectPhoto(index)" :src="thumbSrc(item)" height="100%" width="100%"  v-intersect="{handler:onIntersect}">
+                    containerPadding:5}">
+                <photo-brick 
+                    :photo="item" 
+                    :index="index" 
+                    v-intersect="{handler:onIntersect}" 
+                    :ref="'p' + index"
+                    @set-rating="setRating"
+                    @select-photo="selectPhoto">
+                </photo-brick>
         </vue-justified-layout>
     </div>
 </template>
 <script>
 
     import moment from "moment";
+    import {isReallyVisible}  from "./Util";
+    import { mapState } from 'vuex'
+    import PhotoBrick from "./PhotoBrick.vue"
     export default {
 
         name: "PhotoSegment",
 
         components: {
-            // ImageViewer,
-            // VueJustifiedLayout
+            PhotoBrick
         },
 
         props: {
-            segment: null,
-            targetHeight: Number
+            data: null,
+            targetHeight: Number,
+            segIndex: Number
         },
         data() {
             return {
-                selectedIndex: 0,
-                contWidth: 1060
+                contWidth: 1060,
+                hover: false
             };
         },
 
@@ -57,9 +67,12 @@
 
         computed: {
             segmentDate() {
-                return moment(this.segment.date).format("dddd, D.M.YYYY")
-            }
+                return moment(this.data.date).format("dddd, D.M.YYYY")
+            },
 
+            ...mapState({
+                markMode: state => state.person.markMode,
+            }),
         },
         watch: {
 
@@ -67,32 +80,70 @@
 
         methods: {
 
+            isVisible() {
+                return isReallyVisible(this.$el, false);
+            },
+
+            photoIsVisible(index) {
+                let photoElement =  this.$refs['p' + index];
+                // let result = isReallyVisible(photoElement.getImgElement(), true);
+                return photoElement.visible;
+                // return result;
+            },
+
+            indexOfFirstVisiblePhoto() {
+                let photoElement = null;
+                let index = 0;
+                for (let i=0; i<this.data.photos.length;i++) {
+                    photoElement = this.$refs['p' + i]
+                    
+                    // if (isReallyVisible(photoElement.getImgElement(), true, this.targetHeight)) {
+                    if (photoElement.visible) {
+                        index = i
+                        break;
+                    }
+                }
+                return index;
+            },
+            getPhotoLength() {
+                return this.data.photos.length;
+            },
+
+            markPhoto(index, value) {
+                let wallPhoto = this.$refs['p' + index];
+                if (wallPhoto)
+                    wallPhoto.mark(value);
+
+            },
+            setRating(index, value) {
+                let photo = this.data.photos[index];
+                // let self = this;
+                this.$store.dispatch("setRating", {photo: photo, stars: value}).then( result => {
+                    this.data.photos[index] = result;
+                    this.$set(this.data.photos, index, result)
+                });
+            },
+
             // eslint-disable-next-line no-unused-vars
             onIntersect(entries, observer) {
                 let element = entries[0];
                 if (element.isIntersecting) {
-                    this.$emit('update-timeline', this.segment.date)
+                    this.$emit('update-timeline', this.data.date)
                 }
             },
             resize() {
-                this.contWidth = this.$refs.container.clientWidth;
+                this.contWidth = this.$refs.segmentCont.clientWidth;
             },
             thumbSrc(photo) {
-                if (photo)
-                    // return "/api/photo/preview/" + this.targetHeight +  "/" + photo.id + ".jpg";
-                    // return "/photos/preview/" + this.targetHeight +  "/" + photo.path;
-                    // return encodeURI("/photos/preview/" + this.targetHeight +  "?path=" + photo.path);
-                    return encodeURI("/photos/preview/" + this.targetHeight + "/" + photo.path);
-                else
-                    return null;
+                return encodeURI("/photos/preview/" + this.targetHeight + "/" + photo.path);
             },
 
             selectPhoto(index) {
-                this.$emit("select-photo", this.segment, index)
+                this.$emit("select-photo", this, index)
             },
 
             selectLastPhoto() {
-                this.selectPhoto( this.segment.photos.length-1);
+                this.selectPhoto( this.data.photos.length-1);
             }
 
 
@@ -100,5 +151,4 @@
     }
 </script>
 <style scoped>
-
 </style>
