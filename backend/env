@@ -1,0 +1,20 @@
+# For local development
+# modify and save as .env
+FLASK_ENV=development
+SECRET_KEY=changeme
+SQLALCHEMY_DATABASE_URI=mysql+pymysql://timeline:timeline@localhost:3306/timeline
+CELERY_BROKER_URL=pyamqp://guest:guest@localhost:5672
+CELERY_RESULT_BACKEND=rpc://
+PHOTO_PATH="/mnt/c/Users/himst/Pictures/Camera Roll"
+PREVIEW_PATH=../data/preview
+LOG_PATH=../data/log
+POLLING=False
+INITIAL_SCAN=True
+CREATE_DATABASE=True
+DB_HOST="localhost:3306"
+DB_SUPER_USER=root
+DB_SUPER_USER_PW=example
+COMPUTE_SECTIONS_EVERY_MINUTES=10
+MATCH_FACES_EVERY_MINUTES=20
+GROUP_FACES_EVERY_MINUTES=30
+OBJECT_DETECTION_MODEL_PATH=models/thing/ssd
