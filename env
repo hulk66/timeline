@@ -35,7 +35,7 @@ THREADS_THING_FACE=4
 # with the root user
 DB_SUPER_USER_PW=example
 
-# This controll the Flask Webapp and the number and type of workers
+# This controls the Flask Webapp and the number and type of workers
 # You might want to play with the number of workers
 # According to the gunicorn documentation this should be between 1 and 2 per core
 # but most if the load is handled by nginx, so this shouldn't be necessary
