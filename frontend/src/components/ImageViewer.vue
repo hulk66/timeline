@@ -16,24 +16,58 @@
  */
 
 <template>
-    <v-card dark>
+    <v-card ref="viewer" dark key="photo.id" @mousemove="mouseMove">
         <v-row no-gutters style="min-height: 100vh">
-            <v-expand-x-transition>
                 <v-col style="position: relative" fill-height>
                     <div style="position: absolute; top: 50%; left:0px; transform: translateY(-50%); width:100%">
-                        <v-img :src="photoUrl(photo)" contain max-height="100vh" style="position: relative">
-                            <v-icon style="position: absolute; top: 50%; left: 10px;"  large @click="left()">
-                                mdi-chevron-left
-                            </v-icon>
-                            <v-icon style="position: absolute; top: 50%; right: 10px;" large @click="right()">
-                                mdi-chevron-right
-                            </v-icon>
-                            <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="info = !info" v-if="!info">
-                                mdi-information-outline
-                            </v-icon>
-                            <v-icon style="position: absolute; top: 20px; right: 10px;"  @click="close()">
-                                mdi-close
-                            </v-icon> 
+                        <v-img :transition="transition" :key="photo.id" :src="photoUrl(photo)" contain max-height="100vh" style="position: relative">
+                            <v-fade-transition>
+                                <v-icon v-if="mousemove" style="position: absolute; top: 50%; left: 10px;"  large @click="left()">
+                                    mdi-chevron-left
+                                </v-icon>
+                            </v-fade-transition>
+                            <v-fade-transition>
+                                <v-icon v-if="mousemove" style="position: absolute; top: 50%; right: 10px;" large @click="right()">
+                                    mdi-chevron-right
+                                </v-icon>
+                            </v-fade-transition>
+                            <!--
+                            <v-fade-transition>
+                                <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="goFullScreen(true)" v-if="mousemove &&showFullscreenBt && !fullscreen">
+                                    mdi-fullscreen
+                                </v-icon>
+                            </v-fade-transition>
+                            <v-fade-transition>
+                                <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="goFullScreen(false)" v-if="mousemove && fullscreen">
+                                    mdi-fullscreen-exit
+                                </v-icon>
+                            </v-fade-transition>
+                            -->
+                            <v-fade-transition>
+                                <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="info = !info" v-if="!info && mousemove">
+                                    mdi-information-outline
+                                </v-icon>
+                            </v-fade-transition>
+                            <v-fade-transition>
+                                <v-icon v-if="mousemove" style="position: absolute; top: 20px; right: 10px;"  @click="close()">
+                                    mdi-close
+                                </v-icon> 
+                            </v-fade-transition>
+                            <v-fade-transition>
+                                <v-rating 
+                                    v-if="mousemove"
+                                    style="position: absolute; bottom: 20px; left: 10px;"
+                                    class="align-end" 
+                                    background-color="grey" 
+                                    color="white" 
+                                    length="5"
+                                    @input="ratePhoto"
+                                    @click.native.stop
+                                    clearable
+                                    :value="photo.stars">
+                                </v-rating>
+
+                            </v-fade-transition>
                         <template v-slot:placeholder>
                     <v-row
                         class="fill-height ma-0"
@@ -49,7 +83,6 @@
                         </v-img>
                     </div>
                 </v-col>
-            </v-expand-x-transition>
             <v-expand-x-transition>
                 <v-card light style="position:relative; width:360px; min-height:100vh" v-show="info">
                     <div class="scroller" v-if="info">
@@ -228,7 +261,10 @@
 
 
         props: {
-            photo: Object
+            prevPhoto: Object,
+            photo: Object,
+            nextPhoto: Object,
+            direction: Number       
         },
 
         data() {
@@ -247,9 +283,22 @@
                 faceName: "",
                 newPerson: null,
                 editId: 0,
+                prevImage: null,
+                nextImage: null,
+                transition: "slide-x-transition",
+                mousemove: false,
+                timedFunction: Object,
+                showFullscreenBt: false,
+                // fullscreen: false
             }
         },
 
+        /*
+        created() {
+            
+            this.showFullscreenBt = document.fullscreenEnabled
+        },
+        */
         computed: {
             ...mapState({
                 knownPersons: state => state.person.allPersons
@@ -260,6 +309,20 @@
                 if (this.info)
                     this.loadData(p);
             },
+            direction(val) {
+                if (val == -1)
+                    this.transition = "slide-x-reverse-transition";
+                else
+                    this.transition = "slide-x-transition";
+            },
+            prevPhoto(val) {
+                this.prevImage = new Image();
+                this.prevImage.src = this.photoUrl(val)
+            },
+            nextPhoto(val) {
+                this.nextImage = new Image();
+                this.nextImage.src = this.photoUrl(val)
+            },
             info(v) {
                 if (v)
                     this.loadData(this.photo)
@@ -267,6 +330,28 @@
         },
 
         methods: {
+
+            /*
+            This does not work yet
+            goFullScreen(value) {
+                this.fullscreen = value;
+                if (value)
+                    this.$refs.viewer.$el.requestFullscreen();
+                    this.$emit("go-fullscreen");
+                else   
+                    document.exitFullscreen();
+            },
+            */
+            ratePhoto(value) {
+                this.$emit("set-rating", value);
+            },                
+            mouseMove() {
+                if (this.timedFunction)
+                    clearInterval(this.timedFunction);
+                this.mousemove = true;
+                let self = this;
+                this.timedFunction = setInterval(function(){ self.mousemove = false }, 2000);
+            },
 
             edit(face) {
                 this.editId = face.id;
@@ -365,4 +450,15 @@
     .exif-detail {
         margin-right: 12px;
     }
+
+.slide-fade-enter-active {
+   transition: all .3s ease;
+}
+.slide-fade-leave-active {
+   transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+.slide-fade-enter, .slide-fade-leave-to {
+   transform: translateX(10px);
+   opacity: 0;
+}
 </style>

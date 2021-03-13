@@ -16,7 +16,7 @@
  */
 <template>
     <div ref="segmentCont" v-resize="resize">
-        <v-subheader>{{segmentDate}} Segment {{segIndex}}</v-subheader>
+        <v-subheader>{{segmentDate}}</v-subheader>
         <vue-justified-layout
                 :items="data.photos"
                 v-slot="{item, index}"
@@ -119,8 +119,8 @@
                 let photo = this.data.photos[index];
                 // let self = this;
                 this.$store.dispatch("setRating", {photo: photo, stars: value}).then( result => {
-                    this.data.photos[index] = result;
-                    this.$set(this.data.photos, index, result)
+                    this.$set(this.data.photos, index, result);
+                    this.$store.commit("setSelectedPhoto", result);
                 });
             },
 
@@ -141,7 +141,13 @@
             selectPhoto(index) {
                 this.$emit("select-photo", this, index)
             },
+            getFirstPhoto() {
+                return this.data.photos[0];
+            },
 
+            getLastPhoto() {
+                return this.data.photos[this.data.photos.length-1];
+            },
             selectLastPhoto() {
                 this.selectPhoto( this.data.photos.length-1);
             }

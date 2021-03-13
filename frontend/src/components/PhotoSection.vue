@@ -133,6 +133,18 @@
             selectFirstPhoto() {
                 this.$refs.segment0[0].selectPhoto(0);
             },
+
+            getFirstPhoto() {
+                return  this.$refs.segment0[0].getFirstPhoto();
+            },
+
+            getLastPhoto() {
+                let len = this.segments.length-1
+                // let last_index = this.segments[len].photos.length-1;
+                let segment = this.$refs['segment' + len][0];
+                return segment.getLastPhoto(); 
+            },
+
             selectLastPhoto() {
                 let len = this.segments.length-1
                 let last_index = this.segments[len].photos.length-1;

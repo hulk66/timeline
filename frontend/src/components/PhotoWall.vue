@@ -24,11 +24,7 @@
 
                             @mousedown="clearNav()"
                             @keydown="keyboardAction($event)">
-                            <!--
-                            @keydown.esc="clearNav()"
-                            @keydown.left="navigate(-1)"
-                            @keydown.right="navigate(1)"
-                            -->
+
                         <v-card>
                             <v-card-title>{{totalPhotos}} Photos</v-card-title>
                         </v-card>
@@ -68,12 +64,17 @@
                 fullscreen hide-overlay
                 @keydown.left="advancePhoto(-1)"
                 @keydown.right="advancePhoto(1)"
+                @keydown="keyboardAction($event)"
+                ref="viewerDialog"
                 >
 
                 <image-viewer :photo="selectedPhoto" ref="viewer"
-                              @left="advancePhoto(-1)"
-                              @right="advancePhoto(1)"
-                              @close="photoFullscreen = false">
+                              :nextPhoto="nextPhoto"
+                              :prevPhoto="prevPhoto"
+                              :direction="imageViewerDirection"
+                              @close="photoFullscreen = false"
+                              @set-rating="setRating"
+                              >
 
                 </image-viewer>
         </v-dialog>
@@ -108,10 +109,12 @@
             return {
                 photoFullscreen: false,
                 // for the image viewer
+                /*
                 selectedSegment: null,
                 selectedSection: null,
                 selectedIndex: 0,
                 selectedPhoto: null,
+                */
                 // for navigation and selection
                 currentSegment: null,
                 currentSection: null,
@@ -131,7 +134,10 @@
                 currDate: "",
                 scrubbing: false,
                 tickDates: [],
-                totalPhotos: 0
+                totalPhotos: 0,
+                prevPhoto: null,
+                nextPhoto: null,
+                imageViewerDirection: 1
             };
         },
 
@@ -150,13 +156,18 @@
 
 
         watch: {
+  
         },
 
         computed: {
 
             ...mapState({
                 markMode: state => state.person.markMode,
-                previewHeight: state => state.person.previewHeight
+                previewHeight: state => state.person.previewHeight,
+                selectedSegment: state => state.photo.selectedSegment,
+                selectedSection: state => state.photo.selectedSection,
+                selectedIndex: state => state.photo.selectedIndex,
+                selectedPhoto: state => state.photo.selectedPhoto
             }),
             cssProps() {
                 return {
@@ -287,16 +298,28 @@
             },
 
             selectPhoto(section, segment, photoIndex) {
+                this.$store.commit("setSelectedSection", section);
+                this.$store.commit("setSelectedSegment", segment);
+                this.$store.commit("setSelectedIndex", photoIndex);
+                this.$store.commit("setSelectedPhoto", segment.data.photos[photoIndex]);
+                /*
                 this.selectedSection = section;
                 this.selectedSegment = segment;
                 this.selectedIndex = photoIndex;
-                this.selectedPhoto = segment.data.photos[this.selectedIndex];
+                this.selectedPhoto = segment.data.photos[photoIndex];
+                */
                 this.photoFullscreen = true;
+                this.currentSection = section;
+                this.currentSegment = segment;
+                this.currentIndex = photoIndex;
             },
 
             setRating(value) {
                 if (value <= 5 && this.currentSegment && this.currentIndex >= 0) {
-                     this.currentSegment.setRating(this.currentIndex, value);        
+                     this.currentSegment.setRating(this.currentIndex, value); 
+                     if (this.photoFullscreen) 
+                         this.$refs.viewer.mouseMove();
+                           
                 }
             },
             keyboardAction(event) {
@@ -391,16 +414,63 @@
                     this.currentIndex = -1;
 
             },
-            advancePhoto: function (dir) {
-                this.selectedIndex += dir;
 
-                if (this.selectedIndex >= 0 && this.selectedIndex  < this.selectedSegment.data.photos.length) {
-                    this.selectedPhoto = this.selectedSegment.data.photos[this.selectedIndex];
+            getNextPhoto(index, dir) {
+                let nextPhoto = null;
+                let nextIndex = index + dir;
+                    
+                if (nextIndex >= 0 && nextIndex < this.selectedSegment.data.photos.length) {
+                    nextPhoto = this.selectedSegment.data.photos[nextIndex];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
                     let el = this.$refs['section' + this.selectedSection.id][0];
-                    this.selectedSegment = el.advanceSegment(this.selectedSegment, dir)
+                    let nextSegment = el.advanceSegment(this.selectedSegment, dir)
+                    if (! nextSegment) {
+                        // next or previous photo is not in the current section, so go one section ahead or back
+                        let next_section_id = this.selectedSection.id + dir;
+                        if (next_section_id >= 0 && next_section_id < this.sections.length) {
+                            // find vue component holding the next/prev section
+                            el = this.$refs['section' + next_section_id][0];
+                            if (dir == 1)
+                                nextSegment = el.getFirstSegment()
+                            else
+                                nextSegment = el.getLastSegment();
+                            
+                        }
+                    }
+                    if (nextSegment)
+                        if (dir == 1)
+                            nextPhoto = nextSegment.getFirstPhoto();
+                        else
+                            nextPhoto = nextSegment.getLastPhoto();
+
+                }
+                return nextPhoto;
+            },
+            advancePhoto: function (dir) {
+                this.$store.commit("navigate", dir);
+                // this.selectedIndex += dir;
+                this.imageViewerDirection = dir;
+
+                if (dir == 1) {
+                    this.prevPhoto = this.selectedPhoto; 
+                    this.nextPhoto = this.getNextPhoto(this.selectedIndex, dir);
+                } else {
+                    this.prevPhoto = this.getNextPhoto(this.selectedIndex, dir);
+                    this.nextPhoto = this.selectedPhoto;
+                }
+
+
+                if (this.selectedIndex >= 0 && this.selectedIndex  < this.selectedSegment.data.photos.length) {
+                    this.$store.commit("setSelectedPhoto",this.selectedSegment.data.photos[this.selectedIndex]);
+                    // this.selectedPhoto = this.selectedSegment.data.photos[this.selectedIndex];
+                } else {
+                    // Photo is in next segment or next section
+                    // first go for next segment in same section
+                    let el = this.$refs['section' + this.selectedSection.id][0];
+                    this.$store.commit("setSelectedSegment", el.advanceSegment(this.selectedSegment, dir));
+                    // this.selectedSegment = el.advanceSegment(this.selectedSegment, dir)
                     if (! this.selectedSegment) {
                         // next or previous photo is not in the current section, so go one section ahead or back
                         let next_section_id = this.selectedSection.id + dir;
@@ -411,7 +481,13 @@
                                 el.selectFirstPhoto();
                             else
                                 el.selectLastPhoto();
+                        } else {
+                            // we are at the beginning
+                            // reset everything
+                            this.$store.commit("setSelectedIndex", 0);
+                            this.$store.commit("setSelectedSegment", el.getFirstSegment());
                         }
+
 
                     }
 

@@ -74,6 +74,8 @@
             thumbSrc() {
                 // return encodeURI("/photos/preview/" + this.targetHeight + "/" + this.photo.path);
                 return encodeURI("/photos/preview/400/" + this.photo.path);
+                // let url = encodeURI("/photos/preview/400/" + this.photo.path);
+                // return require(url); 
             },
 
         },
