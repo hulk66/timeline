@@ -21,16 +21,29 @@ import PersonsView from "./components/PersonsView";
 import SimilarPersons from "./components/SimilarPersons";
 import ThingsView from "./components/ThingsView";
 import PlacesView from "./components/PlacesView";
+import SearchView from "./components/SearchView";
 
 Vue.use(Router);
 
 export default new Router({
   routes: [
+
     {
       path: '/wall',
       name: 'photoWall',
       component: PhotoWall,
-      props:true
+      props: route => ({ 
+        personId: route.query.person_id, 
+        thingId: route.query.thing_id,
+        city:route.query.city,
+        county:route.query.county,
+        country:route.query.country,
+        state:route.query.state,
+        camera:route.query.camera,
+        from:route.query.from,
+        to:route.query.to,
+        rating:route.query.rating,
+      })
     },
 
 
@@ -53,6 +66,11 @@ export default new Router({
       path: '/similarPersons',
       name: 'similarPersons',
       component: SimilarPersons
+    },
+    {
+      path: '/search',
+      name: 'search',
+      component: SearchView
     },
 
     {

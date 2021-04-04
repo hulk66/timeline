@@ -24,6 +24,16 @@
                 mini-variant>
             <v-list>
                 <v-list-item-group>
+                    <!--
+                    <v-list-item v-for="item in navigation" :key="item.target" :to="item.target">
+                        <v-list-item-action>
+                            <v-icon v-text="item.icon"></v-icon>
+                        </v-list-item-action>
+                        <v-list-item-content>
+                            <v-list-item-title v-text="item.title"></v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
+                    -->
                     <v-list-item :to="{name:'photoWall'}">
                         <v-list-item-action>
                             <v-icon>mdi-view-dashboard</v-icon>
@@ -60,6 +70,15 @@
                             <v-list-item-title>Places</v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
+                    <v-list-item to="/search">
+                        <v-list-item-action>
+                            <v-icon>mdi-card-search</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-content>
+                            <v-list-item-title>Search</v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
+
                 </v-list-item-group>
             </v-list>
         </v-navigation-drawer>
@@ -270,7 +289,12 @@
                 totalThings: 0,
                 totalPhotos: 0,
                 iq_count: 0,
-                targetHeight: 200
+                targetHeight: 200,
+                /*
+                navigation: [
+                    {title: "All", icon: "mdi-view-dashboard", target:}
+                ]
+                */
             };
         },
 

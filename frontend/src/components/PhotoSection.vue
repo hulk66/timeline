@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  */
 <template>
-
-    <v-card v-intersect="{handler:onIntersect, options: {rootMargin:'1000px'}}" :min-height="initialHeight"  elevation="0" > 
+    <v-card v-intersect="{handler:onIntersect, options: {rootMargin:'1000px'}}" :min-height="initialHeight" elevation="0" > 
         <div v-if="visible" ref="segmentContainer">
             <photo-segment  :ref="'segment' + index"
                             v-for="(segment, index) in segments"
@@ -28,9 +27,7 @@
                             @update-timeline="updateTimeline">
             </photo-segment>
         </div>
-        <div v-else></div>
     </v-card>
-
 </template>
 
 <script>
@@ -57,20 +54,23 @@
             city: String,
             county: String,
             country: String,
-            state: String
+            state: String,
+            from: String,
+            to: String,
+            rating: Number,
+            camera: String
         },
         data() {
             return {
                 segments: [],
                 visible: false,
-                h: 0
+                // h: 0
             };
         },
 
         computed: {
         },
         mounted() {
-            this.h = this.initialHeight;
         },
 
         watch: {
@@ -152,7 +152,6 @@
             },
 
             loadPhotos(sec) {
-                let self = this;
                 // eslint-disable-next-line no-console
                 console.log("Loading photos for section " + sec.id);
                 let params = {};
@@ -166,11 +165,15 @@
                 params["county"] = this.county;
                 params["country"] = this.country;
                 params["state"] = this.state;
+                params["from"] = this.from;
+                params["to"] = this.to;
+                params["camera"] = this.camera;
+                params["rating"] = this.rating;
 
 
                 axios.get( "/api/photo/by_section/" + sec.id, config).then((result) => {
-                    self.photos = result.data;
-                    self.segments = self.computeSegments()
+                    this.photos = result.data;
+                    this.segments = this.computeSegments()
                 })
 
             },

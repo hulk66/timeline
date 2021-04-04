@@ -15,70 +15,75 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-container fluid>
-
-        <v-row no-gutters >
-            <v-col ref="wall" class="noscroll">
+    <v-container fluid class="fill-height">
+        <v-row now-gutters class="fill-height">
+            <v-col>
+                <div class="d-flex noscroll" ref="wall">
                     <div class="scroller" tabindex="0"  
                             ref="scroller"
-
                             @mousedown="clearNav()"
                             @keydown="keyboardAction($event)">
 
                         <v-card>
                             <v-card-title>{{totalPhotos}} Photos</v-card-title>
+
+                            <photo-section
+                                    v-for="section in sections"
+                                    :ref="'section' + section.id"
+                                    :section="section"
+                                    :target-height="previewHeight"
+                                    :key="section.uuid"
+                                    :initial-height="height(section)"
+                                    :filter-person-id="personId"
+                                    :filter-thing-id="thingId"
+                                    :city="city"
+                                    :county="county"
+                                    :country="country"
+                                    :state="state"
+                                    :from="from"
+                                    :to="to"
+                                    :camera="camera"
+                                    :rating="rating"
+                                    @select-photo="selectPhoto"
+                                    @update-timeline="updateTimeline">
+                            </photo-section>
                         </v-card>
-
-                        <photo-section
-                                v-for="section in sections"
-                                :ref="'section' + section.id"
-                                :section="section"
-                                :target-height="previewHeight"
-                                :key="section.id"
-                                :initial-height="height(section)"
-                                :filter-person-id="personId"
-                                :filter-thing-id="thingId"
-                                :city="city"
-                                :county="county"
-                                :country="country"
-                                :state="state"
-                                @select-photo="selectPhoto"
-                                @update-timeline="updateTimeline">
-                        </photo-section>
                     </div>
-            </v-col>
-            <v-card class="noscroll scale" ref="timelineContainer" elevation="0"
-                    v-on:mousemove="calcPosition($event)"
-                    v-on:mouseenter="scrub(true)"
-                    v-on:mouseleave="scrub(false)"
-                    v-on:click="jumpToDate()">
-                <div v-for="(d, index) in tickDates" :key="index" :style="{top:pos_percent(d) + '%',position:'absolute'}" >
-                    <tick :moment="d" :h="tick_height(index)"></tick>
                 </div>
-                <div id="tick" :style="cssProps"></div>
-                <div v-if="scrubbing" id="currentDate" :style="cssProps">{{currDate}}</div>
-            </v-card>
-
-            <v-dialog
-                v-model="photoFullscreen"
-                fullscreen hide-overlay
-                @keydown.left="advancePhoto(-1)"
-                @keydown.right="advancePhoto(1)"
-                @keydown="keyboardAction($event)"
-                ref="viewerDialog"
-                >
-
-                <image-viewer :photo="selectedPhoto" ref="viewer"
-                              :nextPhoto="nextPhoto"
-                              :prevPhoto="prevPhoto"
-                              :direction="imageViewerDirection"
-                              @close="photoFullscreen = false"
-                              @set-rating="setRating"
-                              >
-
-                </image-viewer>
-        </v-dialog>
+            </v-col>
+                <v-card class="noscroll scale" ref="timelineContainer" elevation="0"
+                        v-on:mousemove="calcPosition($event)"
+                        v-on:mouseenter="scrub(true)"
+                        v-on:mouseleave="scrub(false)"
+                        v-on:click="jumpToDate()">
+                    <div v-for="(d, index) in tickDates" :key="index" :style="{top:pos_percent(d) + '%',position:'absolute'}" >
+                        <tick :moment="d" :h="tick_height(index)"></tick>
+                    </div>
+                    <div id="tick" :style="cssProps"></div>
+                    <div v-if="scrubbing" id="currentDate" :style="cssProps">{{currDate}}</div>
+                </v-card>
         </v-row>
+        
+        <v-dialog
+            v-model="photoFullscreen"
+            fullscreen hide-overlay
+            @keydown.left="advancePhoto(-1)"
+            @keydown.right="advancePhoto(1)"
+            @keydown="keyboardAction($event)"
+            ref="viewerDialog"
+            >
+
+            <image-viewer :photo="selectedPhoto" ref="viewer"
+                            :nextPhoto="nextPhoto"
+                            :prevPhoto="prevPhoto"
+                            :direction="imageViewerDirection"
+                            @close="photoFullscreen = false"
+                            @set-rating="setRating"
+                            >
+
+            </image-viewer>
+        </v-dialog>
+
     </v-container>
 </template>
 
@@ -103,30 +108,26 @@
         },
 
         props: {
-
+            personId: Number,
+            thingId: String,
+            city: String,
+            county: String,
+            country: String,
+            state: String,
+            from: String,
+            to: String,
+            rating: Number,
+            camera: String
         },
         data() {
             return {
                 photoFullscreen: false,
-                // for the image viewer
-                /*
-                selectedSegment: null,
-                selectedSection: null,
-                selectedIndex: 0,
-                selectedPhoto: null,
-                */
                 // for navigation and selection
                 currentSegment: null,
                 currentSection: null,
                 currentIndex: -1,
                 // ---
                 sections: [],
-                personId: this.$route.query.person_id,
-                thingId: this.$route.query.thing_id,
-                city: this.$route.query.city,
-                county: this.$route.query.county,
-                country: this.$route.query.country,
-                state: this.$route.query.state,
                 min_date: null,
                 max_date: null,
                 total_scale: null,
@@ -152,8 +153,6 @@
 
             });
         },
-
-
 
         watch: {
   
@@ -505,30 +504,29 @@
 
 
             loadAllSections() {
-                let self = this;
+                // let self = this;
                 let params = {};
                 let config = { params: params};
                 params["person_id"] = this.personId;
-                params["thing_id"] = this.thingId; // this.$route.params.thing_id; // this.thingId;
+                params["thing_id"] = this.thingId; 
                 params["city"] = this.city;
                 params["county"] = this.county;
                 params["country"] = this.country;
                 params["state"] = this.state;
-
-
-                // eslint-disable-next-line no-console
+                params["camera"] = this.camera;
+                params["rating"] = this.rating;
+                params["from"] = this.from;
+                params["to"] = this.to;
                 axios.get("/api/section/all", config).then((result) => {
-                    self.sections = result.data.sections;
-                    self.max_date = moment(result.data.max_date);
-                    self.min_date = moment(result.data.min_date);
-                    self.totalPhotos = result.data.totalPhotos;
-                    self.total_duration = moment.duration(self.max_date.diff(self.min_date));
-                    self.tickDates = self.getTickDates();
-
+                    this.$set(this, "sections",  result.data.sections);
+                    // this.sections = result.data.sections;
+                    this.max_date = moment(result.data.max_date);
+                    this.min_date = moment(result.data.min_date);
+                    this.totalPhotos = result.data.totalPhotos;
+                    this.total_duration = moment.duration(this.max_date.diff(this.min_date));
+                    this.tickDates = this.getTickDates();
                 });
-
             }
-
         }
     }
 </script>
@@ -568,9 +566,7 @@
 
     .noscroll {
         position: relative;
-        /*  fix this */
-        height: calc(100vh - 80px); 
-        /* height: 100vh; */
+        height: 100%;
     }
 
     .scale {

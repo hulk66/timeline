@@ -19,14 +19,14 @@ import logging
 import os
 import random
 from datetime import datetime
-
+import uuid
 import flask
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
 from timeline.api.photos import send_image
 from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
-                             photo_thing)
+                             photo_thing, Exif)
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, distance_maybe,
                                         distance_safe, distance_very_safe,
@@ -219,7 +219,11 @@ def amend_query(request, q):
     county = request.args.get("county")
     city = request.args.get("city")
     state = request.args.get("state")
-
+    camera = request.args.get("camera")
+    rating = request.args.get("rating")
+    fromDate = request.args.get("from")
+    toDate = request.args.get("to")
+    
     if person_id:
         q = q.join(Face, and_(Face.person_id ==
                               person_id, Face.photo_id == Photo.id,
@@ -235,7 +239,19 @@ def amend_query(request, q):
         q = q.join(GPS).filter(GPS.country == country)
     if state:
         q = q.join(GPS).filter(GPS.state == state)
-
+    if camera:
+        q = q.join(Exif).filter(and_(Exif.key == 'Make', Exif.value == camera))
+    if rating:
+        r = int(rating)
+        if r > 0:
+            q = q.filter(Photo.stars >= r)
+    if fromDate:
+        fd = datetime.strptime(fromDate, "%Y-%m-%d")
+        q = q.filter(Photo.created >= fd)
+    if toDate:
+        td = datetime.strptime(toDate, "%Y-%m-%d")
+        q = q.filter(Photo.created < td)
+ 
     return q
 
 
@@ -244,13 +260,12 @@ def all_sections():
     logger.debug("all sections")
     # compute_sections.delay()
 
-    q = db.session.query(Section.id.label("id"), 
-        db.func.count(Photo.id).label("num_photos")).join(Photo,
-        Photo.section_id == Section.id)
+    q = db.session.query(Section.id.label("id"),    
+        db.func.count(Photo.id).label("num_photos")).join(Photo, Photo.section_id == Section.id)
     q = amend_query(request, q)
 
     sections = q.group_by(Section.id).all()
-    sec_array = [{"id": n, "num_photos": m} for n, m in sections]
+    sec_array = [{"id": n, "num_photos": m, "uuid":uuid.uuid1()} for n, m in sections]
     result = {}
     result['sections'] = sec_array
 
@@ -298,7 +313,7 @@ def photo_by_section(id):
 
     q = amend_query(request, q)
     photos = q.filter(Photo.section_id == id).order_by(Photo.created.desc())
-    return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section"))
+    return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-album"))
     # return flask.jsonify(photos.all())
 
 
@@ -602,12 +617,19 @@ def de_tupelize(list_of_tupel):
     l = [v for v, in list_of_tupel]
     return flask.jsonify(l)
 
+@blueprint.route('/exif/camera_makes', methods=['GET'])
+def exif_camera_makes():
+    camera_makes = Exif.query.filter(
+        Exif.key == 'Make').with_entities(Exif.value).distinct()
+    # with_entities returns tupel, we are only interested in the first and only one, so get rid of the tupel
+    return de_tupelize(camera_makes.all())
+
 
 @blueprint.route('/location/countries', methods=['GET'])
 def locations_country():
     countries = GPS.query.filter(
         GPS.country != None).with_entities(GPS.country).distinct()
-    # with_entities return tupel, we are only interested in the first and only one, so get rid of the tupel
+    # with_entities returns tupel, we are only interested in the first and only one, so get rid of the tupel
     return de_tupelize(countries.all())
 
 
