@@ -107,6 +107,7 @@ def get_decimal_from_dms(dms, ref):
 
     return round(degrees + minutes + seconds, 5)
 
+
 def get_coordinates(geotags):
     lat, lon = None, None
     try:
@@ -118,9 +119,13 @@ def get_coordinates(geotags):
 
     return (lat, lon)
 
+
 get_float = lambda x: float(x[0]) / float(x[1])
+
+
 def convert_to_degrees(value):
     return value[0] + (value[1] / 60.0) + (value[2] / 3600.0)
+
 
 def get_lat_lon(geotags):
     try:
@@ -141,19 +146,19 @@ def get_lat_lon(geotags):
         return None
 
 
-
 def get_labeled_exif(exif):
     labeled = {}
     if exif:
         for (key, val) in exif.items():
             label = TAGS.get(key)
-            if val and label  and label not in exif_tags_exclude_list:
+            if val and label and label not in exif_tags_exclude_list:
                 if isinstance(val, bytes):
                     val = val.decode("utf-8", "replace")
 
                 labeled[label] = val
 
     return labeled
+
 
 def get_exif_value(key, raw_value):
     v = str(raw_value)[0:100]
@@ -168,19 +173,23 @@ def get_exif_value(key, raw_value):
         sec = round(d/n)
 
         v = "1/" + str(sec)
-    elif key in ("FNumber","FocalLength", "ExposureBiasValue"):
+    elif key in ("FNumber", "FocalLength", "ExposureBiasValue"):
         v = round(float(raw_value.numerator) / float(raw_value.denominator))
     return v
 
 
-def get_geotagging(exif):
+def get_geotagging(exif: dict) -> dict:
     geotagging = {}
     if exif:
         for (idx, tag) in TAGS.items():
             if tag == 'GPSInfo' and idx in exif:
 
                 for (key, val) in GPSTAGS.items():
-                    if key in exif[idx]:
+                    dictionary = exif[idx]
+                    # In some cases it seems the exif data state that there
+                    # is a dict with GPS data - but this is not the case
+                    # it is just an int
+                    if isinstance(dictionary, dict) and key in dictionary:
                         geotagging[val] = exif[idx][key]
 
     return geotagging

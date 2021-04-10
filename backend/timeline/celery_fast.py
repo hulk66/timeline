@@ -22,11 +22,14 @@ from timeline.extensions import celery, db
 from timeline.tasks.crud_tasks import schedule_next_compute_sections
 from timeline.tasks.match_tasks import do_background_face_tasks
 
+import timeline.tasks.geo_tasks
+import timeline.tasks.match_tasks
 import timeline.tasks.process_tasks
 
 flask_app = create_app()
 app = celery
 setup_logging(flask_app, 'fast_worker.log')
+
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):

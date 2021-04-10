@@ -23,13 +23,13 @@ from timeline.tasks.classify_tasks import init_classify_services
 from timeline.tasks.face_tasks import init_face_services
 
 import timeline.tasks.iq_tasks
-
+import timeline.tasks.face_tasks
+import timeline.tasks.classify_tasks
 
 flask_app = create_app()
 # app = init_celery(flask_app)
 app = celery
 setup_logging(flask_app, 'slow_worker.log')
-
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
