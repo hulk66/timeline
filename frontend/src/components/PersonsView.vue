@@ -15,7 +15,8 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-card>
+    <v-container>
+    <v-card flat>
     <v-tabs v-model="tab">
         <v-tabs-slider></v-tabs-slider>
         <v-tab key="known">Known</v-tab>
@@ -59,8 +60,7 @@
                 </v-card>
             </v-col>
         </v-row>
-        <v-row dense>
-        
+        <v-row>
             <v-col
                 v-for="face in facesToConfirm.items" :key="face.id" class="d-flex child-flex"
                 xs="3" md="2" lg="2" xl="1">
@@ -113,6 +113,7 @@
     </v-tabs-items>
 
     </v-card>
+    </v-container>
 </template>
 <script>
     import axios from "axios";
