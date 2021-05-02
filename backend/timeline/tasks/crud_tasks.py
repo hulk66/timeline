@@ -111,9 +111,9 @@ def create_photo(path, commit=True):
 
         except UnicodeDecodeError as u:
             logger.error("%s", img_path)
-
-        # Now do extract important things such as date, gps infos and so on
-        if key == 'DateTimeOriginal':
+        
+        # 18.04.2021: this is strange, has it changed recently where the photo date is saved under in Exif?
+        if key.startswith('DateTime'):
             try:
                 # set photo date
                 dt = datetime.strptime(str(value), "%Y:%m:%d %H:%M:%S")
