@@ -67,9 +67,9 @@
         <v-dialog
             v-model="photoFullscreen"
             fullscreen hide-overlay
+            @keydown="checkDigit($event)"
             @keydown.left="advancePhoto(-1)"
             @keydown.right="advancePhoto(1)"
-            @keydown="keyboardAction($event)"
             ref="viewerDialog"
             >
 
@@ -79,6 +79,8 @@
                             :direction="imageViewerDirection"
                             @close="photoFullscreen = false"
                             @set-rating="setRating"
+                            @left="advancePhoto(-1)"
+                            @right="advancePhoto(1)"
                             >
 
             </image-viewer>
@@ -321,8 +323,17 @@
                            
                 }
             },
+
+            checkDigit(event) {
+                if (event.code.startsWith("Digit")) {
+                    let value = parseInt(event.key);
+                    this.setRating(value);
+                }
+            },
+
             keyboardAction(event) {
                 // are these values somewhere defined as constants?
+            
                 if (event.code == "ArrowLeft")
                     this.navigate(-1);
                 else if (event.code == "ArrowRight")
@@ -418,8 +429,8 @@
                 let nextPhoto = null;
                 let nextIndex = index + dir;
                     
-                if (nextIndex >= 0 && nextIndex < this.selectedSegment.data.photos.length) {
-                    nextPhoto = this.selectedSegment.data.photos[nextIndex];
+                if (nextIndex >= 0 && nextIndex <= this.selectedSegment.data.photos.length) {
+                    nextPhoto = this.selectedSegment.data.photos[nextIndex-1];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
