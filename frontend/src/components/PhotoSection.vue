@@ -15,18 +15,21 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-card v-intersect="{handler:onIntersect, options: {rootMargin:'1000px'}}" :min-height="initialHeight" elevation="0" > 
-        <div v-if="visible" ref="segmentContainer">
-            <photo-segment  :ref="'segment' + index"
-                            v-for="(segment, index) in segments"
-                            :seg-index="index"
-                            :data="segment"
-                            :key="index"
-                            :target-height="targetHeight"
-                            @select-photo="selectPhoto"
-                            @update-timeline="updateTimeline">
-            </photo-segment>
-        </div>
+    <!-- 
+        Somehow this rootMargin doesn't work. 
+        The Intersection handler is called exactly when a card enters or leave the visible space
+        Would expect this to happen "500px" earlier but for some reason it's not working
+    -->
+    <v-card v-intersect="{handler:onIntersect, options: {rootMargin:'500px'}}" ref="card" :min-height="initialHeight" elevation="0" > 
+        <photo-segment  :ref="'segment' + index"
+                        v-for="(segment, index) in segments"
+                        :seg-index="index"
+                        :data="segment"
+                        :key="index"
+                        :target-height="targetHeight"
+                        @select-photo="selectPhoto"
+                        @update-timeline="updateTimeline">
+        </photo-segment>
     </v-card>
 </template>
 
@@ -58,19 +61,19 @@
             from: String,
             to: String,
             rating: Number,
-            camera: String
+            camera: String,
         },
         data() {
             return {
                 segments: [],
                 visible: false,
-                // h: 0
             };
         },
 
         computed: {
         },
         mounted() {
+            // this.createObserver();
         },
 
         watch: {
@@ -78,7 +81,17 @@
         },
 
         methods: {
+            createObserver() {
+                let observer;
+                let root = this.$parent.$parent.$el;
+                let options = {
+                    root: root,
+                    rootMargin: "200px",
+                };
 
+                observer = new IntersectionObserver(this.onIntersect, options);
+                observer.observe(this.$refs.card.$el);
+            },
             findFirstVisibleSegment() {
                 let segementElement = null;
                 for (let i=0; i<this.segments.length; i++) {
@@ -101,14 +114,15 @@
             },
 
             getLastSegment() {
-                let len = this.segments.length-1
-                return this.$refs.segment0[len];
+                let len = this.segments.length-1;
+                let segment = this.$refs['segment' + len][0];
+                return segment;
             },
-
+            /*
             isVisible() {
                 return this.visible
             },
-
+            */
             nextSegment(segment, dir) {
 
                 let segment_nr = segment.data.nr + dir;
@@ -186,10 +200,10 @@
                         this.loadPhotos(this.section);
                     this.visible = true;
                     // eslint-disable-next-line no-console
-                    // console.log(this.section.id + " visible");
+                    console.log(this.section.id + " visible");
                 } else {
                     // eslint-disable-next-line no-console
-                    // console.log(this.section.id + " invisible");
+                    console.log(this.section.id + " invisible");
                     this.photos = [];
                     this.visible = false;
                 }

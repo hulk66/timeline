@@ -91,6 +91,12 @@
                 // return result;
             },
 
+            scrollToPhoto(index, dir) {
+                let photoElement =  this.$refs['p' + index];
+                photoElement.$el.scrollIntoView( dir == 1 ? false:true)
+
+            },
+
             indexOfFirstVisiblePhoto() {
                 let photoElement = null;
                 let index = 0;

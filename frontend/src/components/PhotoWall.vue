@@ -353,76 +353,162 @@
                 this.$store.commit("markMode", false);
 
             },
-            findFirstVisibleSegment(dir) {
+            findFirstVisibleSegment() {
 
+                let sectionElement = null;
+                /*
+                for (let i=0; i<this.sections.length; i++) {
+                    sectionElement = this.$refs['section' + i][0];
+                    if (sectionElement && sectionElement.isVisible())
+                        break;
+                }
+                */
+                this.sections.some(section => {
+                    sectionElement = this.$refs['section' + section.id][0];
+                    if (sectionElement.isVisible())
+                        return sectionElement
+
+                });
+                if (sectionElement) {
+                    // now we have the first visible section
+                    // let's find the fist visible segment
+                    this.currentSection = sectionElement;
+                    this.currentSegment = this.currentSection.findFirstVisibleSegment();
+                    this.currentIndex = this.currentSegment.indexOfFirstVisiblePhoto();
+                }
+                
+            },
+            scrollToMarkedPhoto(dir) {
                 if (this.currentSegment && this.currentSegment.isVisible() && 
-                    this.currentIndex >= 0 && this.currentSegment.photoIsVisible(this.currentIndex)) {
+                    this.currentIndex >= 0 && this.currentSegment.photoIsVisible(this.currentIndex)) 
                     // we are still in the same area, so no change here
-                    this.currentIndex += dir;
-                } else {
-                    let sectionElement = null;
-                    for (let i=0; i<this.sections.length; i++) {
-                        sectionElement = this.$refs['section' + i][0];
-                        if (sectionElement.isVisible())
-                            break;
-                    }
+                    return;
+                this.currentSegment.scrollToPhoto(this.currentIndex, dir)
+            },
 
-                    if (sectionElement) {
-                        // now we have the first visible section
-                        // let's find the fist visible segment
-                        this.currentSection = sectionElement;
-                        this.currentSegment = this.currentSection.findFirstVisibleSegment();
-                        this.currentIndex = this.currentSegment.indexOfFirstVisiblePhoto();
+            currentSectionChildIndex() {
+                let index = 0;
+                let self = this;
+                this.$children.some(child => {
+                    if (child == self.currentSection)
+                        return index;
+                    index++;
+                });
+                return index;
+            },
+
+            nextNonEmptySection(dir) {
+                let start = this.currentSection.section.id + dir;
+                let el = this.$refs['section' + start];
+                // let result = this.currentSection;
+                while (el && !el[0]) {
+                    start += dir;
+                    el = this.$refs['section' + start];
+                }
+                if (el && el[0]) {
+                    this.currentSection = el[0];
+                    if (dir == 1) {
+                        this.currentSegment = this.currentSection.getFirstSegment();
+                        this.currentIndex = 0;
+                    } else {
+                        this.currentSegment = this.currentSection.getLastSegment();
+                        this.currentIndex = this.currentSegment.getPhotoLength()-1;
+                    }
+                } else {
+                    if (dir == 1) {
+                        this.currentSegment = this.currentSection.getLastSegment();
+                        this.currentIndex = this.currentSegment.getPhotoLength()-1;
+                    } else {
+                        this.currentSegment = this.currentSection.getFirstSegment();
+                        this.currentIndex = 0;
                     }
                 }
             },
 
             navigate(dir) {
                 this.$store.commit("markMode", true);
+                if (this.currentIndex == -1) {
+                    this.findFirstVisibleSegment();
+                    this.currentSegment.markPhoto(this.currentIndex, true);
+                } else {
 
-                if (this.currentSegment && this.currentIndex >= 0)
-                    this.currentSegment.markPhoto(this.currentIndex, false);
+                    if (this.currentSegment && this.currentIndex >= 0)
+                        this.currentSegment.markPhoto(this.currentIndex, false);
 
-                this.findFirstVisibleSegment(dir);
-                // this.currentIndex += dir;
-                if (! this.currentSegment) {
-                    this.currentSection = this.$refs.section0[0]
-                    this.currentSegment = this.currentSection.getFirstSegment()
-                }
+                    // this.scrollToPhoto(dir);
+                    // this.findFirstVisibleSegment(dir);
+                    this.currentIndex += dir;
+                    if (! this.currentSegment) {
+                        this.currentSection = this.$refs.section0[0]
+                        this.currentSegment = this.currentSection.getFirstSegment()
+                    }
 
-                if (this.currentIndex < 0 || this.currentIndex >= this.currentSegment.data.photos.length) {
-                    // Photo is in next segment or next section
-                    // first go for next segment in same section
-                    let el = this.currentSection;
-                    this.currentSegment = el.nextSegment(this.currentSegment, dir);
+                    if (this.currentIndex < 0 || this.currentIndex >= this.currentSegment.data.photos.length) {
+                        // Photo is in next segment or next section
+                        // first go for next segment in same section
 
-                    if (this.currentSegment) {
-                        if (dir == 1)
-                            this.currentIndex = 0;
-                        else 
-                            this.currentIndex = this.currentSegment.getPhotoLength()-1;
-                    } else {
-                        // next or previous photo is not in the current section, so go one section ahead or back
-                        let next_section_id = this.currentSection.id + dir;
-                        if (next_section_id >= 0 && next_section_id < this.sections.length) {
-                            // find vue component holding the next/prev section
-                            el = this.$refs['section' + next_section_id][0];
+                        // let el = this.$refs['section' + this.currentSection.id][0];
+                        // let el = this.$refs['section' + this.currentSection.id];
+                        // this.$store.commit("setSelectedSegment", el.advanceSegment(this.selectedSegment, dir));
+                        //let el = this.currentSection;
+                        this.currentSegment = this.currentSection.nextSegment(this.currentSegment, dir);
+
+                        if (this.currentSegment) {
+                            if (dir == 1)
+                                this.currentIndex = 0;
+                            else 
+                                this.currentIndex = this.currentSegment.getPhotoLength()-1;
+                        } else {
+                            // next or previous photo is not in the current section, so go one section ahead or back
+                            this.nextNonEmptySection(dir);
+                            /*
+                            this.currentSection = this.nextNonEmptySection(dir);                        
                             if (dir == 1) {
-                                this.currentSegment = el.getFirstSegment();
+                                this.currentSegment = this.currentSection.getFirstSegment();
                                 this.currentIndex = 0;
                             } else {
-                                this.currentSegment = el.getLastSegment();
-                                this.currentIndex = this.currentSegment.getPhotoLength();
+                                this.currentSegment = this.currentSection.getLastSegment();
+                                this.currentIndex = this.currentSegment.getPhotoLength()-1;
                             }
-                        }
+                            */
+                            /*
+                            if (next_section_id >= 0 && next_section_id < this.sections.length) {
+                                // find vue component holding the next/prev section
+                                el = this.$refs['section' + next_section_id][0];
+                                if (dir == 1) {
+                                    this.currentSegment = el.getFirstSegment();
+                                    this.currentIndex = 0;
+                                } else {
+                                    this.currentSegment = el.getLastSegment();
+                                    this.currentIndex = this.currentSegment.getPhotoLength();
+                                }
+                            }
+                            */
 
+                        }
                     }
                 }
-                if (this.currentSegment)
+                if (this.currentSegment) {
+                    this.scrollToMarkedPhoto(dir);
                     this.currentSegment.markPhoto(this.currentIndex, true);
-                else
+                } else
                     this.currentIndex = -1;
 
+            },
+
+            getNextSegment(dir) {
+                let nextSegment = null;
+                let next_section_id = this.selectedSection.id + dir;
+                let el = this.$refs['section' + next_section_id]
+                while (el && !el[0]) {
+                    next_section_id += dir;
+                    el = this.$refs['section' + next_section_id]
+                }
+                if (dir == 1)
+                    nextSegment = el[0].getFirstSegment()
+                else
+                    nextSegment = el[0].getLastSegment();
+                return nextSegment;
             },
 
             getNextPhoto(index, dir) {
@@ -438,6 +524,7 @@
                     let nextSegment = el.advanceSegment(this.selectedSegment, dir)
                     if (! nextSegment) {
                         // next or previous photo is not in the current section, so go one section ahead or back
+                        /*
                         let next_section_id = this.selectedSection.id + dir;
                         if (next_section_id >= 0 && next_section_id < this.sections.length) {
                             // find vue component holding the next/prev section
@@ -448,6 +535,8 @@
                                 nextSegment = el.getLastSegment();
                             
                         }
+                        */
+                       nextSegment = this.getNextSegment(dir);
                     }
                     if (nextSegment)
                         if (dir == 1)
