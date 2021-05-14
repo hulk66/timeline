@@ -118,11 +118,11 @@
                 let segment = this.$refs['segment' + len][0];
                 return segment;
             },
-            /*
+            
             isVisible() {
                 return this.visible
             },
-            */
+            
             nextSegment(segment, dir) {
 
                 let segment_nr = segment.data.nr + dir;
