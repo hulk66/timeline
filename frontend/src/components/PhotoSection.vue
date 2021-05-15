@@ -200,10 +200,10 @@
                         this.loadPhotos(this.section);
                     this.visible = true;
                     // eslint-disable-next-line no-console
-                    console.log(this.section.id + " visible");
+                    // console.log(this.section.id + " visible");
                 } else {
                     // eslint-disable-next-line no-console
-                    console.log(this.section.id + " invisible");
+                    // console.log(this.section.id + " invisible");
                     this.photos = [];
                     this.visible = false;
                 }

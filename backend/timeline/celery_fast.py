@@ -33,7 +33,8 @@ setup_logging(flask_app, 'fast_worker.log')
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
-    schedule_next_compute_sections()
+    # let's see the first photos after 5min and after this according to the plan (15min)
+    schedule_next_compute_sections(5)
     # schedule_next_grouping()
     # schedule_next_match_all_unknown_faces()
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
