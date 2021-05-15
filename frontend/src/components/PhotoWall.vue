@@ -22,7 +22,7 @@
                     <div class="scroller" tabindex="0"  
                             ref="scroller"
                             @mousedown="clearNav()"
-                            @keydown="keyboardAction($event)">
+                            @keydown="keyboardActionWall($event)">
 
                         <v-card>
                             <v-card-title>{{totalPhotos}} Photos</v-card-title>
@@ -67,7 +67,7 @@
         <v-dialog
             v-model="photoFullscreen"
             fullscreen hide-overlay
-            @keydown="keyboardAction($event)"
+            @keydown="keyboardActionDialog($event)"
             ref="viewerDialog"
             >
             <!--
@@ -92,8 +92,9 @@
 
 <script>
 
+    /* Todo: Unify curentSelettion, segment ... and selectedSegment, section .... This is complicated and not necessary */
+
     import axios from "axios";
-    // import moment from "moment"
     import PhotoSection from "./PhotoSection";
     import ImageViewer from "./ImageViewer";
     import moment from "moment"
@@ -316,9 +317,9 @@
                 this.currentIndex = photoIndex;
             },
 
-            setRating(value) {
-                if (value <= 5 && this.currentSegment && this.currentIndex >= 0) {
-                     this.currentSegment.setRating(this.currentIndex, value); 
+            setRating(value, segment, index) {
+                if (value <= 5 && segment && this.currentIndex >= 0) {
+                     segment.setRating(index, value); 
                      if (this.photoFullscreen) 
                          this.$refs.viewer.mouseMove();
                            
@@ -332,18 +333,32 @@
                 }
             },
 
-            keyboardAction(event) {
+
+            keyboardActionWall(event) {
+                // are these values somewhere defined as constants?
+            
+                if (event.code == "ArrowLeft")
+                    this.navigate(-1);
+                else if (event.code == "ArrowRight")
+                    this.navigate(1);
+                else if (event.code == "Escape")
+                    this.clearNav();
+                else if (event.code.startsWith("Digit")) {
+                    let value = parseInt(event.key);
+                    this.setRating(value, this.currentSegment, this.currentIndex);
+                }
+            },
+
+            keyboardActionDialog(event) {
                 // are these values somewhere defined as constants?
             
                 if (event.code == "ArrowLeft")
                     this.advancePhoto(-1);
                 else if (event.code == "ArrowRight")
                     this.advancePhoto(1);
-                else if (event.code == "Escape")
-                    this.clearNav();
                 else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
-                    this.setRating(value);
+                    this.setRating(value, this.selectedSegment, this.selectedIndex);
                 }
             },
             clearNav() {
