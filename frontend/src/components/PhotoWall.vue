@@ -513,7 +513,7 @@
 
             getNextPhoto(index, dir) {
                 let nextPhoto = null;
-                let nextIndex = index + dir;
+                let nextIndex = index;
                     
                 if (nextIndex >= 0 && nextIndex <= this.selectedSegment.data.photos.length) {
                     nextPhoto = this.selectedSegment.data.photos[nextIndex-1];
