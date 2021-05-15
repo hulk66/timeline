@@ -67,12 +67,13 @@
         <v-dialog
             v-model="photoFullscreen"
             fullscreen hide-overlay
-            @keydown="checkDigit($event)"
-            @keydown.left="advancePhoto(-1)"
-            @keydown.right="advancePhoto(1)"
+            @keydown="keyboardAction($event)"
             ref="viewerDialog"
             >
-
+            <!--
+            @keydown.left="advancePhoto(-1)"
+            @keydown.right="advancePhoto(1)"
+            -->
             <image-viewer :photo="selectedPhoto" ref="viewer"
                             :nextPhoto="nextPhoto"
                             :prevPhoto="prevPhoto"
@@ -335,9 +336,9 @@
                 // are these values somewhere defined as constants?
             
                 if (event.code == "ArrowLeft")
-                    this.navigate(-1);
+                    this.advancePhoto(-1);
                 else if (event.code == "ArrowRight")
-                    this.navigate(1);
+                    this.advancePhoto(1);
                 else if (event.code == "Escape")
                     this.clearNav();
                 else if (event.code.startsWith("Digit")) {
