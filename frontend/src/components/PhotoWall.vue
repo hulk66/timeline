@@ -44,7 +44,8 @@
                                     :to="to"
                                     :camera="camera"
                                     :rating="rating"
-                                    @select-photo="selectPhoto"
+                                    @click-photo="clickPhoto"
+                                    @select-photo="selectPhotoEvent"
                                     @update-timeline="updateTimeline">
                             </photo-section>
                         </v-card>
@@ -142,7 +143,8 @@
                 totalPhotos: 0,
                 prevPhoto: null,
                 nextPhoto: null,
-                imageViewerDirection: 1
+                imageViewerDirection: 1,
+                selectedPhotos: []
             };
         },
 
@@ -159,7 +161,12 @@
         },
 
         watch: {
-  
+            selectedPhotos: {
+                handler(val) {
+                    this.$emit("photos-selected", val.length > 0)
+                },
+                deep: true
+            }
         },
 
         computed: {
@@ -300,17 +307,20 @@
                 return lv * 100;
             },
 
-            selectPhoto(section, segment, photoIndex) {
+            selectPhotoEvent(section, segment, index, value) {
+                if (value)
+                    this.selectedPhotos.push(segment.data.photos[index]);
+                else {
+                    let p = segment.data.photos[index]
+                    this.selectedPhotos = this.selectedPhotos.filter(item => item.id !== p.id)
+                }
+            },
+            clickPhoto(section, segment, photoIndex) {
                 this.$store.commit("setSelectedSection", section);
                 this.$store.commit("setSelectedSegment", segment);
                 this.$store.commit("setSelectedIndex", photoIndex);
                 this.$store.commit("setSelectedPhoto", segment.data.photos[photoIndex]);
-                /*
-                this.selectedSection = section;
-                this.selectedSegment = segment;
-                this.selectedIndex = photoIndex;
-                this.selectedPhoto = segment.data.photos[photoIndex];
-                */
+       
                 this.photoFullscreen = true;
                 this.currentSection = section;
                 this.currentSegment = segment;
@@ -343,6 +353,8 @@
                     this.navigate(1);
                 else if (event.code == "Escape")
                     this.clearNav();
+                else if (event.code == "Space")
+                    this.selectPhoto();
                 else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
                     this.setRating(value, this.currentSegment, this.currentIndex);
@@ -369,6 +381,7 @@
                 this.$store.commit("markMode", false);
 
             },
+
             findFirstVisibleSegment() {
 
                 let sectionElement = null;
@@ -438,6 +451,12 @@
                         this.currentSegment = this.currentSection.getFirstSegment();
                         this.currentIndex = 0;
                     }
+                }
+            },
+
+            selectPhoto() {
+                if (this.currentIndex != -1) {
+                    this.currentSegment.selectPhoto(this.currentIndex, true);
                 }
             },
 
@@ -593,9 +612,9 @@
                             // find vue component holding the next/prev section
                             el = this.$refs['section' + next_section_id][0];
                             if (dir == 1)
-                                el.selectFirstPhoto();
+                                el.clickFirstPhoto();
                             else
-                                el.selectLastPhoto();
+                                el.clickLastPhoto();
                         } else {
                             // we are at the beginning
                             // reset everything

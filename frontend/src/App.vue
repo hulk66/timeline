@@ -89,176 +89,208 @@
             <v-app-bar-nav-icon @click.stop="drawer = !drawer"/>
             <v-toolbar-title>Timeline - Photo Organizer</v-toolbar-title>
 
-
             <v-spacer></v-spacer>
-                  <v-menu left bottom>
 
-                      <template v-slot:activator="{ on, attrs }">
-                        <v-btn icon v-bind="attrs" v-on="on">
-                            <v-icon>mdi-dots-vertical</v-icon>
-                        </v-btn>
-                      </template>
+            <v-btn icon v-if="showAlbumButton" @click="albumDialog = true">
+                <v-icon>mdi-plus</v-icon>
+            </v-btn>
 
-                      <v-list subheader width="300">
-                          <v-list-item>
-                              <v-list-item-content>
-                                  <v-switch v-model="darkmode" label="Dark Mode"></v-switch>
-                              </v-list-item-content>
-                          </v-list-item>
 
-                          <v-list-item>
+            <v-menu left bottom>
 
-                              <v-list-item-content>
-                                  <v-list-item-title>Preview Size</v-list-item-title>
-                                  <v-list-item-subtitle>
-                                  <v-slider v-model="previewHeight"  hint="Preview Size" max="400" min="80" ></v-slider>
-                                  </v-list-item-subtitle>
-                              </v-list-item-content>
-                          </v-list-item>
+                <template v-slot:activator="{ on, attrs }">
+                <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon>mdi-dots-vertical</v-icon>
+                </v-btn>
+                </template>
 
-                          <v-list-item>
-                               <v-list-item-content>
-                                    <v-list-item-title>Processed Photos</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action>{{totalPhotos}}</v-list-item-action>
-                          </v-list-item>
+                <v-list subheader width="300">
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-switch v-model="darkmode" label="Dark Mode"></v-switch>
+                        </v-list-item-content>
+                    </v-list-item>
 
-                          <v-list-item>
-                               <v-list-item-content>
-                                    <v-list-item-title>Identified Faces</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action>{{totalFaces}}</v-list-item-action>
-                          </v-list-item>
+                    <v-list-item>
 
-                          <v-list-item>
-                               <v-list-item-content>
-                                    <v-list-item-title>Identified Things</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action>{{totalThings}}</v-list-item-action>
-                          </v-list-item>
+                        <v-list-item-content>
+                            <v-list-item-title>Preview Size</v-list-item-title>
+                            <v-list-item-subtitle>
+                            <v-slider v-model="previewHeight"  hint="Preview Size" max="400" min="80" ></v-slider>
+                            </v-list-item-subtitle>
+                        </v-list-item-content>
+                    </v-list-item>
 
-                          <v-list-item>
-                              <v-list-item-content>
-                                    <v-dialog
-                                          v-model="about"
-                                          persistent
-                                          max-width="400"
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-list-item-title>Processed Photos</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action>{{totalPhotos}}</v-list-item-action>
+                    </v-list-item>
+
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-list-item-title>Identified Faces</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action>{{totalFaces}}</v-list-item-action>
+                    </v-list-item>
+
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-list-item-title>Identified Things</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action>{{totalThings}}</v-list-item-action>
+                    </v-list-item>
+
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-dialog
+                                    v-model="about"
+                                    persistent
+                                    max-width="400"
+                                >
+                                    <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                        color="primary" text 
+                                        v-bind="attrs"
+                                        v-on="on">
+                                        About
+                                    </v-btn>
+                                    </template>
+                                    <v-card>
+                                    <v-card-title class="headline">
+                                        Timeline - Photo Organizer
+                                    </v-card-title>
+                                    <v-card-text>
+                                        <v-list dense>
+                                            <v-list-item>
+                                                <v-list-item-icon>
+                                                    <v-icon>mdi-copyright</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>Tobias Himstedt</v-list-item-content>
+                                            </v-list-item>
+                                            <v-list-item>
+                                                <v-list-item-icon>
+                                                    <v-icon>mdi-at</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <a href="mailto://himstedt@gmail.com">himstedt@gmail.com</a>
+                                                    </v-list-item-content>
+                                            </v-list-item>
+
+                                        </v-list>
+
+                                    </v-card-text>
+                                    <v-card-actions>
+                                        <v-spacer></v-spacer>
+                                        <v-btn
+                                        color="primary"
+                                        text
+                                        @click="about = false"
                                         >
-                                          <template v-slot:activator="{ on, attrs }">
-                                            <v-btn
-                                              color="primary" text 
-                                              v-bind="attrs"
-                                              v-on="on">
-                                              About
-                                            </v-btn>
-                                          </template>
-                                          <v-card>
-                                            <v-card-title class="headline">
-                                              Timeline - Photo Organizer
-                                            </v-card-title>
-                                            <v-card-text>
-                                                <v-list dense>
-                                                    <v-list-item>
-                                                        <v-list-item-icon>
-                                                            <v-icon>mdi-copyright</v-icon>
-                                                        </v-list-item-icon>
-                                                        <v-list-item-content>Tobias Himstedt</v-list-item-content>
-                                                    </v-list-item>
-                                                    <v-list-item>
-                                                        <v-list-item-icon>
-                                                            <v-icon>mdi-at</v-icon>
-                                                        </v-list-item-icon>
-                                                        <v-list-item-content>
-                                                            <a href="mailto://himstedt@gmail.com">himstedt@gmail.com</a>
-                                                            </v-list-item-content>
-                                                    </v-list-item>
+                                        OK
+                                        </v-btn>
+                                    </v-card-actions>
+                                    </v-card>
+                                </v-dialog>
+                        </v-list-item-content>
+                    </v-list-item>
+                    <v-list-group  @click.stop>
+                    <template v-slot:activator>
+                        <v-list-item-content>
+                            <v-list-item-title>Queued Jobs</v-list-item-title>
+                        </v-list-item-content>
+                    </template>
 
-                                                </v-list>
+                    <!--
+                    <v-subheader>Queued Jobs</v-subheader>
+                    -->
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-list-item-title>Processing</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action>{{process_count}}</v-list-item-action>
+                    </v-list-item>
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-list-item-title>Face detection</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action v-text="faces_count"></v-list-item-action>
+                    </v-list-item>
+                    <v-list-item>
+                        <v-list-item-content>
+                        <v-list-item-title>Object detection</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action v-text="things_count"></v-list-item-action>
 
-                                            </v-card-text>
-                                            <v-card-actions>
-                                              <v-spacer></v-spacer>
-                                              <v-btn
-                                                color="primary"
-                                                text
-                                                @click="about = false"
-                                              >
-                                                OK
-                                              </v-btn>
-                                            </v-card-actions>
-                                          </v-card>
-                                        </v-dialog>
-                              </v-list-item-content>
-                          </v-list-item>
-                          <v-list-group  @click.stop>
-                            <template v-slot:activator>
-                                <v-list-item-content>
-                                    <v-list-item-title>Queued Jobs</v-list-item-title>
-                                </v-list-item-content>
-                            </template>
+                    </v-list-item>
+                    <v-list-item>
+                        <v-list-item-content>
+                        <v-list-item-title>Address Detection</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action v-text="geo_count"></v-list-item-action>
+                    </v-list-item>
+                    <v-list-item>
+                        <v-list-item-content>
+                        <v-list-item-title>Quality Assessment</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action v-text="iq_count"></v-list-item-action>
+                    </v-list-item>
+                                            </v-list-group>
 
-                          <!--
-                          <v-subheader>Queued Jobs</v-subheader>
-                          -->
-                          <v-list-item>
-                              <v-list-item-content>
-                                    <v-list-item-title>Processing</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action>{{process_count}}</v-list-item-action>
-                          </v-list-item>
-                          <v-list-item>
-                              <v-list-item-content>
-                                  <v-list-item-title>Face detection</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action v-text="faces_count"></v-list-item-action>
-                          </v-list-item>
-                          <v-list-item>
-                              <v-list-item-content>
-                              <v-list-item-title>Object detection</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action v-text="things_count"></v-list-item-action>
+                    <v-list-group @click.stop>
+                    <template v-slot:activator>
+                        <v-list-item-content>
+                            <v-list-item-title>Currently Processing</v-list-item-title>
+                        </v-list-item-content>
+                    </template>
+                    <!--
+                    <v-subheader>Currently processing</v-subheader>
+                    -->
+                    <v-list-item v-for="(job, key, index) in active" :key="index">
+                        <v-list-item-content>
+                        <v-list-item-title v-text="key"></v-list-item-title>
+                        <v-list-item-subtitle v-for="p in job" v-text="p" :key="p"></v-list-item-subtitle>
+                        </v-list-item-content>
 
-                          </v-list-item>
-                          <v-list-item>
-                              <v-list-item-content>
-                              <v-list-item-title>Address Detection</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action v-text="geo_count"></v-list-item-action>
-                          </v-list-item>
-                          <v-list-item>
-                              <v-list-item-content>
-                              <v-list-item-title>Quality Assessment</v-list-item-title>
-                              </v-list-item-content>
-                              <v-list-item-action v-text="iq_count"></v-list-item-action>
-                          </v-list-item>
-                                                  </v-list-group>
+                    </v-list-item>
+                    </v-list-group>
+                </v-list>
 
-                            <v-list-group   @click.stop>
-                            <template v-slot:activator>
-                                <v-list-item-content>
-                                    <v-list-item-title>Currently Processing</v-list-item-title>
-                                </v-list-item-content>
-                            </template>
-                            <!--
-                          <v-subheader>Currently processing</v-subheader>
-                          -->
-                          <v-list-item v-for="(job, key, index) in active" :key="index">
-                              <v-list-item-content>
-                              <v-list-item-title v-text="key"></v-list-item-title>
-                              <v-list-item-subtitle v-for="p in job" v-text="p" :key="p"></v-list-item-subtitle>
-                              </v-list-item-content>
-
-                          </v-list-item>
-                            </v-list-group>
-                      </v-list>
-
-                  </v-menu>
+            </v-menu>
 
         </v-app-bar>
 
         <v-main>
-            <router-view :key="$route.fullPath">></router-view>
+            <router-view @photos-selected="photoSelected" :key="$route.fullPath">></router-view>
+        <v-dialog
+            v-model="albumDialog"
+            scrollable
+            max-width="400px">
+            <v-card>
+                <v-card-title>Select Album or create a new one</v-card-title>
+                <v-divider></v-divider>
+                <v-card-text style="height: 300px;">
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions>
+                    <v-btn
+                        color="primary"
+                        text
+                        @click="albumDialog = false">
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        color="primary"
+                        text
+                        @click="albumDialog = false">
+                        Save
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>            
         </v-main>
+
     </v-app>
 </template>
 
@@ -290,6 +322,8 @@
                 totalPhotos: 0,
                 iq_count: 0,
                 targetHeight: 200,
+                showAlbumButton: false,
+                albumDialog: false
                 /*
                 navigation: [
                     {title: "All", icon: "mdi-view-dashboard", target:}
@@ -341,6 +375,13 @@
 
         },
         methods: {
+
+            createOrSelectAlbum() {
+
+            },
+            photoSelected(val) {
+                this.showAlbumButton = val;
+            },
             person(i) {
                 return this.knownPersons[i]
             },

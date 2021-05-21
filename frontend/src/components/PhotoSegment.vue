@@ -13,7 +13,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- */
+ */ 
 <template>
     <div ref="segmentCont" v-resize="resize">
         <v-subheader>{{segmentDate}}</v-subheader>
@@ -31,7 +31,9 @@
                     v-intersect="{handler:onIntersect}" 
                     :ref="'p' + index"
                     @set-rating="setRating"
-                    @select-photo="selectPhoto">
+                    @click-photo="clickPhoto"
+                    @mark-photo="markPhoto"
+                    @select-photo="selectPhotoEvent">
                 </photo-brick>
         </vue-justified-layout>
     </div>
@@ -121,6 +123,16 @@
                     wallPhoto.mark(value);
 
             },
+            selectPhoto(index, value) {
+                let wallPhoto = this.$refs['p' + index];
+                if (wallPhoto)
+                    wallPhoto.selectPhoto(value);
+
+            },
+
+            selectPhotoEvent(index, value) {
+                this.$emit("select-photo", this, index, value);
+            },
             setRating(index, value) {
                 let photo = this.data.photos[index];
                 // let self = this;
@@ -144,8 +156,8 @@
                 return encodeURI("/photos/preview/" + this.targetHeight + "/" + photo.path);
             },
 
-            selectPhoto(index) {
-                this.$emit("select-photo", this, index)
+            clickPhoto(index) {
+                this.$emit("click-photo", this, index)
             },
             getFirstPhoto() {
                 return this.data.photos[0];
@@ -154,8 +166,8 @@
             getLastPhoto() {
                 return this.data.photos[this.data.photos.length-1];
             },
-            selectLastPhoto() {
-                this.selectPhoto( this.data.photos.length-1);
+            clickLastPhoto() {
+                this.clickPhoto( this.data.photos.length-1);
             }
 
 

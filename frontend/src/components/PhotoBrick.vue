@@ -16,30 +16,36 @@
  */
 <template>
         <div v-intersect="{handler:onIntersect, options: {threshold: 0.75}}">
-        <v-img @click="selectPhoto" 
+        <v-img @click="clickPhoto" 
                 :src="thumbSrc" 
                 eager
-                :class="marked"
+                :class="markedClass"
                 @mouseover="hover = true" 
                 @mouseleave="hover = false"
                 ref="img"
                 >
                 <v-fade-transition>
-                 <div v-if="hover || marked" class="d-flex bottom-gradient fill-height align-end">
-                    
-                    <v-rating 
-                        class="align-end" 
-                        background-color="grey" 
-                        color="white" 
-                        small 
-                        length="5"
-                        dense 
-                        @input="ratePhoto"
-                        @click.native.stop
-                        clearable
-                        :value="photo.stars">
-                    </v-rating>
-                </div>
+                    <div v-if="hover || selected || marked" class="gradient fill-height container">
+                        <v-checkbox class="top-left" 
+                            dark
+                            v-model="selected"
+                            @change="selectPhoto"
+                            @click.native.stop>
+                        </v-checkbox>       
+                        <v-rating 
+                            class="bottom-left"
+                            background-color="grey" 
+                            color="white" 
+                            small 
+                            length="5"
+                            dense 
+                            @input="ratePhoto"
+                            @click.native.stop
+                            clearable
+                            :value="photo.stars">
+                        </v-rating>
+                    </div>
+                                        
                 </v-fade-transition>
         </v-img>
         </div>                    
@@ -63,20 +69,23 @@
             return {
                 hover: false,
                 visible: false,
-                marked: ""
+                marked: false,
+                selected: false
             };
         },
+
 
         mounted() {
         },
 
         computed: {
             thumbSrc() {
-                // return encodeURI("/photos/preview/" + this.targetHeight + "/" + this.photo.path);
                 return encodeURI("/photos/preview/400/" + this.photo.path);
-                // let url = encodeURI("/photos/preview/400/" + this.photo.path);
-                // return require(url); 
             },
+
+            markedClass() {
+                return this.marked ? "marked" : "";
+            }
 
         },
         watch: {
@@ -88,15 +97,21 @@
             ratePhoto(v) {
                 this.$emit("set-rating", this.index, v);
             },
-            selectPhoto() {
-                this.$emit("select-photo", this.index);
+
+            clickPhoto() {
+                this.$emit("click-photo", this.index);
             },
 
+            selectPhoto(value) {
+                this.selected = value;
+                this.$emit("select-photo", this.index, value);
+
+            }, 
+            
             mark(value) {
-                this.marked = value ? "marked" : "";
+                this.marked = value;
             },
-
-
+            
             getImgElement() {
                 return this.$refs.img;
             },
@@ -113,20 +128,18 @@
 <style scoped>
     .container {
         position: relative;
-        text-align: center;
-        padding: 0% ;
     }
+
+    .bottom-left {
+        position: absolute;
+        bottom: 8px;
+        left: 16px;
+        }
 
     .top-left {
         position: absolute;
-        top: 8px;
+        top: 0px;
         left: 16px;
-    }
-
-    .top-right {
-        position: absolute;
-        top: 8px;
-        right: 16px;
     }
 
     .marked {
@@ -134,8 +147,8 @@
         border-color: var(--v-primary-base);
     }
 
-    .bottom-gradient {
-        background-image: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 72px);
+    .gradient {
+        background-image: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 72px), linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, transparent 72px);
     }
     
 </style>

@@ -15,6 +15,13 @@ module.exports = {
 
   devServer: {
     proxy: {
+      
+      '/albums': {
+        target: 'http://localhost:5000',
+        ws: false,
+        changeOrigin: true,
+        autoRewrite: true
+      },
 
       '/photos': {
         target: 'http://localhost:5000',

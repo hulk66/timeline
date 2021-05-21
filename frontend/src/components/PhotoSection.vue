@@ -27,7 +27,8 @@
                         :data="segment"
                         :key="index"
                         :target-height="targetHeight"
-                        @select-photo="selectPhoto"
+                        @click-photo="clickPhoto"
+                        @select-photo="selectPhotoEvent"
                         @update-timeline="updateTimeline">
         </photo-segment>
     </v-card>
@@ -105,10 +106,15 @@
             updateTimeline(currentDate) {
                 this.$emit("update-timeline", currentDate)
             },
-            selectPhoto(segment, photoIndex) {
-                this.$emit("select-photo", this.section, segment, photoIndex)
+
+            clickPhoto(segment, photoIndex) {
+                this.$emit("click-photo", this.section, segment, photoIndex)
             },
 
+            selectPhotoEvent(segment, index, value) {
+                this.$emit("select-photo", this.section, segment, index, value)
+            },
+            
             getFirstSegment() {
                 return this.$refs.segment0[0];
             },
@@ -136,16 +142,17 @@
                 let el = this.nextSegment(segment, dir);
                 if (el) {
                     if (dir == 1)
-                        el.selectPhoto(0)
+                        el.clickPhoto(0)
                     else
-                        el.selectLastPhoto()
+                        el.clickLastPhoto()
 
                 }
                 return el;
             },
 
-            selectFirstPhoto() {
-                this.$refs.segment0[0].selectPhoto(0);
+            
+            clickFirstPhoto() {
+                this.$refs.segment0[0].clickPhoto(0);
             },
 
             getFirstPhoto() {
@@ -159,10 +166,10 @@
                 return segment.getLastPhoto(); 
             },
 
-            selectLastPhoto() {
+            clickLastPhoto() {
                 let len = this.segments.length-1
                 let last_index = this.segments[len].photos.length-1;
-                this.$refs['segment' + len][0].selectPhoto(last_index);
+                this.$refs['segment' + len][0].clickPhoto(last_index);
             },
 
             loadPhotos(sec) {
