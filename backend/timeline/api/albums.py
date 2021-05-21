@@ -31,6 +31,11 @@ def get_all_albums():
     return flask.jsonify([a.to_dict() for a in albums])
 
 
+def add_photos(album, photo_ids):
+    for id in photo_ids:
+        photo = Photo.query.get(id)
+        album.photos.append(photo)
+
 @blueprint.route('/create', methods=['POST'])
 def create_new_album():
     req_data = request.get_json()
@@ -38,8 +43,35 @@ def create_new_album():
     photo_ids = req_data["pids"]
     album = Album()
     album.name = album_name
-    for id in photo_ids:
-        photo = Photo.query.get(id)
-        album.photos.append(photo)
+    add_photos(album, photo_ids)
     db.session.add(album)
     db.session.commit()    
+    return flask.jsonify(album.to_dict)
+
+
+@blueprint.route('/addPhotoToAlbum', methods=['POST'])
+def add_photos_to_album():
+    req_data = request.get_json()
+    album_id = req_data.get("albumId")
+    photo_ids = req_data["pids"]
+    album = Album.query.get(album_id)
+    add_photos(album, photo_ids)
+    db.session.commit()    
+    return flask.jsonify(album.to_dict)
+
+
+@blueprint.route('/rename/<int:id>/<name>', methods=['GET'])
+def rename(id, name):
+    album = Album.query.get(id)
+    album.name = name
+    db.session.commit()
+    return flask.jsonify(album.to_dict)
+    
+
+@blueprint.route('/delete/<int:id>', methods=['GET'])
+def delete(id):
+    album = Album.query.get(id)
+    db.session.delete(album)
+    db.session.commit()
+    return flask.jsonify(True)
+
