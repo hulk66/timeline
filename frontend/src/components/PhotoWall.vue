@@ -17,14 +17,12 @@
 <template>
     <v-container fluid class="fill-height">
         <v-row now-gutters class="fill-height">
-            <v-col>
-                <div class="d-flex noscroll" ref="wall">
-                    <div class="scroller" tabindex="0"  
-                            ref="scroller"
+            <v-col class="noscroll" ref="wall">
+                    <v-card class="scroller" tabindex="0"  
+                            ref="scroller" flat 
                             @mousedown="clearNav()"
                             @keydown="keyboardActionWall($event)">
 
-                        <v-card>
                             <v-card-title>{{totalPhotos}} Photos</v-card-title>
 
                             <photo-section
@@ -36,6 +34,7 @@
                                     :initial-height="height(section)"
                                     :filter-person-id="personId"
                                     :filter-thing-id="thingId"
+                                    :filter-album-id="albumId"
                                     :city="city"
                                     :county="county"
                                     :country="country"
@@ -49,8 +48,6 @@
                                     @update-timeline="updateTimeline">
                             </photo-section>
                         </v-card>
-                    </div>
-                </div>
             </v-col>
                 <v-card class="noscroll scale" ref="timelineContainer" elevation="0"
                         v-on:mousemove="calcPosition($event)"
@@ -69,12 +66,7 @@
             v-model="photoFullscreen"
             fullscreen hide-overlay
             @keydown="keyboardActionDialog($event)"
-            ref="viewerDialog"
-            >
-            <!--
-            @keydown.left="advancePhoto(-1)"
-            @keydown.right="advancePhoto(1)"
-            -->
+            ref="viewerDialog">
             <image-viewer :photo="selectedPhoto" ref="viewer"
                             :nextPhoto="nextPhoto"
                             :prevPhoto="prevPhoto"
@@ -122,7 +114,8 @@
             from: String,
             to: String,
             rating: Number,
-            camera: String
+            camera: String,
+            albumId: Number
         },
         data() {
             return {
@@ -144,7 +137,6 @@
                 prevPhoto: null,
                 nextPhoto: null,
                 imageViewerDirection: 1,
-                selectedPhotos: []
             };
         },
 
@@ -152,21 +144,15 @@
             // this.viewportWidth = this.$refs.wall.clientWidth;
             if (!this.sections || this.sections.length == 0)
                 this.loadAllSections();
-
             
             this.$nextTick(function() {
-                this.$refs.scroller.focus();
+                // this.$refs.scroller.focus();
 
             });
         },
 
         watch: {
-            selectedPhotos: {
-                handler(val) {
-                    this.$emit("photos-selected", val.length > 0)
-                },
-                deep: true
-            }
+
         },
 
         computed: {
@@ -177,7 +163,8 @@
                 selectedSegment: state => state.photo.selectedSegment,
                 selectedSection: state => state.photo.selectedSection,
                 selectedIndex: state => state.photo.selectedIndex,
-                selectedPhoto: state => state.photo.selectedPhoto
+                selectedPhoto: state => state.photo.selectedPhoto,
+                selectedPhotos: state => state.photo.selectedPhotos
             }),
             cssProps() {
                 return {
@@ -309,10 +296,12 @@
 
             selectPhotoEvent(section, segment, index, value) {
                 if (value)
-                    this.selectedPhotos.push(segment.data.photos[index]);
+                    // this.selectedPhotos.push(segment.data.photos[index]);
+                    this.$store.commit("addPhotoToSelection", segment.data.photos[index])
                 else {
                     let p = segment.data.photos[index]
-                    this.selectedPhotos = this.selectedPhotos.filter(item => item.id !== p.id)
+                    // this.selectedPhotos = this.selectedPhotos.filter(item => item.id !== p.id)
+                    this.$store.commit("removePhotoFromSelection", p)
                 }
             },
             clickPhoto(section, segment, photoIndex) {
@@ -642,7 +631,8 @@
                 // let self = this;
                 let params = {};
                 let config = { params: params};
-                params["person_id"] = this.personId;
+                if (!isNaN(this.personId))
+                    params["person_id"] = this.personId;
                 params["thing_id"] = this.thingId; 
                 params["city"] = this.city;
                 params["county"] = this.county;
@@ -652,6 +642,8 @@
                 params["rating"] = this.rating;
                 params["from"] = this.from;
                 params["to"] = this.to;
+                if (!isNaN(this.albumId))
+                    params['album_id'] = this.albumId;
                 axios.get("/api/section/all", config).then((result) => {
                     this.$set(this, "sections",  result.data.sections);
                     // this.sections = result.data.sections;
@@ -674,8 +666,14 @@
         left: 0px;
         right: 0px;
         overflow: auto;
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        /* IE and Edge */
+        /*
+        -ms-overflow-style: none;  
+        */
+        /* Firefox */
+        /*
+        scrollbar-width: none;
+        */  
     }
     .scroller::-webkit-scrollbar {
         display: none;
@@ -683,11 +681,6 @@
 
     .scroller:focus {
         outline-width: 0;
-    }
-    .wallcontainer {
-        position: relative;
-        overflow: hidden;
-        height:100%;
     }
 
     .tl {
@@ -701,7 +694,6 @@
 
     .noscroll {
         position: relative;
-        height: 100%;
     }
 
     .scale {

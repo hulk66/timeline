@@ -20,6 +20,9 @@ from flask import Blueprint, request
 import logging
 from timeline.domain import Album, Photo
 from timeline.extensions import db
+from timeline.api.util import list_as_json
+from sqlalchemy import and_
+
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 logger = logging.getLogger(__name__)
@@ -46,7 +49,7 @@ def create_new_album():
     add_photos(album, photo_ids)
     db.session.add(album)
     db.session.commit()    
-    return flask.jsonify(album.to_dict)
+    return flask.jsonify(album.to_dict())
 
 
 @blueprint.route('/addPhotoToAlbum', methods=['POST'])
@@ -57,7 +60,7 @@ def add_photos_to_album():
     album = Album.query.get(album_id)
     add_photos(album, photo_ids)
     db.session.commit()    
-    return flask.jsonify(album.to_dict)
+    return flask.jsonify(album.to_dict())
 
 
 @blueprint.route('/rename/<int:id>/<name>', methods=['GET'])
@@ -65,7 +68,7 @@ def rename(id, name):
     album = Album.query.get(id)
     album.name = name
     db.session.commit()
-    return flask.jsonify(album.to_dict)
+    return flask.jsonify(album.to_dict())
     
 
 @blueprint.route('/delete/<int:id>', methods=['GET'])
@@ -75,3 +78,20 @@ def delete(id):
     db.session.commit()
     return flask.jsonify(True)
 
+@blueprint.route('/info/<int:id>', methods=['GET'])
+def info(id):
+    album = Album.query.get(id)
+    if album:
+        return flask.jsonify(album.to_dict())
+    return flask.jsonify(None)
+
+@blueprint.route('/photos/<int:album_id>', defaults={'count':None}, methods=['GET'])
+@blueprint.route('/photos/<int:album_id>/<int:count>', methods=['GET'])
+def photos(album_id, count):
+    # q = Photo.query.join(Photo.albums).filter(id == album_id)   
+    # q = Photo.query.filter(Photo.albums.any(id == album_id))
+    photos = Photo.query.join(Photo.albums).filter(Album.id == album_id)
+    print(photos)
+    if count:
+        photos = photos.limit(count)
+    return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))

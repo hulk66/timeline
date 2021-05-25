@@ -5,6 +5,7 @@ export const photo = {
         selectedSection: Object,
         selectedIndex: 0,
         selectedPhoto: Object,
+        selectedPhotos: []
 
     },
 
@@ -24,6 +25,17 @@ export const photo = {
 
         navigate(state, dir) {
             state.selectedIndex += dir;
+        },
+        setSelectedPhotos(state, idArray) {
+            state.selectedPhotos = idArray;
+        }, 
+
+        addPhotoToSelection(state, p) {
+            state.selectedPhotos.push(p);
+        },
+
+        removePhotoFromSelection(state, p) {
+            state.selectedPhotos = state.selectedPhotos.filter(item => item.id !== p.id)
         }
 
     },

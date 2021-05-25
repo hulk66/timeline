@@ -15,8 +15,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-from datetime import datetime
-
 import pickle
 import zlib
 from sqlalchemy_serializer import SerializerMixin
@@ -94,7 +92,6 @@ class Album(db.Model, SerializerMixin):
     photos = db.relationship(
         'Photo', secondary=photo_album, back_populates='albums')
     serialize_rules = ('-photos',)
-
 
 class SmartAlbumDateCriteria(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)

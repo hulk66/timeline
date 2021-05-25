@@ -25,8 +25,9 @@ from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
 from timeline.api.photos import send_image
+from timeline.api.util import list_as_json
 from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
-                             photo_thing, Exif)
+                             photo_thing, Exif, photo_album)
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, distance_maybe,
                                         distance_safe, distance_very_safe,
@@ -208,10 +209,6 @@ def photo_by_face(id):
     return flask.jsonify(photo.to_dict())
 
 
-def list_as_json(list, excludes=None):
-    return flask.jsonify([element.to_dict(rules=excludes) for element in list])
-
-
 def amend_query(request, q):
     person_id = request.args.get("person_id")
     thing_id = request.args.get("thing_id")
@@ -223,6 +220,7 @@ def amend_query(request, q):
     rating = request.args.get("rating")
     fromDate = request.args.get("from")
     toDate = request.args.get("to")
+    album_id = request.args.get("album_id")
     
     if person_id:
         q = q.join(Face, and_(Face.person_id ==
@@ -252,6 +250,10 @@ def amend_query(request, q):
         td = datetime.strptime(toDate, "%Y-%m-%d")
         q = q.filter(Photo.created < td)
  
+    if album_id:
+        q = q.join(photo_album).filter(photo_album.c.album_id == album_id)
+        # q = q.join(Photo.albums).filter( and_(Photo.albums.photo_id == Photo.id, Photo.albums.album_id == album_id))
+        print(q)
     return q
 
 
@@ -313,8 +315,7 @@ def photo_by_section(id):
 
     q = amend_query(request, q)
     photos = q.filter(Photo.section_id == id).order_by(Photo.created.desc())
-    return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-album"))
-    # return flask.jsonify(photos.all())
+    return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))
 
 
 @blueprint.route('/face/assign_face_to_person', methods=['POST'])

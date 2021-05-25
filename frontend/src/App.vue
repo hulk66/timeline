@@ -70,6 +70,14 @@
                             <v-list-item-title>Places</v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
+                    <v-list-item to="/albumList">
+                        <v-list-item-action>
+                            <v-icon>mdi-image-album</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-content>
+                            <v-list-item-title>Albums</v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
                     <v-list-item to="/search">
                         <v-list-item-action>
                             <v-icon>mdi-card-search</v-icon>
@@ -91,7 +99,7 @@
 
             <v-spacer></v-spacer>
 
-            <v-btn icon v-if="showAlbumButton" @click="albumDialog = true">
+            <v-btn icon v-if="showAlbumButton" @click="showAlbumDialog">
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
 
@@ -262,7 +270,7 @@
         </v-app-bar>
 
         <v-main>
-            <router-view @photos-selected="photoSelected" :key="$route.fullPath">></router-view>
+            <router-view  :key="$route.fullPath">></router-view>
         <v-dialog
             v-model="albumDialog"
             scrollable
@@ -271,7 +279,29 @@
                 <v-card-title>Select Album or create a new one</v-card-title>
                 <v-divider></v-divider>
                 <v-card-text style="height: 300px;">
+                    <v-list>
+                        <v-list-item-group>
+                            <v-list-item key="-1" @click="selectAlbum(-1)" >
+                                <v-list-item-icon>
+                                    <v-icon>mdi-plus</v-icon>
+                                </v-list-item-icon>
+                                <v-list-item-content>
+                                    <v-list-item-title>New Album ...</v-list-item-title>
+                                </v-list-item-content>
+                            </v-list-item>
+                             <v-divider></v-divider>
+                            <v-list-item v-for="album in albums" :key="album.id" @click="selectAlbum(album.id)" >
+                                <v-list-item-icon>
+                                    <v-icon>mdi-plus</v-icon>
+                                </v-list-item-icon>
+                                <v-list-item-content>
+                                    <v-list-item-title v-text="album.name"></v-list-item-title>
+                                </v-list-item-content>
+                            </v-list-item>
+                        </v-list-item-group>
+                    </v-list>                    
                 </v-card-text>
+                
                 <v-divider></v-divider>
                 <v-card-actions>
                     <v-btn
@@ -280,12 +310,14 @@
                         @click="albumDialog = false">
                         Cancel
                     </v-btn>
+                    <!--
                     <v-btn
                         color="primary"
                         text
                         @click="albumDialog = false">
                         Save
                     </v-btn>
+                    -->
                 </v-card-actions>
             </v-card>
         </v-dialog>            
@@ -322,13 +354,10 @@
                 totalPhotos: 0,
                 iq_count: 0,
                 targetHeight: 200,
-                showAlbumButton: false,
-                albumDialog: false
-                /*
-                navigation: [
-                    {title: "All", icon: "mdi-view-dashboard", target:}
-                ]
-                */
+                albumDialog: false,
+                albums: [],
+                selectedAlbum: 0
+    
             };
         },
 
@@ -336,7 +365,8 @@
         computed: {
             ...mapState({
                 knownPersons: state => state.person.knownPersons,
-                newFaces: state => state.person.newFaces
+                newFaces: state => state.person.newFaces,
+                selectedPhotos: state => state.photo.selectedPhotos
             }),
 
             previewHeight: {
@@ -347,6 +377,10 @@
                     return this.$store.state.person.previewHeight;
                 }
             },
+
+            showAlbumButton() {
+                return this.selectedPhotos.length > 0;
+            }
 
         },
         watch: {
@@ -366,6 +400,13 @@
                 });
             },
 
+            /*
+            selectedPhotos: {
+                handler(val) {
+                    this.showAlbumButton = val.length > 0;
+                },
+                deep: true
+            }*/
         },
 
         mounted() {
@@ -376,12 +417,36 @@
         },
         methods: {
 
-            createOrSelectAlbum() {
+            showAlbumDialog() {
+                this.albumDialog = true;
+                axios.get("/albums/all").then((result) => {
+                        this.albums = result.data
+                    }).catch((error) => {
+                        // eslint-disable-next-line
+                        console.error(error);
+                    });
+            },
 
+            selectAlbum(albumId) {
+                this.albumDialog = false;
+                if (albumId == -1) {
+                    // New Album
+                    axios.post("/albums/create", {
+                        albumName: "New Album",
+                        pids: this.selectedPhotos.map(a => a.id)
+                    }).then((result) => {
+                        let newAlbum = result.data;
+                        this.$router.push({ name:"album", query: {album_id:newAlbum.id, newAlbum:true}});
+
+                    }).catch(function (error) {
+                        // eslint-disable-next-line no-console
+                        console.log(error);
+                    });
+                } else {
+                    this.$router.push({name:"album",  params: {albumId:albumId}});
+                }
             },
-            photoSelected(val) {
-                this.showAlbumButton = val;
-            },
+      
             person(i) {
                 return this.knownPersons[i]
             },

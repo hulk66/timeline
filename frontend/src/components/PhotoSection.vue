@@ -63,6 +63,7 @@
             to: String,
             rating: Number,
             camera: String,
+            filterAlbumId: Number
         },
         data() {
             return {
@@ -174,14 +175,12 @@
 
             loadPhotos(sec) {
                 // eslint-disable-next-line no-console
-                console.log("Loading photos for section " + sec.id);
+                // console.log("Loading photos for section " + sec.id);
                 let params = {};
                 let config ={ params: params};
-                // if (this.filterPersonId)
-                params["person_id"] = this.filterPersonId;
-                // if (this.filterThingId)
+                if (!isNaN(this.filterPersonId))
+                    params["person_id"] = this.filterPersonId;
                 params["thing_id"] = this.filterThingId;
-
                 params["city"] = this.city;
                 params["county"] = this.county;
                 params["country"] = this.country;
@@ -190,6 +189,8 @@
                 params["to"] = this.to;
                 params["camera"] = this.camera;
                 params["rating"] = this.rating;
+                if (!isNaN(this.filterAlbumId))
+                    params["album_id"] = this.filterAlbumId;
 
 
                 axios.get( "/api/photo/by_section/" + sec.id, config).then((result) => {

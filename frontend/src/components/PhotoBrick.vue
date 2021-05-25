@@ -30,7 +30,7 @@
                             dark
                             v-model="selected"
                             @change="selectPhoto"
-                            @click.native.stop>
+                            @click.native.stop> 
                         </v-checkbox>       
                         <v-rating 
                             class="bottom-left"
