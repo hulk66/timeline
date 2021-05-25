@@ -30,6 +30,8 @@
                             dark
                             v-model="selected"
                             @change="selectPhoto"
+                            @click.shift="clickMultiple"
+                            @click="clickSingle"
                             @click.native.stop> 
                         </v-checkbox>       
                         <v-rating 
@@ -102,10 +104,15 @@
                 this.$emit("click-photo", this.index);
             },
 
+            clickSingle() {
+                this.$emit("select-photo", this.index, this.selected);
+            },
+
+            clickMultiple() {
+                this.$emit("select-multi");
+            },
             selectPhoto(value) {
                 this.selected = value;
-                this.$emit("select-photo", this.index, value);
-
             }, 
             
             mark(value) {

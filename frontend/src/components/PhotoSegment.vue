@@ -33,7 +33,8 @@
                     @set-rating="setRating"
                     @click-photo="clickPhoto"
                     @mark-photo="markPhoto"
-                    @select-photo="selectPhotoEvent">
+                    @select-photo="selectPhotoEvent"
+                    @select-multi="selectMultiEvent">
                 </photo-brick>
         </vue-justified-layout>
     </div>
@@ -133,6 +134,11 @@
             selectPhotoEvent(index, value) {
                 this.$emit("select-photo", this, index, value);
             },
+
+            selectMultiEvent() {
+                this.$emit("select-multi");
+            },
+            
             setRating(index, value) {
                 let photo = this.data.photos[index];
                 // let self = this;

@@ -45,6 +45,7 @@
                                     :rating="rating"
                                     @click-photo="clickPhoto"
                                     @select-photo="selectPhotoEvent"
+                                    @select-multi="selectMultiEvent"
                                     @update-timeline="updateTimeline">
                             </photo-section>
                         </v-card>
@@ -137,6 +138,7 @@
                 prevPhoto: null,
                 nextPhoto: null,
                 imageViewerDirection: 1,
+                selectMulti: false
             };
         },
 
@@ -146,7 +148,7 @@
                 this.loadAllSections();
             
             this.$nextTick(function() {
-                // this.$refs.scroller.focus();
+                this.$refs.scroller.focus();
 
             });
         },
@@ -295,15 +297,32 @@
             },
 
             selectPhotoEvent(section, segment, index, value) {
-                if (value)
-                    // this.selectedPhotos.push(segment.data.photos[index]);
-                    this.$store.commit("addPhotoToSelection", segment.data.photos[index])
-                else {
-                    let p = segment.data.photos[index]
-                    // this.selectedPhotos = this.selectedPhotos.filter(item => item.id !== p.id)
+                let p = segment.data.photos[index]
+                if (value) {
+                    if (this.selectMulti) {
+                        let lowerBoundary = this.$store.state.photo.lowerSelectionBound;
+                        let startSection = self.$refs['section' + lowerBoundary.section][0];
+                        let startSegment = startSection.getSegment(lowerBoundary.segment);
+                        let photoIndex = lowerBoundary.index;
+
+                        while (startSection <= section.index && startSegment.segIndex && photoIndex < index) {
+                            let p = startSegment.data.photos[photoIndex];
+                            this.$store.commit("addPhotoToSelection", p);
+                            
+                        }
+                    } else {
+                        this.$store.commit("addPhotoToSelection", p);
+                        this.$store.commit("setSelectionBoundaries", {section:section.id, segment:segment.data.nr, index:index} );
+                    }
+                } else {
                     this.$store.commit("removePhotoFromSelection", p)
                 }
             },
+
+            selectMultiEvent() {
+                this.selectMulti = true;
+            },
+
             clickPhoto(section, segment, photoIndex) {
                 this.$store.commit("setSelectedSection", section);
                 this.$store.commit("setSelectedSegment", segment);

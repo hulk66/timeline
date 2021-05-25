@@ -29,6 +29,7 @@
                         :target-height="targetHeight"
                         @click-photo="clickPhoto"
                         @select-photo="selectPhotoEvent"
+                        @select-multi="selectMultiEvent"
                         @update-timeline="updateTimeline">
         </photo-segment>
     </v-card>
@@ -83,6 +84,11 @@
         },
 
         methods: {
+
+            getSegment(index) {
+                return this.segment[index];
+            },
+            
             createObserver() {
                 let observer;
                 let root = this.$parent.$parent.$el;
@@ -116,6 +122,10 @@
                 this.$emit("select-photo", this.section, segment, index, value)
             },
             
+            selectMultiEvent() {
+                this.$emit("select-multi");
+            },
+
             getFirstSegment() {
                 return this.$refs.segment0[0];
             },
