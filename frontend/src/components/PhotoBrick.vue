@@ -155,7 +155,7 @@
     }
 
     .gradient {
-        background-image: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 72px), linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, transparent 72px);
+        background-image: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 52px), linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, transparent 52px);
     }
     
 </style>
