@@ -5,7 +5,7 @@ export const photo = {
         selectedSection: Object,
         selectedIndex: 0,
         selectedPhoto: Object,
-        selectedPhotos: new Set(),
+        selectedPhotos: [],
 
         lowerSelectionBound: {
             section: Number.MAX_VALUE,
@@ -14,9 +14,9 @@ export const photo = {
         },
 
         upperSelectionBound: {
-            section: 0,
-            segment: 0,
-            index: 0
+            section: -1,
+            segment: -1,
+            index: -1,
         }
     },
 
@@ -40,14 +40,37 @@ export const photo = {
         setSelectedPhotos(state, idArray) {
             state.selectedPhotos = idArray;
         }, 
+        emptySelectedPhotos(state) {
+            state.selectedPhotos = [];
+            state.lowerSelectionBound.section = Number.MAX_VALUE;
+            state.lowerSelectionBound.segment = Number.MAX_VALUE;
+            state.lowerSelectionBound.index = Number.MAX_VALUE;
+
+            state.upperSelectionBound.section = -1;
+            state.upperSelectionBound.segment = -1;
+            state.upperSelectionBound.index = -1;
+
+        }, 
 
         addPhotoToSelection(state, p) {
-            // state.selectedPhotos.push(p);
-            state.selectedPhotos.add(p);
+            if (! state.selectedPhotos.some(photo => photo.id == p.id))
+                state.selectedPhotos.push(p);
+            // state.selectedPhotos.add(p);
         },
 
         removePhotoFromSelection(state, p) {
             state.selectedPhotos = state.selectedPhotos.filter(item => item.id !== p.id)
+        },
+
+        resetBoundaries(state) {
+            state.lowerSelectionBound.section = Number.MAX_VALUE;
+            state.lowerSelectionBound.segment = Number.MAX_VALUE;
+            state.lowerSelectionBound.index = Number.MAX_VALUE;
+
+            state.upperSelectionBound.section = -1;
+            state.upperSelectionBound.segment = -1;
+            state.upperSelectionBound.index = -1;
+
         },
 
         setSelectionBoundaries(state, { section, segment, index} ) {

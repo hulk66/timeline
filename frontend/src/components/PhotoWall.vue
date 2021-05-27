@@ -18,7 +18,7 @@
     <v-container fluid class="fill-height">
         <v-row now-gutters class="fill-height">
             <v-col class="noscroll" ref="wall">
-                    <v-card class="scroller" tabindex="0"  
+                    <v-card class="scroller" tabindex="0"
                             ref="scroller" flat 
                             @mousedown="clearNav()"
                             @keydown="keyboardActionWall($event)">
@@ -147,10 +147,12 @@
             if (!this.sections || this.sections.length == 0)
                 this.loadAllSections();
             
+            /*
             this.$nextTick(function() {
                 this.$refs.scroller.focus();
 
             });
+            */
         },
 
         watch: {
@@ -296,27 +298,56 @@
                 return lv * 100;
             },
 
+            isBefore(sectionA, segmentA, indexA, sectionB, segmentB, indexB) {
+                return  (sectionA.id < sectionB.id) ||
+                        (sectionA.id == sectionB.id && segmentA.nr < segmentB.nr) ||
+                        (sectionA.id == sectionB.id && segmentA.nr == segmentB.nr && indexA <= indexB);
+            },
             selectPhotoEvent(section, segment, index, value) {
                 let p = segment.data.photos[index]
                 if (value) {
+                    this.$store.commit("setSelectionBoundaries", {section:section.id, segment:segment.data.nr, index:index} );
                     if (this.selectMulti) {
                         let lowerBoundary = this.$store.state.photo.lowerSelectionBound;
-                        let startSection = self.$refs['section' + lowerBoundary.section][0];
-                        let startSegment = startSection.getSegment(lowerBoundary.segment);
+                        let startSection = this.$refs['section' + lowerBoundary.section][0];
+                        let startSegment = startSection.getSegmentEl(lowerBoundary.segment);
                         let photoIndex = lowerBoundary.index;
-
-                        while (startSection <= section.index && startSegment.segIndex && photoIndex < index) {
+                        while (this.isBefore(startSection.section, startSegment.data, photoIndex, section, segment.data, index)) {
                             let p = startSegment.data.photos[photoIndex];
                             this.$store.commit("addPhotoToSelection", p);
+                            startSegment.selectPhoto(photoIndex, true);
+                            let next = this.getNextSectionSegmentAndPhoto(startSection, startSegment, photoIndex, 1)
+                            startSection = next.section;
+                            startSegment = next.segment;
+                            photoIndex = next.index;
                             
                         }
+                        this.selectMulti = false;
                     } else {
                         this.$store.commit("addPhotoToSelection", p);
-                        this.$store.commit("setSelectionBoundaries", {section:section.id, segment:segment.data.nr, index:index} );
                     }
                 } else {
                     this.$store.commit("removePhotoFromSelection", p)
                 }
+            },
+
+            clearSelection() { 
+                let lowerBoundary = this.$store.state.photo.lowerSelectionBound;
+                let upperBoundary = this.$store.state.photo.upperSelectionBound;
+                let startSection = this.$refs['section' + lowerBoundary.section][0];
+                let startSegment = startSection.getSegmentEl(lowerBoundary.segment);
+                let photoIndex = lowerBoundary.index;
+                let endSection = this.$refs['section' + upperBoundary.section][0]
+                let endSegment = endSection.getSegmentEl(upperBoundary.segment);
+                let endIndex = upperBoundary.index;
+                while (this.isBefore(startSection.section, startSegment.data, photoIndex, endSection.section, endSegment.data, endIndex)) {
+                    startSegment.selectPhoto(photoIndex, false);
+                    let next = this.getNextSectionSegmentAndPhoto(startSection, startSegment, photoIndex, 1)
+                    startSection = next.section;
+                    startSegment = next.segment;
+                    photoIndex = next.index;            
+                }
+                this.$store.commit("emptySelectedPhotos");
             },
 
             selectMultiEvent() {
@@ -359,9 +390,10 @@
                     this.navigate(-1);
                 else if (event.code == "ArrowRight")
                     this.navigate(1);
-                else if (event.code == "Escape")
+                else if (event.code == "Escape") {
                     this.clearNav();
-                else if (event.code == "Space")
+                    this.clearSelection();
+                } else if (event.code == "Space")
                     this.selectPhoto();
                 else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
@@ -478,8 +510,6 @@
                     if (this.currentSegment && this.currentIndex >= 0)
                         this.currentSegment.markPhoto(this.currentIndex, false);
 
-                    // this.scrollToPhoto(dir);
-                    // this.findFirstVisibleSegment(dir);
                     this.currentIndex += dir;
                     if (! this.currentSegment) {
                         this.currentSection = this.$refs.section0[0]
@@ -487,13 +517,7 @@
                     }
 
                     if (this.currentIndex < 0 || this.currentIndex >= this.currentSegment.data.photos.length) {
-                        // Photo is in next segment or next section
-                        // first go for next segment in same section
 
-                        // let el = this.$refs['section' + this.currentSection.id][0];
-                        // let el = this.$refs['section' + this.currentSection.id];
-                        // this.$store.commit("setSelectedSegment", el.advanceSegment(this.selectedSegment, dir));
-                        //let el = this.currentSection;
                         this.currentSegment = this.currentSection.nextSegment(this.currentSegment, dir);
 
                         if (this.currentSegment) {
@@ -504,29 +528,6 @@
                         } else {
                             // next or previous photo is not in the current section, so go one section ahead or back
                             this.nextNonEmptySection(dir);
-                            /*
-                            this.currentSection = this.nextNonEmptySection(dir);                        
-                            if (dir == 1) {
-                                this.currentSegment = this.currentSection.getFirstSegment();
-                                this.currentIndex = 0;
-                            } else {
-                                this.currentSegment = this.currentSection.getLastSegment();
-                                this.currentIndex = this.currentSegment.getPhotoLength()-1;
-                            }
-                            */
-                            /*
-                            if (next_section_id >= 0 && next_section_id < this.sections.length) {
-                                // find vue component holding the next/prev section
-                                el = this.$refs['section' + next_section_id][0];
-                                if (dir == 1) {
-                                    this.currentSegment = el.getFirstSegment();
-                                    this.currentIndex = 0;
-                                } else {
-                                    this.currentSegment = el.getLastSegment();
-                                    this.currentIndex = this.currentSegment.getPhotoLength();
-                                }
-                            }
-                            */
 
                         }
                     }
@@ -539,6 +540,59 @@
 
             },
 
+            getNextSectionSegmentAndPhoto(sectionElement, segment, index, dir) {
+                let nextPhoto = null;
+                let nextSection = sectionElement;
+                let nextSegment = segment;
+                let nextIndex = index + dir;
+                if (nextIndex >= 0 && nextIndex < segment.data.photos.length) {
+                    nextPhoto = segment.data.photos[index-1];
+                } else {
+                    // Photo is in next segment or next section
+                    // first go for next segment in same section
+                    // let el = this.$refs['section' + sectionElement.section.id][0];
+                    // let nextSegment = el.advanceSegment(segment, dir)
+                    nextSegment = sectionElement.nextSegment(segment, dir)
+                    if (! nextSegment) {
+                        nextSection = this.getNextSection(sectionElement, dir);
+                        nextSegment = this.getNextSegmentNew(nextSection, dir);
+                    }
+                    if (dir == 1) {
+                        nextPhoto = nextSegment.getFirstPhoto();
+                        nextIndex = 0;
+                    } else {
+                        nextPhoto = nextSegment.getLastPhoto();
+                        nextIndex = nextSegment.data.photos.length;
+                    }
+
+                }
+                return {section:nextSection, segment:nextSegment, index:nextIndex, photo: nextPhoto };
+            },
+
+            getNextSection(sectionElement, dir) {
+                let next_section_id = sectionElement.section.id + dir;
+                let el = this.$refs['section' + next_section_id]
+                while (el && !el[0]) {
+                    next_section_id += dir;
+                    el = this.$refs['section' + next_section_id]
+                }
+                return el[0];
+            },
+
+            getNextSegmentNew(section, dir) {
+                let nextSegment = null;
+                if (dir == 1)
+                    nextSegment = section.getFirstSegment()
+                else
+                    nextSegment = section.getLastSegment();
+                return nextSegment;
+            },
+            
+            getNextSegmentXXX(dir) {
+                let nextSection = this.getNextSection(this.selectedSection, dir);
+                let nextSegment = this.getNextSegmentNew(nextSection, dir);
+                return nextSegment;
+            },
             getNextSegment(dir) {
                 let nextSegment = null;
                 let next_section_id = this.selectedSection.id + dir;
@@ -566,20 +620,7 @@
                     let el = this.$refs['section' + this.selectedSection.id][0];
                     let nextSegment = el.advanceSegment(this.selectedSegment, dir)
                     if (! nextSegment) {
-                        // next or previous photo is not in the current section, so go one section ahead or back
-                        /*
-                        let next_section_id = this.selectedSection.id + dir;
-                        if (next_section_id >= 0 && next_section_id < this.sections.length) {
-                            // find vue component holding the next/prev section
-                            el = this.$refs['section' + next_section_id][0];
-                            if (dir == 1)
-                                nextSegment = el.getFirstSegment()
-                            else
-                                nextSegment = el.getLastSegment();
-                            
-                        }
-                        */
-                       nextSegment = this.getNextSegment(dir);
+                       nextSegment = this.getNextSegmentXXX(dir);
                     }
                     if (nextSegment)
                         if (dir == 1)

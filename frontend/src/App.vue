@@ -99,11 +99,15 @@
 
             <v-spacer></v-spacer>
 
+            <div v-if="showAlbumButton">
+                                {{selectedPhotos.length}} selected
+
+            </div>
             <v-btn icon v-if="showAlbumButton" @click="showAlbumDialog">
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
 
-
+            
             <v-menu left bottom>
 
                 <template v-slot:activator="{ on, attrs }">

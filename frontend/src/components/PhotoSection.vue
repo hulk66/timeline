@@ -86,9 +86,12 @@
         methods: {
 
             getSegment(index) {
-                return this.segment[index];
+                return this.segments[index];
             },
             
+            getSegmentEl(index) {
+                return this.$refs['segment' + index][0];
+            },
             createObserver() {
                 let observer;
                 let root = this.$parent.$parent.$el;
