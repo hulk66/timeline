@@ -21,19 +21,10 @@
                 app
                 clipped
                 expand-on-hover
-                mini-variant>
+                >
             <v-list>
                 <v-list-item-group>
-                    <!--
-                    <v-list-item v-for="item in navigation" :key="item.target" :to="item.target">
-                        <v-list-item-action>
-                            <v-icon v-text="item.icon"></v-icon>
-                        </v-list-item-action>
-                        <v-list-item-content>
-                            <v-list-item-title v-text="item.title"></v-list-item-title>
-                        </v-list-item-content>
-                    </v-list-item>
-                    -->
+
                     <v-list-item :to="{name:'photoWall'}">
                         <v-list-item-action>
                             <v-icon>mdi-view-dashboard</v-icon>
@@ -93,26 +84,35 @@
 
         <v-app-bar
                 app
-                clipped-left dense>
-            <v-app-bar-nav-icon @click.stop="drawer = !drawer"/>
-            <v-toolbar-title>Timeline - Photo Organizer</v-toolbar-title>
-
+                clipped-left >
+            <v-btn v-if="back" icon @click="goBack"><v-icon>mdi-close</v-icon></v-btn>
+            <v-app-bar-nav-icon  v-else @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+            <v-toolbar-title>{{title}}</v-toolbar-title>
+            
             <v-spacer></v-spacer>
 
-            <div v-if="showAlbumButton">
-                                {{selectedPhotos.length}} selected
+            <v-tooltip v-if="showAlbumButton" bottom>
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        @click="showAlbumDialog" 
+                        icon
+                        color="primary"
+                        dark
+                        v-bind="attrs"
+                        v-on="on">
+                    <v-icon>mdi-plus</v-icon>
+                </v-btn>
+            </template>
+            <span>Select or create new Album...</span>
+            </v-tooltip>
 
-            </div>
-            <v-btn icon v-if="showAlbumButton" @click="showAlbumDialog">
-                <v-icon>mdi-plus</v-icon>
-            </v-btn>
 
             
             <v-menu left bottom>
 
                 <template v-slot:activator="{ on, attrs }">
                 <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-dots-vertical</v-icon>
+                    <v-icon color="primary">mdi-dots-vertical</v-icon>
                 </v-btn>
                 </template>
 
@@ -274,7 +274,7 @@
         </v-app-bar>
 
         <v-main>
-            <router-view  :key="$route.fullPath">></router-view>
+            <router-view  @set-goback="setGoBackFunction" :key="$route.fullPath">></router-view>
         <v-dialog
             v-model="albumDialog"
             scrollable
@@ -314,14 +314,7 @@
                         @click="albumDialog = false">
                         Cancel
                     </v-btn>
-                    <!--
-                    <v-btn
-                        color="primary"
-                        text
-                        @click="albumDialog = false">
-                        Save
-                    </v-btn>
-                    -->
+
                 </v-card-actions>
             </v-card>
         </v-dialog>            
@@ -360,7 +353,11 @@
                 targetHeight: 200,
                 albumDialog: false,
                 albums: [],
-                selectedAlbum: 0
+                selectedAlbum: 0,
+                back: false,
+                goBackFunction: null,
+                defaultTitle: "Timeline Photo Organizer",
+                title: "Timeline Photo Organizer",
     
             };
         },
@@ -404,13 +401,6 @@
                 });
             },
 
-            /*
-            selectedPhotos: {
-                handler(val) {
-                    this.showAlbumButton = val.length > 0;
-                },
-                deep: true
-            }*/
         },
 
         mounted() {
@@ -421,6 +411,21 @@
         },
         methods: {
 
+            setGoBackFunction(f, title) {
+                if (f) {
+                    this.title = title;
+                    this.back = true;
+                    this.goBackFunction = f;
+                } else {
+                    this.back = false;
+                    this.title = this.defaultTitle;
+                }
+            },
+
+            goBack() {
+                if (this.goBackFunction)
+                    this.goBackFunction();                
+            },
             showAlbumDialog() {
                 this.albumDialog = true;
                 axios.get("/albums/all").then((result) => {

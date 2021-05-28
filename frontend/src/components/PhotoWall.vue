@@ -17,13 +17,14 @@
 <template>
     <v-container fluid class="fill-height">
         <v-row now-gutters class="fill-height">
-            <v-col class="noscroll" ref="wall">
-                    <v-card class="scroller" tabindex="0"
-                            ref="scroller" flat 
+            <v-col class="noscroll" ref="wall" >
+                    
+                    <div class="scroller ma-2" tabindex="0" 
+                            ref="scroller" 
                             @mousedown="clearNav()"
                             @keydown="keyboardActionWall($event)">
-
-                            <v-card-title>{{totalPhotos}} Photos</v-card-title>
+                            
+                            <div class="text-h3">{{totalPhotos}} Photos</div>
 
                             <photo-section
                                     v-for="section in sections"
@@ -48,7 +49,7 @@
                                     @select-multi="selectMultiEvent"
                                     @update-timeline="updateTimeline">
                             </photo-section>
-                        </v-card>
+                        </div>
             </v-col>
                 <v-card class="noscroll scale" ref="timelineContainer" elevation="0"
                         v-on:mousemove="calcPosition($event)"
@@ -147,12 +148,12 @@
             if (!this.sections || this.sections.length == 0)
                 this.loadAllSections();
             
-            /*
+            
             this.$nextTick(function() {
                 this.$refs.scroller.focus();
-
             });
-            */
+            
+            this.$emit("set-goback", null);
         },
 
         watch: {
@@ -329,6 +330,12 @@
                 } else {
                     this.$store.commit("removePhotoFromSelection", p)
                 }
+                if (this.selectedPhotos.length == 1) {
+                    let self = this;
+                    this.$emit("set-goback", function() {
+                        self.clearSelection();
+                    })
+                }
             },
 
             clearSelection() { 
@@ -348,6 +355,8 @@
                     photoIndex = next.index;            
                 }
                 this.$store.commit("emptySelectedPhotos");
+                this.$emit("set-goback", null);
+                
             },
 
             selectMultiEvent() {
@@ -393,9 +402,10 @@
                 else if (event.code == "Escape") {
                     this.clearNav();
                     this.clearSelection();
-                } else if (event.code == "Space")
+                } else if (event.code == "Space") {
                     this.selectPhoto();
-                else if (event.code.startsWith("Digit")) {
+                    event.preventDefault();
+                } else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
                     this.setRating(value, this.currentSegment, this.currentIndex);
                 }
@@ -497,6 +507,8 @@
             selectPhoto() {
                 if (this.currentIndex != -1) {
                     this.currentSegment.selectPhoto(this.currentIndex, true);
+                    let p = this.currentSegment.data.photos[this.currentIndex];
+                    this.$store.commit("addPhotoToSelection", p);
                 }
             },
 
