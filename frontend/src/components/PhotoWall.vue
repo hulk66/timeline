@@ -24,7 +24,7 @@
                             @mousedown="clearNav()"
                             @keydown="keyboardActionWall($event)">
                             
-                            <div class="text-h3">{{totalPhotos}} Photos</div>
+                            <div v-if="showPhotoCount" class="ma-2 text-h2">{{totalPhotos}} Photos</div>
 
                             <photo-section
                                     v-for="section in sections"
@@ -117,7 +117,11 @@
             to: String,
             rating: Number,
             camera: String,
-            albumId: Number
+            albumId: Number,
+            showPhotoCount: {
+                type: Boolean,
+                default: true
+            }
         },
         data() {
             return {
@@ -506,9 +510,16 @@
 
             selectPhoto() {
                 if (this.currentIndex != -1) {
-                    this.currentSegment.selectPhoto(this.currentIndex, true);
                     let p = this.currentSegment.data.photos[this.currentIndex];
-                    this.$store.commit("addPhotoToSelection", p);
+                    let alreadySelected = this.selectedPhotos.some(photo => photo.id == p.id);
+                    if (alreadySelected) {
+                        this.$store.commit("removePhotoFromSelection", p);
+                        this.currentSegment.selectPhoto(this.currentIndex, false);
+                    } else {
+                        this.$store.commit("addPhotoToSelection", p);
+                        this.currentSegment.selectPhoto(this.currentIndex, true);
+                    }
+
                 }
             },
 

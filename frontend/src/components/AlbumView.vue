@@ -15,9 +15,17 @@
  * GNU General Public License for more details.
  */
 <template>
-    <div class="d-flex flex-column fill-height pa-2">
-        <div >
-            <v-text-field ref="nameInput" class="large" v-model="albumName" :readonly="!edit" @keydown.enter="saveName" @click="edit = true"></v-text-field>
+    <div class="d-flex flex-column fill-height">
+        <div class="ma-2">
+            <v-text-field 
+                ref="nameInput"
+                label="Album Name"
+                :rules="[rules.required]"
+                v-model="albumName" 
+                :readonly="!edit" 
+                @focus="select($event)"
+                @keydown.enter="saveName" 
+                @click="edit = true"></v-text-field>
             <!--
             <div v-else >{{albumName}}</div>
             -->
@@ -25,6 +33,7 @@
         <div class="flex-grow-1">
             <photo-wall  
                 ref="photoWall"
+                :showPhotoCount="false"
                 :albumId="albumId">
             </photo-wall>
         </div>
@@ -51,15 +60,32 @@
         data() {
             return {
                 albumName: "",
-                edit: false
+                edit: false,
+                rules: {
+                    required: value => !!value || 'Required.',
+                },
             };
         },
 
         mounted() {
+            this.edit = this.newAlbum;
             axios.get(`/albums/info/${this.albumId}`).then((result) => {
                 this.albumName = result.data.name
+                if (this.edit) {
+                this.$nextTick(() => {
+                    this.$refs.nameInput.focus();
+                    this.$refs.nameInput.$el.querySelector('input').select();
+                });
+                }
             });
-            this.edit = this.newAlbum;
+            /*
+            if (this.edit) {
+                this.$nextTick(() => {
+                    this.$refs.nameInput.focus();
+                    this.$refs.nameInput.$el.querySelector('input').select();
+                });
+            }
+            */
         },
 
         computed: {
@@ -68,18 +94,26 @@
         },
 
         methods: {
+            select(event) {
+                event.target.select();
+            },
             saveName() {
                 axios.get(`/albums/rename/${this.albumId}/${this.albumName}`);
                 this.edit = false;
-                this.$refs.nameInput.$el.blur();
+                this.$refs.nameInput.blur();
             }
 
         }
     }
 </script>
 <style scoped>
-    .large {
-        font-size: 36px;
+    .v-text-field {
+        font-size: 32px;
         line-height: 48px;
+    }
+    
+    /* what a mess to find this out!! */
+    .v-text-field >>> input {
+        max-height: unset;
     }
 </style>

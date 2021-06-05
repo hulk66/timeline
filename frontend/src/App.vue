@@ -401,6 +401,11 @@
                 });
             },
 
+            selectedPhotos: {
+                handler(val) {
+                    this.back = val.length > 0;
+                }
+            }
         },
 
         mounted() {
@@ -414,10 +419,10 @@
             setGoBackFunction(f, title) {
                 if (f) {
                     this.title = title;
-                    this.back = true;
+                    // this.back = true;
                     this.goBackFunction = f;
                 } else {
-                    this.back = false;
+                    // this.back = false;
                     this.title = this.defaultTitle;
                 }
             },
@@ -441,19 +446,24 @@
                 if (albumId == -1) {
                     // New Album
                     axios.post("/albums/create", {
-                        albumName: "New Album",
+                        albumName: "Change me",
                         pids: this.selectedPhotos.map(a => a.id)
                     }).then((result) => {
                         let newAlbum = result.data;
                         this.$router.push({ name:"album", query: {album_id:newAlbum.id, newAlbum:true}});
-
                     }).catch(function (error) {
                         // eslint-disable-next-line no-console
                         console.log(error);
                     });
                 } else {
-                    this.$router.push({name:"album",  params: {albumId:albumId}});
+                    axios.post("/albums/addPhotoToAlbum", {
+                        albumId: albumId,
+                        pids: this.selectedPhotos.map(a => a.id)
+                    }).then(() => {
+                        this.$router.push({name:"album",  query: {album_id:albumId}});
+                    });
                 }
+                this.$store.commit("emptySelectedPhotos");
             },
       
             person(i) {

@@ -16,7 +16,7 @@
  */ 
 <template>
     <div ref="segmentCont" v-resize="resize">
-        <v-subheader>{{segmentDate}}</v-subheader>
+        <div class="ma-2 text-h6">{{segmentDate}}</div>
         <vue-justified-layout
                 :items="data.photos"
                 v-slot="{item, index}"
