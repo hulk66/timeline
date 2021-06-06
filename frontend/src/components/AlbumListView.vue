@@ -16,11 +16,11 @@
  */
 <template>
     <v-container fluid class="fill-height">
-        <v-row>
+        <v-row no-gutters>
             <v-col
                 v-for="album in albums" :key="album.id"
                 class="d-flex child-flex"
-                xs="3" md="2" lg="2" xl="2">
+                cols="6" md="4" lg="2" xl="1">
                     <album-preview :album="album"></album-preview>
                 </v-col>
         </v-row>
@@ -29,6 +29,7 @@
 <script>
     import axios from 'axios';
     import AlbumPreview from './AlbumPreview'
+
     export default {
 
         name: "AlbumListView",
@@ -50,6 +51,7 @@
             axios.get(`/albums/all`).then((result) => {
                 this.albums = result.data;
             });
+            this.$store.commit("setSelectedAlbum", null);
         },
 
         computed: {

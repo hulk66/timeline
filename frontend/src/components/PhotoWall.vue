@@ -121,6 +121,10 @@
             showPhotoCount: {
                 type: Boolean,
                 default: true
+            },
+            selectionAllowed: {
+                type: Boolean,
+                default: true
             }
         },
         data() {
@@ -158,6 +162,7 @@
             });
             
             this.$emit("set-goback", null);
+            this.$store.commit("setSelectionAllowed", this.selectionAllowed);
         },
 
         watch: {

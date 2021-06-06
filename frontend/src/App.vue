@@ -90,6 +90,20 @@
             <v-toolbar-title>{{title}}</v-toolbar-title>
             
             <v-spacer></v-spacer>
+            <v-tooltip v-if="showRemoveButton" bottom>
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        @click="deletePhotosOrAlbum" 
+                        icon
+                        color="primary"
+                        dark
+                        v-bind="attrs"
+                        v-on="on">
+                    <v-icon>mdi-delete</v-icon>
+                </v-btn>
+            </template>
+            <span>Delete ...</span>
+            </v-tooltip>
 
             <v-tooltip v-if="showAlbumButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
@@ -275,6 +289,7 @@
 
         <v-main>
             <router-view  @set-goback="setGoBackFunction" :key="$route.fullPath">></router-view>
+
         <v-dialog
             v-model="albumDialog"
             scrollable
@@ -308,16 +323,56 @@
                 
                 <v-divider></v-divider>
                 <v-card-actions>
+                    <v-spacer></v-spacer>
                     <v-btn
                         color="primary"
                         text
                         @click="albumDialog = false">
                         Cancel
                     </v-btn>
-
                 </v-card-actions>
             </v-card>
-        </v-dialog>            
+        </v-dialog>
+        <v-dialog
+            v-model="deletePhotosDialog"
+            max-width="400px">
+            <v-card>
+                <v-card-title>Delete {{selectedPhotos.length}} Photos</v-card-title>
+                <v-card-text>
+                    <div>
+                    Do you want to delete {{selectedPhotos.length}} from the Catalog?
+                    </div>
+                    <br/>
+                    The photos itself will not be physically removed from the filesystem.
+                    They will just be ignored within this application.
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" text @click="deletePhotosDialog = false">Cancel</v-btn>
+                    <v-btn color="warning" text @click="deletePhotos">Delete</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <v-dialog
+            v-model="deleteAlbumDialog"
+            max-width="400px"
+            v-if="selectedAlbum">
+            <v-card>
+                <v-card-title>Delete Album</v-card-title>
+                <v-card-text>
+                    <div>
+                    Do you want to delete the album {{selectedAlbum.name}} from the Catalog?
+                    </div>
+                    <br/>
+                    The photos in this album will not be affected / removed.
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" text @click="deleteAlbumDialog = false">Cancel</v-btn>
+                    <v-btn color="warning" text @click="deleteAlbum">Delete</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
         </v-main>
 
     </v-app>
@@ -353,12 +408,11 @@
                 targetHeight: 200,
                 albumDialog: false,
                 albums: [],
-                selectedAlbum: 0,
                 back: false,
                 goBackFunction: null,
                 defaultTitle: "Timeline Photo Organizer",
-                title: "Timeline Photo Organizer",
-    
+                deletePhotosDialog: false,
+                deleteAlbumDialog: false
             };
         },
 
@@ -367,7 +421,8 @@
             ...mapState({
                 knownPersons: state => state.person.knownPersons,
                 newFaces: state => state.person.newFaces,
-                selectedPhotos: state => state.photo.selectedPhotos
+                selectedPhotos: state => state.photo.selectedPhotos,
+                selectedAlbum: state => state.photo.selectedAlbum
             }),
 
             previewHeight: {
@@ -381,6 +436,14 @@
 
             showAlbumButton() {
                 return this.selectedPhotos.length > 0;
+            },
+
+            showRemoveButton() {
+                return this.selectedPhotos.length > 0 || this.selectedAlbum != null;
+            },
+
+            title() {
+                return this.selectedPhotos.length > 0 ? this.selectedPhotos.length.toString() + " Photos selected" : this.defaultTitle;
             }
 
         },
@@ -416,15 +479,36 @@
         },
         methods: {
 
-            setGoBackFunction(f, title) {
-                if (f) {
-                    this.title = title;
-                    // this.back = true;
-                    this.goBackFunction = f;
-                } else {
-                    // this.back = false;
-                    this.title = this.defaultTitle;
-                }
+            deletePhotosOrAlbum() {
+                // this is most likely not a good solution but I don't know better at the moment
+                if (this.selectedPhotos.length > 0) 
+                    this.deletePhotosDialog = true
+                else if (this.selectedAlbum)
+                    this.deleteAlbumDialog = true
+                
+            },
+            deletePhotos() {
+                axios.post("/photos/remove", {
+                        physically: false,
+                        pids: this.selectedPhotos.map(a => a.id)
+                    }).then(() => {
+                        this.$router.go();
+                    }).catch(function (error) {
+                        // eslint-disable-next-line no-console
+                        console.log(error);
+                    });
+                this.$store.commit("emptySelectedPhotos");
+                this.deletePhotosDialog = false;
+            },
+
+            deleteAlbum() {
+                axios.get(`/albums/remove/${this.selectedAlbum.id}`).then(() => {
+                    this.$router.push({'name':'albumList'})
+                });
+                this.deleteAlbumDialog = false;
+            },
+            setGoBackFunction(f) {
+                this.goBackFunction = f;
             },
 
             goBack() {

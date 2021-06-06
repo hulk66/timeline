@@ -29,8 +29,8 @@ from timeline.api.util import list_as_json
 from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
                              photo_thing, Exif, photo_album)
 from timeline.extensions import db
-from timeline.tasks.match_tasks import (assign_new_person, distance_maybe,
-                                        distance_safe, distance_very_safe,
+from timeline.tasks.match_tasks import (assign_new_person, 
+                                        distance_safe,
                                         find_all_classified_faces,
                                         find_closest, group_faces,
                                         match_all_unknown_faces)
@@ -288,7 +288,7 @@ def all_sections():
             Photo.section_id == sec_end_id, Photo.created != None)).order_by(Photo.created.asc()).first()
         oldest_date = oldest_photo.created
 
-        total = Photo.query
+        total = Photo.query.filter(Photo.ignore == False)
         total = amend_query(request, total)
         total_photos = total.count()
 
@@ -311,7 +311,7 @@ def get_section_by_date(date_str):
 def photo_by_section(id):
     logger.debug("Get section %i", id)
 
-    q = Photo.query
+    q = Photo.query.filter(Photo.ignore == False)
 
     q = amend_query(request, q)
     photos = q.filter(Photo.section_id == id).order_by(Photo.created.desc())

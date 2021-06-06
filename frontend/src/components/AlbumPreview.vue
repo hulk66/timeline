@@ -23,7 +23,7 @@
             </v-col>
         </v-row>
         </v-card-text>
-        <v-card-title v-text="album.name"></v-card-title>
+        <v-card-subtitle class="text-h6" v-text="album.name"></v-card-subtitle>
     </v-card>
 </template>
 <script>

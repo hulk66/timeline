@@ -34,6 +34,7 @@
             <photo-wall  
                 ref="photoWall"
                 :showPhotoCount="false"
+                :selectionAllowed="false"
                 :albumId="albumId">
             </photo-wall>
         </div>
@@ -71,21 +72,14 @@
             this.edit = this.newAlbum;
             axios.get(`/albums/info/${this.albumId}`).then((result) => {
                 this.albumName = result.data.name
+                this.$store.commit("setSelectedAlbum", result.data)
                 if (this.edit) {
-                this.$nextTick(() => {
-                    this.$refs.nameInput.focus();
-                    this.$refs.nameInput.$el.querySelector('input').select();
-                });
+                    this.$nextTick(() => {
+                        this.$refs.nameInput.focus();
+                        this.$refs.nameInput.$el.querySelector('input').select();
+                    });
                 }
             });
-            /*
-            if (this.edit) {
-                this.$nextTick(() => {
-                    this.$refs.nameInput.focus();
-                    this.$refs.nameInput.$el.querySelector('input').select();
-                });
-            }
-            */
         },
 
         computed: {
@@ -93,6 +87,11 @@
         watch: {
         },
 
+        // eslint-disable-next-line no-unused-vars
+        beforeRouteLeave(to, from, next) {
+            this.$store.commit("setSelectedAlbum", null)
+            next();
+        },
         methods: {
             select(event) {
                 event.target.select();

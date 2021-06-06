@@ -93,6 +93,7 @@ class Album(db.Model, SerializerMixin):
         'Photo', secondary=photo_album, back_populates='albums')
     serialize_rules = ('-photos',)
 
+
 class SmartAlbumDateCriteria(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     start_date = db.Column(db.DateTime)
@@ -139,6 +140,7 @@ class Photo(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(512), unique=True)
 
+    ignore = db.Column(db.Boolean, index=True)
     filename = db.Column(db.String(100))
     faces = db.relationship("Face", back_populates="photo",
                             cascade="all, delete, delete-orphan")

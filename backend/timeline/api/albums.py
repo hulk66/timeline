@@ -71,7 +71,7 @@ def rename(id, name):
     return flask.jsonify(album.to_dict())
     
 
-@blueprint.route('/delete/<int:id>', methods=['GET'])
+@blueprint.route('/remove/<int:id>', methods=['GET'])
 def delete(id):
     album = Album.query.get(id)
     db.session.delete(album)

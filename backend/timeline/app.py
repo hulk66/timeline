@@ -38,6 +38,7 @@ def create_app(testing=False, cli=False, env=None):
     if testing is True:
         app.config["TESTING"] = True
 
+    # app.config['SQLALCHEMY_ECHO'] = True
     configure_extensions(app, cli)
     # configure_apispec(app)
     register_blueprints(app)

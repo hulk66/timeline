@@ -84,6 +84,7 @@ def create_photo(path, commit=True):
     #photo.score_aesthetic = 0.0
     # photo.score_technical = 0.0
     # photo.score_brisque = 0.0
+    photo.ingore = False
     photo.exif = []
     photo.path = img_path
     photo.filename = os.path.basename(img_path)
@@ -191,7 +192,7 @@ def sort_old_photos():
         logger.debug("sort_old_photos - nothing to do")
         return
 
-    oldest_photo = Photo.query.order_by(Photo.created.asc()).first()
+    oldest_photo = Photo.query.filter(Photo.ignore == False).order_by(Photo.created.asc()).first()
     if not oldest_photo:
         return
     min_date = oldest_photo.created - timedelta(days=1)
@@ -220,7 +221,7 @@ def compute_sections():
     offset = 0
     batch_size = 300
     current_section = 0
-    photos = Photo.query.order_by(Photo.created.desc()).limit(batch_size).all()
+    photos = Photo.query.filter(Photo.ignore == False).order_by(Photo.created.desc()).limit(batch_size).all()
     prev_batch_date = None
     last_batch_date = None
     section = None

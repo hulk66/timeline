@@ -22,11 +22,11 @@
                 :class="markedClass"
                 @mouseover="hover = true" 
                 @mouseleave="hover = false"
-                ref="img"
-                >
+                ref="img">
                 <v-fade-transition>
                     <div v-if="hover || selected || marked" class="gradient fill-height container">
                         <v-checkbox class="top-left" 
+                            v-if="selectionAllowed"
                             dark
                             v-model="selected"
                             @change="selectPhoto"
@@ -55,9 +55,10 @@
 </template>
 <script>
 
+    import { mapState } from 'vuex'
 
     export default {
-
+    
         name: "PhotoBrick",
 
         components: {
@@ -87,7 +88,11 @@
 
             markedClass() {
                 return this.marked ? "marked" : "";
-            }
+            },
+
+            ...mapState({
+                selectionAllowed: state => state.photo.selectionAllowed,
+            }),
 
         },
         watch: {

@@ -6,6 +6,8 @@ export const photo = {
         selectedIndex: 0,
         selectedPhoto: Object,
         selectedPhotos: [],
+        selectionAllowed: true,
+        selectedAlbum: Object,
 
         lowerSelectionBound: {
             section: Number.MAX_VALUE,
@@ -17,10 +19,18 @@ export const photo = {
             section: -1,
             segment: -1,
             index: -1,
-        }
+        },
     },
 
     mutations: {
+        setSelectedAlbum(state, album) {
+            state.selectedAlbum = album;
+        },
+
+        setSelectionAllowed(state, allowed) {
+            state.selectionAllowed = allowed;
+        },
+
         setSelectedSegment(state, segment) {
             state.selectedSegment = segment;
         },
