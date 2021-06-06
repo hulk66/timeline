@@ -373,6 +373,21 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <v-snackbar v-model="snackbar" :timeout="6000">
+            Use the Left and Right Cursor Keys to navigate.<br/>
+            Use Space to add Photos to the selection. <br/>
+            Use 1-5 Keys to rate a Photo. <br/>
+            Use Shift-Click to select multiple Photos.
+            <template v-slot:action="{ attrs }">
+                <v-btn
+                    color="primary"
+                    text
+                    v-bind="attrs"
+                    @click="snackbar = false">
+              Close
+        </v-btn>
+      </template>
+        </v-snackbar>
         </v-main>
 
     </v-app>
@@ -412,7 +427,8 @@
                 goBackFunction: null,
                 defaultTitle: "Timeline Photo Organizer",
                 deletePhotosDialog: false,
-                deleteAlbumDialog: false
+                deleteAlbumDialog: false,
+                snackbar: false
             };
         },
 
@@ -467,6 +483,7 @@
             selectedPhotos: {
                 handler(val) {
                     this.back = val.length > 0;
+                    this.snackbar = (val.length == 1);
                 }
             }
         },
