@@ -85,13 +85,12 @@ def info(id):
         return flask.jsonify(album.to_dict())
     return flask.jsonify(None)
 
-@blueprint.route('/photos/<int:album_id>', defaults={'count':None}, methods=['GET'])
+@blueprint.route('/photos/<int:album_id>', defaults={'count': None}, methods=['GET'])
 @blueprint.route('/photos/<int:album_id>/<int:count>', methods=['GET'])
 def photos(album_id, count):
     # q = Photo.query.join(Photo.albums).filter(id == album_id)   
     # q = Photo.query.filter(Photo.albums.any(id == album_id))
     photos = Photo.query.join(Photo.albums).filter(Album.id == album_id)
-    print(photos)
     if count:
         photos = photos.limit(count)
     return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))

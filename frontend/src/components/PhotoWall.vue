@@ -188,6 +188,12 @@
                 }
             },
         },
+
+         // eslint-disable-next-line no-unused-vars
+        beforeRouteLeave(to, from, next) {
+            this.$store.commit("emptySelectedPhotos");
+            next();
+        },
         methods: {
 
             getTickDates() {
