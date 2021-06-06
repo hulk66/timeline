@@ -20,28 +20,6 @@
             <v-col cols=2>
                 <v-card flat>
                     <v-container fluid>
-                    <!--
-                    <v-row>
-                        <v-col v-for="crit in criterias" :key="crit.type">
-                            <v-rating v-if="crit.type == 'rating'"></v-rating>
-                            <date-picker v-if="crit.type == 'date'" title="From" v-model="crit.from"></date-picker>
-                            <date-picker v-if="crit.type == 'date'" title="To" v-model="crit.to"></date-picker>
-                            <v-select v-if="crit.type == 'camera'" label="Camera Make" :items="cameras" v-model="crit.name"></v-select>
-                            <v-select v-if="crit.type == 'country'" label="Country" :items="countries" v-model="crit.name"></v-select>
-                            <v-select v-if="crit.type == 'city'" label="City" :items="cities" v-model="crit.name"></v-select>
-                            <v-select v-if="crit.type == 'person'" label="Person" :items="knownPersons" item-text="name" v-model="crit.name"></v-select>
-                        </v-col>
-
-                    </v-row>
-                    <v-row>
-                        <v-col>
-                            <v-select v-model="criteria" :items="criteriaList"></v-select>
-                        </v-col>
-                        <v-col>
-                            <v-btn @click="addCriteria">Add</v-btn>
-                        </v-col>
-                    </v-row>
-                    -->
                     <v-row dense>
                         <v-col>
                             <date-picker v-model="from" title="From"></date-picker>
@@ -152,6 +130,12 @@
 
         },
 
+         // eslint-disable-next-line no-unused-vars
+        beforeRouteLeave(to, from, next) {
+            this.$store.commit("emptySelectedPhotos");
+            next();
+        },
+        
         methods: {
             loadData() {
                 axios.get("/api/location/countries").then (result => {

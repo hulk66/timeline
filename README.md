@@ -20,6 +20,12 @@ a resolved address along with a little map and some important Exif data)
 * Rating of Photos via the usual Rating stars either by clicking the rating while hovering over a photo or selecting a photo via cursor left/right and use the 0-5 keys (filtering for the so rated photos will follow)
 * Option to change the preview size to accommodate more or less on the photo wall
 
+### New (0.8)
+* Selection of Multiple Photos at one by Shift-Click
+* Albums can be created (and deleted)
+* New Albums Overview 
+* Photos can be removed from the Catalog
+* New Search View. Photos can be searched by Date Range, Rating, Camera Make, Country, City, People
 
 ### General View
 <img src="assets/start_view.jpg" width="400"/>
@@ -46,6 +52,19 @@ Please note that it detects more than just one thing.
 There is also a Dark Mode and an information panel showing what is happening in the background.
 
 <img src="assets/info.jpg"  width="400">
+
+## Search View
+
+There is also a new Seach View (to be extended) to query photos by various combined attributes
+
+<img src="assets/search.jpg"  width="400">
+
+## Album View
+
+Photos can be selected and added to existing or new Albums
+
+<img src="assets/albums.jpg"  width="400">
+
 
 # How to use it
 The easiest way is to use Docker, resp. docker-compose 
