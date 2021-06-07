@@ -7,7 +7,7 @@ export const photo = {
         selectedPhoto: Object,
         selectedPhotos: [],
         selectionAllowed: true,
-        selectedAlbum: Object,
+        selectedAlbum: null,
 
         lowerSelectionBound: {
             section: Number.MAX_VALUE,

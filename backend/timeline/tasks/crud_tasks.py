@@ -84,7 +84,7 @@ def create_photo(path, commit=True):
     #photo.score_aesthetic = 0.0
     # photo.score_technical = 0.0
     # photo.score_brisque = 0.0
-    photo.ingore = False
+    photo.ignore = False
     photo.exif = []
     photo.path = img_path
     photo.filename = os.path.basename(img_path)
@@ -276,7 +276,7 @@ def schedule_next_compute_sections(minutes=None):
     else:
         compute_sections_schedule = int(current_app.config['COMPUTE_SECTIONS_EVERY_MINUTES'])
     logger.debug("Scheduling next computing section in %i minutes", compute_sections_schedule)
-    c = chain(compute_sections.s().set(queue="beat"), schedule_next_compute_sections.si().set(queue="beat"))
+    c = chain(compute_sections.si().set(queue="beat"), schedule_next_compute_sections.si().set(queue="beat"))
     c.apply_async(countdown=compute_sections_schedule*60)
 
 @celery.task
