@@ -15,9 +15,8 @@
  * GNU General Public License for more details.
  */
 <template>
-        <div v-intersect="{handler:onIntersect, options: {threshold: 0.75}}">
-        <v-img @click="clickPhoto" 
-                :src="thumbSrc" 
+        <v-img @click="clickPhoto"
+                :src="thumbSrc"
                 eager
                 :class="markedClass"
                 @mouseover="hover = true" 
@@ -50,7 +49,6 @@
                                         
                 </v-fade-transition>
         </v-img>
-        </div>                    
 
 </template>
 <script>
@@ -71,7 +69,7 @@
         data() {
             return {
                 hover: false,
-                visible: false,
+                // visible: false,
                 marked: false,
                 selected: false
             };
@@ -128,12 +126,13 @@
                 return this.$refs.img;
             },
             // eslint-disable-next-line no-unused-vars
+            /*
             onIntersect(entries, observer) {
                 let element = entries[0];
                 this.visible = element.isIntersecting
                 // console.log("Index " + this.index + " is " + this.visible);
             },
-
+            */
         }
     }
 </script>

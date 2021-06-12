@@ -19,4 +19,10 @@ import flask
 
 
 def list_as_json(list, excludes=None):
-    return flask.jsonify([element.to_dict(rules=excludes) for element in list])
+    result = [element.to_dict(rules=excludes) for element in list]
+    return flask.jsonify(result)
+
+
+def list_as_json_only(list, only):
+    result = [element.to_dict(only=only) for element in list]
+    return flask.jsonify(result)

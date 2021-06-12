@@ -15,8 +15,14 @@
  * GNU General Public License for more details.
  */ 
 <template>
-    <div ref="segmentCont" v-resize="resize">
-        <div class="ma-2 text-h6">{{segmentDate}}</div>
+    <div ref="segmentCont" 
+        :id="'seg' + segIndex"
+        v-intersect="{handler:onIntersect, options: {rootMargin:'400px', root:this.$parent.$parent.$el}}" 
+        v-resize="resize"
+        > 
+        <div class="ma-2 text-h6">{{segIndex}} {{segmentDate}}</div>
+        <!-- v-intersect="{handler:onIntersect, options: {rootMargin:this.rootMargin, root:this.$parent.$el}}" -->
+
         <vue-justified-layout
                 :items="data.photos"
                 v-slot="{item, index}"
@@ -26,9 +32,9 @@
                     boxSpacing: 5,
                     containerPadding:5}">
                 <photo-brick 
+                    v-if="visible"
                     :photo="item" 
                     :index="index" 
-                    v-intersect="{handler:onIntersect}" 
                     :ref="'p' + index"
                     @set-rating="setRating"
                     @click-photo="clickPhoto"
@@ -61,7 +67,8 @@
         data() {
             return {
                 contWidth: 1060,
-                hover: false
+                hover: false,
+                visible: false
             };
         },
 
@@ -69,6 +76,10 @@
         },
 
         computed: {
+            rootMargin() {
+                return this.targetHeight.toString() + "px";
+            },
+
             segmentDate() {
                 return moment(this.data.date).format("dddd, D.M.YYYY")
             },
@@ -148,11 +159,18 @@
                 });
             },
 
+
             // eslint-disable-next-line no-unused-vars
             onIntersect(entries, observer) {
                 let element = entries[0];
                 if (element.isIntersecting) {
+                    console.log(element.target.id + " visible")
+                    this.visible = true;
                     this.$emit('update-timeline', this.data.date)
+                } else {
+                    this.visible = false;
+                    console.log(element.target.id + " invisible")
+
                 }
             },
             resize() {

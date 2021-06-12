@@ -20,7 +20,11 @@
         The Intersection handler is called exactly when a card enters or leave the visible space
         Would expect this to happen "500px" earlier but for some reason it's not working
     -->
-    <v-card v-intersect="{handler:onIntersect, options: {rootMargin:'500px'}}" ref="card" :min-height="initialHeight" elevation="0" > 
+    <v-card  
+        ref="card"
+        v-intersect="{handler:onIntersect, options: {rootMargin:rootMargin, root:this.$parent.$el}}" 
+        :min-height="initialHeight" 
+        elevation="0" > 
         <photo-segment  :ref="'segment' + index"
                         v-for="(segment, index) in segments"
                         :seg-index="index"
@@ -74,9 +78,12 @@
         },
 
         computed: {
+            rootMargin() {
+                return (this.targetHeight * 3).toString() + "px";
+            }
         },
         mounted() {
-            // this.createObserver();
+            //this.createObserver();
         },
 
         watch: {
@@ -92,9 +99,10 @@
             getSegmentEl(index) {
                 return this.$refs['segment' + index][0];
             },
+            /*
             createObserver() {
                 let observer;
-                let root = this.$parent.$parent.$el;
+                let root = this.$parent.$el;
                 let options = {
                     root: root,
                     rootMargin: "200px",
@@ -103,6 +111,7 @@
                 observer = new IntersectionObserver(this.onIntersect, options);
                 observer.observe(this.$refs.card.$el);
             },
+            */
             findFirstVisibleSegment() {
                 let segementElement = null;
                 for (let i=0; i<this.segments.length; i++) {
@@ -221,10 +230,10 @@
                         this.loadPhotos(this.section);
                     this.visible = true;
                     // eslint-disable-next-line no-console
-                    // console.log(this.section.id + " visible");
+                    console.log("Section " + this.section.id + " visible");
                 } else {
                     // eslint-disable-next-line no-console
-                    // console.log(this.section.id + " invisible");
+                    console.log("Section " + this.section.id + " invisible");
                     this.photos = [];
                     this.visible = false;
                 }

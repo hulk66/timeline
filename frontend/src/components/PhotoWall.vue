@@ -18,12 +18,11 @@
     <v-container fluid class="fill-height">
         <v-row now-gutters class="fill-height">
             <v-col class="noscroll" ref="wall" >
-                    
-                    <div class="scroller ma-2" tabindex="0" 
+                    <v-sheet class="scroller ma-2" tabindex="0" 
                             ref="scroller" 
                             @mousedown="clearNav()"
                             @keydown="keyboardActionWall($event)">
-                            
+
                             <div v-if="showPhotoCount" class="ma-2 text-h2">{{totalPhotos}} Photos</div>
 
                             <photo-section
@@ -49,7 +48,7 @@
                                     @select-multi="selectMultiEvent"
                                     @update-timeline="updateTimeline">
                             </photo-section>
-                        </div>
+                        </v-sheet>
             </v-col>
                 <v-card class="noscroll scale" ref="timelineContainer" elevation="0"
                         v-on:mousemove="calcPosition($event)"
@@ -158,7 +157,7 @@
             
             
             this.$nextTick(function() {
-                this.$refs.scroller.focus();
+                this.$refs.scroller.$el.focus();
             });
             
             this.$emit("set-goback", null);
@@ -196,6 +195,11 @@
         },
         methods: {
 
+            // eslint-disable-next-line no-unused-vars
+            onIntersect(entries, observer) {
+                let element = entries[0];
+                console.log(element.isIntersecting)
+            },                     
             getTickDates() {
                 // let start = moment(this.max_date);
                 // let end = moment(this.min_date);
@@ -753,13 +757,18 @@
 </script>
 
 <style scoped>
+
+    .inscroll {
+        overflow: scroll;
+
+    }
     .scroller {
         position: absolute;
         top: 0px;
         bottom: 0px;
         left: 0px;
         right: 0px;
-        overflow: auto;
+        overflow: scroll;
         /* IE and Edge */
         /*
         -ms-overflow-style: none;  

@@ -25,7 +25,7 @@ from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
 from timeline.api.photos import send_image
-from timeline.api.util import list_as_json
+from timeline.api.util import list_as_json, list_as_json_only
 from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
                              photo_thing, Exif, photo_album)
 from timeline.extensions import db
@@ -315,7 +315,10 @@ def photo_by_section(id):
 
     q = amend_query(request, q)
     photos = q.filter(Photo.section_id == id).order_by(Photo.created.desc())
-    return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))
+    return list_as_json(
+            photos, 
+            excludes=("-exif", "-gps", "-faces", 
+            "-things", "-section", "-albums"))
 
 
 @blueprint.route('/face/assign_face_to_person', methods=['POST'])

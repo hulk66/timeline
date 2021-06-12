@@ -50,13 +50,23 @@ def trigger_section_compute():
 
 
 @blueprint.route('/match_unknown_faces', methods=['GET'])
-def trigger_match_unknown_faces():
+def trigger_match_unknown_faces(dimension):
     logger.debug("trigger match unknown faces")
     # match_all_unknown_faces.apply_async((), queue="beat")
     celery.send_task(
-        "Match all unknown Faces", queue="beat")
+        name="Match all unknown Faces", args=(dimension, ), queue="beat")
 
     return flask.jsonify(True)
+
+@blueprint.route('/recreatePreviews', methods=['GET'], defaults={'dimension': 400})
+@blueprint.route('/recreatePreviews/<int:dimension>', methods=['GET'])
+def recreate_previews(dimension):
+    logger.debug("Trigger recreation of previews for size %d", dimension)
+    celery.send_task("Recreate Previews", args=(dimension, ), queue="process")   
+    return flask.jsonify(True)
+    
+
+
 
 
 # def remove_all_tasks():

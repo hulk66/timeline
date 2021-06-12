@@ -219,7 +219,7 @@ def compute_sections():
     sort_old_photos()
 
     offset = 0
-    batch_size = 300
+    batch_size = 200
     current_section = 0
     photos = Photo.query.filter(Photo.ignore == False).order_by(Photo.created.desc()).limit(batch_size).all()
     prev_batch_date = None
@@ -288,3 +288,9 @@ def create_preview(photo_path, max_dim):
     preview_path = get_preview_path(photo_path, str(max_dim))
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     image.save(preview_path)
+
+@celery.task(name="Recreate Previews")
+def recreate_previews(dimension=400):
+    logger.debug("Recreating Previews for size %d", dimension)
+    for photo in Photo.query:
+        create_preview.apply_async((photo.path, dimension), queue='process')
