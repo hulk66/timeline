@@ -26,7 +26,8 @@ a resolved address along with a little map and some important Exif data)
 * New Albums Overview 
 * Photos can be removed from the Catalog
 * New Search View. Photos can be searched by Date Range, Rating, Camera Make, Country, City, People
-
+* A new default Album "Last Import" is created and filled by last added photos accessible with a new navigation shortcut 
+* A new simple view showing the photos to be sorted into the index is available
 ### General View
 <img src="assets/start_view.jpg" width="400"/>
 
