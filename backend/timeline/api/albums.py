@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 @blueprint.route('/all', methods=['GET'])
 def get_all_albums():
     logger.debug("get all albums")
-    albums = Album.query.order_by(Album.name).all()
+    albums = Album.query.filter(Album.id > 1).order_by(Album.name).all()
     return flask.jsonify([a.to_dict() for a in albums])
 
 

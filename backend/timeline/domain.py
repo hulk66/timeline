@@ -145,6 +145,7 @@ class Photo(db.Model, SerializerMixin):
     faces = db.relationship("Face", back_populates="photo",
                             cascade="all, delete, delete-orphan")
     exif = db.relationship("Exif", cascade="all, delete, delete-orphan")
+    added = db.Column(db.DateTime, index=True)
     created = db.Column(db.DateTime, index=True)
     width = db.Column(db.Integer)
     height = db.Column(db.Integer)
@@ -201,7 +202,7 @@ class Status(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     sections_dirty = db.Column(db.Boolean)
     new_faces = db.Column(db.Boolean)
-
+    next_import_is_new = db.Column(db.Boolean)
 
 class Exif(db.Model, SerializerMixin):
     __tablename__ = 'exif'

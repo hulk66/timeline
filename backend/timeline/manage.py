@@ -14,7 +14,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
-from timeline.domain import Status
+from timeline.domain import Status, Album
 from timeline.event_handler import EventHandler
 import click
 from flask.cli import FlaskGroup, with_appcontext
@@ -84,7 +84,7 @@ def init():
     status = Status.query.first()
     if not status:
         status = Status()
-        status.num_photos_created = 0
+        status.next_import_is_new = True
         status.sections_dirty = False
         status.computing_sections = False
         status.num_photos_created = False
@@ -92,6 +92,13 @@ def init():
 
     status.sections_dirty = False
     status.computing_sections = False
+
+    album = Album.query.get(1)
+    if not album:
+        album = Album()
+        album.name = "Last Import"
+        db.session.add(album)
+
     db.session.commit()
     click.echo("init done")    
 

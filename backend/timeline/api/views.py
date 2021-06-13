@@ -307,6 +307,17 @@ def get_section_by_date(date_str):
     return flask.jsonify(photo.section.id)
 
 
+@blueprint.route('/photo/importing', methods=['GET'])
+def currently_importing():
+    logger.debug("Get Photos currently importing")
+
+    photos = Photo.query.filter(and_(Photo.section == None, Photo.ignore == False))
+    return list_as_json(
+            photos, 
+            excludes=("-exif", "-gps", "-faces", 
+            "-things", "-section", "-albums"))
+
+
 @blueprint.route('/photo/by_section/<int:id>', methods=['GET'])
 def photo_by_section(id):
     logger.debug("Get section %i", id)

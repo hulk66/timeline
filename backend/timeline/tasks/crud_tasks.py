@@ -23,7 +23,7 @@ from pathlib import Path
 from celery import chain
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
-from timeline.domain import GPS, Exif, Person, Photo, Section, Status
+from timeline.domain import Album, GPS, Exif, Person, Photo, Section, Status
 from timeline.extensions import celery, db
 from timeline.util.gps import (get_exif_value, get_geotagging,
                                get_labeled_exif, get_lat_lon)
@@ -52,12 +52,6 @@ def get_size(image):
     return image.size
 
 
-def set_status_dirty():
-    status = Status.query.first()
-    if not status.sections_dirty:
-        status.sections_dirty = True
-
-
 def create_photo(path, commit=True):
     logger.debug("Create new Photo %s", path)
     if not Path(path).exists():
@@ -80,10 +74,9 @@ def create_photo(path, commit=True):
         logger.error("File not found: %s")
         return None
 
+
     photo = Photo()
-    #photo.score_aesthetic = 0.0
-    # photo.score_technical = 0.0
-    # photo.score_brisque = 0.0
+    photo.added = datetime.today()
     photo.ignore = False
     photo.exif = []
     photo.path = img_path
@@ -92,10 +85,10 @@ def create_photo(path, commit=True):
     exif_raw = image.getexif()
     exif_data = get_labeled_exif(exif_raw)
     geotags = get_geotagging(exif_raw)
-    #latitude, longitude = get_coordinates(geotags)
+    # latitude, longitude = get_coordinates(geotags)
     gps_data = get_lat_lon(geotags)
     if gps_data:
-        # latitude, longitude = 
+        # latitude, longitude =
         gps = GPS()
         photo.gps = gps
         photo.gps.latitude, photo.gps.longitude = gps_data
@@ -110,18 +103,18 @@ def create_photo(path, commit=True):
 
                 exif.key, exif.value = key, str(value)
 
-        except UnicodeDecodeError as u:
+        except UnicodeDecodeError:
             logger.error("%s", img_path)
-        
-        # 18.04.2021: this is strange, has it changed recently where the photo date is saved under in Exif?
-        if key.startswith('DateTime'):
+
+        # User either DateTimeOriginal or not available any other DateTime
+        if key == 'DateTimeOriginal' or (key.startswith("DateTime") and photo.created is None):
             try:
                 # set photo date
                 dt = datetime.strptime(str(value), "%Y:%m:%d %H:%M:%S")
                 photo.created = dt
                 photo.no_creation_date = False
-            except:
-                logger.error("Error parsing Date for %s", img_path)
+            except ValueError:
+                logger.error("%s can not be parsed as Date for %s", str(value), img_path)
 
     if not photo.created:
         # there is either no exif date or it can't be parsed for the photo date, so we assumme it is old
@@ -129,14 +122,25 @@ def create_photo(path, commit=True):
         photo.no_creation_date = True
         # they will be moved to the end later
 
-    set_status_dirty()
     db.session.add(photo)
+    add_to_last_import(photo)
 
     if commit:
         db.session.commit()
     return photo.id
 
-#def update_sections(photo):
+
+def add_to_last_import(photo):
+    status = Status.query.first()
+    status.sections_dirty = True
+    album = Album.query.get(1)
+    if status.next_import_is_new:
+        album.photos = []
+        status.next_import_is_new = False
+
+    album.photos.append(photo)
+
+# def update_sections(photo):
 #
 #    sec = Sec.query.find( and_(Sec.start_date <= photo.created, photo.created < Sec.end_date)).first()
 #    if sec:
@@ -145,10 +149,10 @@ def create_photo(path, commit=True):
 #        else:
 #            # all good, nothing to do
 
-@celery.task(mame="Delete Photo")
+@ celery.task(mame="Delete Photo")
 def delete_photo(img_path, commit=True):
     logger.debug("Delete Photo %s", img_path)
-    path = get_rel_path(img_path)
+    path=get_rel_path(img_path)
     for p in Photo.query.filter(Photo.path == path):
         # for face in p.faces:
         #    if (face.person is None):
@@ -164,7 +168,7 @@ def delete_photo(img_path, commit=True):
         db.session.commit()
 
 
-@celery.task(mame="Modify Photo")
+@ celery.task(mame="Modify Photo")
 def modify_photo(img_path):
     logger.debug("Modify Photo %s", img_path)
 
@@ -173,38 +177,49 @@ def modify_photo(img_path):
     db.session.commit()
 
 
-@celery.task(name="Move Photo")
+@ celery.task(name="Move Photo")
 def move_photo(img_path_src, img_path_dest):
     logger.debug("Move Photo from %s to %s", img_path_src, img_path_dest)
-    path = get_rel_path(img_path_src)
-    photos = Photo.query.filter(Photo.path == path).all()
+    path=get_rel_path(img_path_src)
+    photos=Photo.query.filter(Photo.path == path).all()
 
     if len(photos) > 0:
-        photos[0].path = get_rel_path(img_path_dest)
+        photos[0].path=get_rel_path(img_path_dest)
     set_status_dirty()
     db.session.commit()
 
-@celery.task(name="Sort old Photos to end")
+@ celery.task(name="Sort old Photos to end")
 def sort_old_photos():
     logger.debug("Sort undated Photos")
-    status = Status.query.first()
+    status=Status.query.first()
     if not status.sections_dirty:
         logger.debug("sort_old_photos - nothing to do")
         return
 
-    oldest_photo = Photo.query.filter(Photo.ignore == False).order_by(Photo.created.asc()).first()
+    oldest_photo=Photo.query.filter(
+        Photo.ignore == False).order_by(Photo.created.asc()).first()
     if not oldest_photo:
         return
-    min_date = oldest_photo.created - timedelta(days=1)
-    photos = Photo.query.filter(Photo.no_creation_date == True)
+    min_date=oldest_photo.created - timedelta(days=1)
+    photos=Photo.query.filter(Photo.no_creation_date == True)
 
     for photo in photos:
-        #logger.debug("photo %i", photo.id)
-        #logger.debug(min_date)
-        photo.created = min_date 
+        # logger.debug("photo %i", photo.id)
+        # logger.debug(min_date)
+        photo.created=min_date
         min_date -= timedelta(seconds=1)
 
     db.session.commit()
+
+
+def new_import():
+    album = Album.query.get(0)
+    if album is None:
+        album = Album()
+        album.id = 0
+        album.name = 'Last Import'
+    album.photos = []
+
 
 
 @celery.task(ignore_result=True)
@@ -214,6 +229,8 @@ def compute_sections():
 
     if not status.sections_dirty and Photo.query.filter(Photo.section == None).count() == 0:
         logger.debug("compute_sections - nothing to do")
+        status.next_import_is_new = True
+        db.session.commit()
         return
 
     sort_old_photos()
@@ -221,75 +238,81 @@ def compute_sections():
     offset = 0
     batch_size = 200
     current_section = 0
-    photos = Photo.query.filter(Photo.ignore == False).order_by(Photo.created.desc()).limit(batch_size).all()
+    photos = Photo.query.filter(Photo.ignore == False).order_by(
+        Photo.created.desc()).limit(batch_size).all()
     prev_batch_date = None
     last_batch_date = None
     section = None
     initial = True
 
     while len(photos) > 0:
-        logger.debug("Sectioning next batch %i with %i initial photos", current_section, len(photos))
-        photos_from_prev_batch = 0
-        add_limit = 0
-        new_batch = True
+        logger.debug("Sectioning next batch %i with %i initial photos",
+                     current_section, len(photos))
+        photos_from_prev_batch=0
+        add_limit=0
+        new_batch=True
         for photo in photos:
             if initial or (new_batch and last_batch_date and last_batch_date.date() != photo.created.date()):
-                initial = False
+                initial=False
                 if section:
-                    section.num_photos = len(section.photos)
-                    logger.debug("Compute Sections - Closing Section with %i photos", section.num_photos)
-                    section.start_date = None
-                add_limit = photos_from_prev_batch
-                section = Section.query.get(current_section)
+                    section.num_photos=len(section.photos)
+                    logger.debug(
+                        "Compute Sections - Closing Section with %i photos", section.num_photos)
+                    section.start_date=None
+                add_limit=photos_from_prev_batch
+                section=Section.query.get(current_section)
                 if not section:
                     logger.debug("Creating new Section")
-                    section = Section()
+                    section=Section()
                     db.session.add(section)
-                    section.id = current_section
+                    section.id=current_section
 
                 current_section += 1
-                new_batch = False
+                new_batch=False
             else:
                 photos_from_prev_batch += 1
             offset += 1
-            photo.section = section
+            photo.section=section
 
-        last_batch_date = photos[-1].created
+        last_batch_date=photos[-1].created
         if prev_batch_date == last_batch_date:
             # make sure to always have a date break in the set of photos
             # otherwise we might come into an endless loop
             # let's see if this solves this strange problem
             last_batch_date -= timedelta(seconds=1)
-        prev_batch_date = last_batch_date
-        photos = Photo.query \
+        prev_batch_date=last_batch_date
+        photos=Photo.query \
             .filter(Photo.created < last_batch_date) \
             .order_by(Photo.created.desc()).limit(batch_size + add_limit).all()
-    
-    status.sections_dirty = False
+
+    status.sections_dirty=False
     db.session.commit()
     logger.debug("Compute Sections - Done")
 
-@celery.task(ignore_result=True)
+@ celery.task(ignore_result=True)
 def schedule_next_compute_sections(minutes=None):
     if minutes:
-        compute_sections_schedule = minutes
+        compute_sections_schedule=minutes
     else:
-        compute_sections_schedule = int(current_app.config['COMPUTE_SECTIONS_EVERY_MINUTES'])
-    logger.debug("Scheduling next computing section in %i minutes", compute_sections_schedule)
-    c = chain(compute_sections.si().set(queue="beat"), schedule_next_compute_sections.si().set(queue="beat"))
+        compute_sections_schedule=int(
+            current_app.config['COMPUTE_SECTIONS_EVERY_MINUTES'])
+    logger.debug("Scheduling next computing section in %i minutes",
+                 compute_sections_schedule)
+    c=chain(compute_sections.si().set(queue="beat"),
+            schedule_next_compute_sections.si().set(queue="beat"))
     c.apply_async(countdown=compute_sections_schedule*60)
 
-@celery.task
+@ celery.task
 def create_preview(photo_path, max_dim):
     # logger.debug("Create Preview for %s in size %d", photo_path, max_dim)
-    path = get_full_path(photo_path)
-    image = read_and_transpose(path)
+    path=get_full_path(photo_path)
+    image=read_and_transpose(path)
     image.thumbnail((max_dim, max_dim), Image.ANTIALIAS)
-    preview_path = get_preview_path(photo_path, str(max_dim))
+    preview_path=get_preview_path(photo_path, str(max_dim))
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     image.save(preview_path)
 
-@celery.task(name="Recreate Previews")
+@ celery.task(name="Recreate Previews")
 def recreate_previews(dimension=400):
     logger.debug("Recreating Previews for size %d", dimension)
     for photo in Photo.query:

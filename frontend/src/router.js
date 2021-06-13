@@ -24,6 +24,7 @@ import PlacesView from "./components/PlacesView";
 import SearchView from "./components/SearchView";
 import AlbumView from "./components/AlbumView";
 import AlbumListView from "./components/AlbumListView";
+import ImportView from "./components/ImportView";
 
 Vue.use(Router);
 
@@ -34,21 +35,6 @@ export default new Router({
       path: '/wall',
       name: 'photoWall',
       component: PhotoWall,
-      /*
-      props: route => ({ 
-        personId: route.query.person_id, 
-        thingId: route.query.thing_id,
-        city: route.query.city,
-        county: route.query.county,
-        country: route.query.country,
-        state: route.query.state,
-        camera: route.query.camera,
-        from: route.query.from,
-        to: route.query.to,
-        rating: route.query.rating,
-        albumId: route.query.album_id
-      })
-      */
       props: castRouteParams
     },
 
@@ -83,15 +69,16 @@ export default new Router({
       name: 'album',
       component: AlbumView,
       props: castRouteParams
-      /*
-      props: route => ({ 
-        albumId:route.query.album_id
-      })*/
     },
     {
       path: '/albumlist',
       name: 'albumList',
       component: AlbumListView
+    },
+    {
+      path: '/importing',
+      name: 'importList',
+      component: ImportView
     },
 
     {
