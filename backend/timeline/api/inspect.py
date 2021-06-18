@@ -130,8 +130,7 @@ def inspect(method):
 
 @blueprint.route('/status', methods=['GET'])
 def status():
-    logger.debug("Getting Status")
-
+    # logger.debug("Getting Status")
     inspect = celery.control.inspect()
     active = inspect.active()
     numFaces = Face.query.count()

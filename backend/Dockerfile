@@ -27,5 +27,6 @@ EXPOSE 5000
 WORKDIR /tmp/myapp
 COPY envs/env.docker .env
 
+# CMD ["/usr/bin/supervisord"]
 ENTRYPOINT ["/tmp/myapp/docker-entrypoint.sh"]
 # ENTRYPOINT ["tail", "-f", "/dev/null"]

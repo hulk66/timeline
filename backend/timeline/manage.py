@@ -88,16 +88,15 @@ def init():
         status.sections_dirty = False
         status.computing_sections = False
         status.num_photos_created = False
+
+        album = Album()
+        album.name = "Last Import"
+        status.last_import_album = album
+
         db.session.add(status)
 
     status.sections_dirty = False
     status.computing_sections = False
-
-    album = Album.query.get(1)
-    if not album:
-        album = Album()
-        album.name = "Last Import"
-        db.session.add(album)
 
     db.session.commit()
     click.echo("init done")    

@@ -155,7 +155,8 @@ class Photo(db.Model, SerializerMixin):
     score_brisque = db.Column(db.Float)
 
     gps = db.relationship(
-        "GPS", uselist=False, cascade="all, delete, delete-orphan", single_parent=True)
+        "GPS", uselist=False, cascade="all, delete, delete-orphan", 
+        single_parent=True)
     gps_id = db.Column(db.Integer, db.ForeignKey('gps.id'))
 
     things = db.relationship(
@@ -203,6 +204,12 @@ class Status(db.Model, SerializerMixin):
     sections_dirty = db.Column(db.Boolean)
     new_faces = db.Column(db.Boolean)
     next_import_is_new = db.Column(db.Boolean)
+
+    last_import_album = db.relationship(
+        "Album", uselist=False, cascade="all, delete, delete-orphan", 
+        single_parent=True)
+    last_import_album_id = db.Column(db.Integer, db.ForeignKey('albums.id'))   
+
 
 class Exif(db.Model, SerializerMixin):
     __tablename__ = 'exif'

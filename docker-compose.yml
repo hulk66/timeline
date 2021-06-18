@@ -84,6 +84,7 @@ services:
       - rabbitmq
 
   worker_thing_face:
+    # image: hulk66/timeline_be:0.82
     image: hulk66/timeline_be:0.82
     # build: backend
     restart: always
