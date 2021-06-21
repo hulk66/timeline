@@ -135,6 +135,7 @@ def find_faces(photo_id):
                 result.append(face)
             i += 1
         photo.faces = result
+        logger.debug("Found %d faces in %s", num_faces, photo.path)
         db.session.commit()
         for face in photo.faces:
             # for all found faces we will check if we can match is already to some known face

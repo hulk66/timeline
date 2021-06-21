@@ -21,7 +21,7 @@ from flask.cli import FlaskGroup, with_appcontext
 from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
 from timeline.util.init_things import insert_things, set_hierarchy
-from timeline.app import create_app
+from timeline.app import create_app, setup_logging
 from flask import current_app
 from timeline.tasks.initial_scan import inital_scan
 import time
@@ -40,6 +40,7 @@ def cli():
 def watchdog():
     """Start watchdog and perform the initial scan of the directory
     """
+    setup_logging(current_app, "watchdog.log")
     click.echo("Starting Watchdog")
 
     polling = current_app.config.get("POLLING")

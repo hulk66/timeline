@@ -38,14 +38,14 @@ class EventHandler(PatternMatchingEventHandler):
 
     def on_created(self, event):
         abs_path = os.path.abspath(event.src_path)
-        logger.debug("on_created: %s", abs_path)
+        logger.debug("New File: %s", abs_path)
         # new_photo.delay(event.src_path)
         new_photo.apply_async( (event.src_path,), queue='process')
         # new_photo(event.src_path)
 
     def on_deleted(self, event):
         path = os.path.abspath(event.src_path)
-        logger.debug("on_deleted: %s", path)
+        logger.debug("Deleted file: %s", path)
         # delete_photo.delay(event.src_path)
         delete_photo.apply_async( (event.src_path,), queue='process')
 
@@ -56,8 +56,8 @@ class EventHandler(PatternMatchingEventHandler):
     #    # modify_photo.apply_async( (event.src_path,), queue='process')
 
     def on_moved(self, event):
-        path = os.path.abspath(event.src_path)
-        logger.debug("on_moved: %s", path)
+        path = os.path.abspath(pyevent.src_path)
+        logger.debug("Move File: %s", path)
         # dest_path = os.path.abspath(event.dest_path)
         # move_photo.delay(event.src_path, event.dest_path)
         modify_photo.apply_async( (event.src_path, event.dest_path), queue='process')

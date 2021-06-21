@@ -123,15 +123,11 @@ def group_faces():
 
     if len(result) > 0:
         face_ids, encodings = zip(*result)
-        # for fid in face_ids:
-        #    Face.query.get(fid).already_clustered = True
 
         face_ids = numpy.asarray(face_ids)
         encodings = numpy.asarray(encodings)
-        logger.debug(
-            "Group Faces - Starting DBSCAN - might take a minute or two")
-        cluster_data = DBSCAN(
-            eps=epsilon, min_samples=min_samples).fit(encodings)
+        logger.debug("Group Faces - Starting DBSCAN - might take a minute or two")
+        cluster_data = DBSCAN(eps=epsilon, min_samples=min_samples).fit(encodings)
         labels = cluster_data.labels_
 
         n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
@@ -149,15 +145,14 @@ def group_faces():
                     face = Face.query.get(face_id)
                     face.already_clustered = True
                     if not face.person or not face.person.confirmed:
-                        # face.classified_by = Face.CLUSTER_GEN
-                        # face.distance_to_human_classified = 2
+                        face.distance_to_human_classified = 2
                         face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_NONE
-
+                        face.confidence = 1.0
                     if face.person and not person:
                         person = face.person
                         logger.debug(
                             "Use existing person for the identified group")
-                if person == None:
+                if person is None:
                     status.new_faces = True
                     person = Person()
                     person.name = "Unknown"
@@ -218,14 +213,15 @@ def find_unclassified_and_unclustered_faces(limit=None):
     # Find all faces which
     # are not to be ignored and
     #   have either no person assigned or
-    #      if a person is assigned then this is a person which is is not confirmed by the user
+    #      if a person is assigned then then this assignment is only a maybe
 
     q = Face.query.join(Photo).join(Person, isouter=True) \
         .filter(and_(Face.ignore == False,
                      Face.already_clustered == False,
                      Face.photo_id == Photo.id,
                      or_(Face.person == None,
-                         and_(Face.person_id == Person.id, Person.confirmed == False)))).order_by(Photo.created.desc())
+                         Face.confidence_level == Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))).order_by(Photo.created.desc())
+
     if limit:
         q = q.limit(limit)
 
@@ -336,6 +332,37 @@ def do_background_face_tasks():
 
 
 def classify_face(distance, found_face, unknown_face):
+    confidence = get_confidence_level(distance)
+
+    if found_face.distance_to_human_classified == 0 and distance < distance_maybe():
+        assign_new_person(unknown_face, found_face.person)
+        unknown_face.confidence_level = confidence
+        unknown_face.confidence = distance.item()
+        unknown_face.distance_to_human_classified = 1
+        logger.debug("Found person classified by human; face %i is %s with confidence %f",
+                     unknown_face.id, found_face.person.name, unknown_face.confidence)
+        return True
+    elif found_face.distance_to_human_classified == 1 and distance < distance_safe():
+        assign_new_person(unknown_face, found_face.person)
+        unknown_face.confidence_level = confidence
+        unknown_face.confidence = distance.item()
+        unknown_face.distance_to_human_classified = 2
+        logger.debug("Found person classified by classifier with distance 1 to human classified; face %i is %s with confidence %f",
+                     unknown_face.id, found_face.person.name, unknown_face.confidence)
+        return True
+
+    elif found_face.distance_to_human_classified == 2 and distance < distance_very_safe():
+        assign_new_person(unknown_face, found_face.person)
+        unknown_face.confidence_level = confidence
+        unknown_face.confidence = distance.item()
+        unknown_face.distance_to_human_classified = 3
+        logger.debug("Found person classified by classifier with distance 2 to human classified; face %i is %s with confidence %f",
+                     unknown_face.id, found_face.person.name, unknown_face.confidence)
+        return True
+    return False
+
+
+""" def classify_face(distance, found_face, unknown_face):
     confidence_level = get_confidence_level(distance)
 
     if confidence_level > Face.CLASSIFICATION_CONFIDENCE_NONE:
@@ -349,6 +376,8 @@ def classify_face(distance, found_face, unknown_face):
                      unknown_face.confidence)
         return True
     return False
+ """
+
 
 @celery.task(ignore_result=True)
 def schedule_next_match_all_unknown_faces(minutes=None):
@@ -395,14 +424,6 @@ def match_unknown_face(face_id):
         # confidence = get_confidence_level(distance)
 
         classify_face(distance, found_face, unknown_face)
-        # if confidence != Face.CLASSIFICATION_CONFIDENCE_NONE:
-        # if the distance is safe, then we assign this unknown face to to person
-        # where the face is closest by
-        #    assign_new_person(unknown_face, found_face.person)
-        #    unknown_face.confidence_level = confidence
-        #    unknown_face.confidence = distance.item()
-        #    unknown_face.classified_by = Face.CLASSIFIER
-        #    unknown_face.distance_to_human_classified = 1
         db.session.commit()
 
 
@@ -421,14 +442,18 @@ def find_all_classified_faces():
 
 def find_all_classified_known_faces(limit=None):
     classified_faces = Face.query.join(Person) \
-        .filter(and_(Face.person_id == Person.id, Person.confirmed == True))
+        .filter(
+            and_(
+                Face.person_id == Person.id, 
+                Person.confirmed == True,
+                Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
     if limit:
         classified_faces = classified_faces.order_by(
             db.func.random()).limit(limit)
     return classified_faces.with_entities(Face.id, Face.encoding).all()
 
 
-#def find_manual_classified_faces():
+# def find_manual_classified_faces():
 #    classified_faces = Face.query.join(Person) \
 #        .filter(and_(Face.person_id == Person.id, Face.distance_to_human_classified == 0)) \
 #        .with_entities(Face.id, Face.encoding).all()
@@ -458,6 +483,7 @@ def reset_persons():
 
     Person.query.delete()
     db.session.commit()
+
 
 """
 # Currently Unused

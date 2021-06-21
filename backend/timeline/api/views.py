@@ -332,27 +332,29 @@ def photo_by_section(id):
             "-things", "-section", "-albums"))
 
 
+def face_assigned_by_human(face):
+    face.distance_to_human_classified = 0
+    face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED
+    face.confidence = 0.0
+
 @blueprint.route('/face/assign_face_to_person', methods=['POST'])
 def assign_face_to_person():
     req_data = request.get_json()
     person_id = req_data.get("personId")
     name = req_data.get("name")
     face_id = req_data.get("faceId")
-
     person = Person.query.get(person_id)
     if not person:
         person = Person()
         person.name = name
         person.confirmed = True
 
+    logger.debug("Assign face %d to %d", face_id, person.id)
     face = Face.query.get(face_id)
     assign_new_person(face, person)
-    face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED
-    #face.distance_to_human_classified = 0
-    # face.classified_by = Face.HUMAN
+    face_assigned_by_human(face)
 
     db.session.commit()
-    # return flask.jsonify(face.to_dict())
     return flask.jsonify(True)
 
 
@@ -372,9 +374,7 @@ def set_name_faces(personId, newPersonId, name, face_ids):
                 # person.faces.remove(face)
                 to_be_removed.append(face.id)
             else:
-                #face.classified_by = Face.HUMAN
-                #face.distance_to_human_classified = 0
-                face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED
+                face_assigned_by_human(face)
 
         for to_be_removed_id in to_be_removed:
             face = Face.query.get(to_be_removed_id)
@@ -388,9 +388,7 @@ def set_name_faces(personId, newPersonId, name, face_ids):
         newPerson = Person.query.get(newPersonId)
         for fid in face_ids:
             face = Face.query.get(fid)
-            #face.classified_by = Face.HUMAN
-            #face.distance_to_human_classified = 0
-            face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED
+            face_assigned_by_human(face)
             face.person = newPerson
 
         # Now remove those faces that have not been confirmed bye the user and remove the person
@@ -398,8 +396,8 @@ def set_name_faces(personId, newPersonId, name, face_ids):
         for face in person.faces:
             face.person = None
             face.confidence_level = None
-            #face.classified_by = None
-            #face.distance_to_human_classified = None
+            face.distance_to_human_classified = None
+            face.confidence = None
 
         db.session.delete(person)
     db.session.commit()
@@ -421,10 +419,6 @@ def set_facename():
         # Completely new Person
         set_name_faces(personId, None, newPerson, ids)
 
-    # after we add new names we need to match the unknown faces against the new face
-    # for face_id in ids:
-    #    match_known_face.apply_async((face_id,), queue='match')
-
     return flask.jsonify(True)
 
 
@@ -434,6 +428,7 @@ def ignore_unknonw_person(person_id):
     for face in person.faces:
         face.ignore = True
         face.person = None
+        face.con
     db.session.delete(person)
     db.session.commit()
     return all_persons()
@@ -446,6 +441,8 @@ def forget_person(person_id):
         face.ignore = False
         face.person = None
         face.already_clustered = False
+        face.confidence_level = None
+        face.distance_to_human_classified = None
     db.session.delete(person)
     db.session.commit()
     return all_persons()
@@ -459,6 +456,7 @@ def merge_persons(src_person_id, target_person_id):
     target_person = Person.query.get(target_person_id)
     for face in src_person.faces:
         face.person = target_person
+        face_assigned_by_human(face)
     db.session.delete(src_person)
     db.session.commit()
     return flask.jsonify(True)
@@ -472,7 +470,14 @@ def rename_persons():
 
     person = Person.query.get(personId)
     person.name = name
-    person.confirmed = True
+    if not person.confirmed:
+        # we rename a not yet confirmed persons that are coming from the clustering
+        # therefore all the related faces will be claaed as classified by human
+        for face in person.faces:
+            face_assigned_by_human(face)
+
+        person.confirmed = True
+
     db.session.commit()
     return flask.jsonify(person.to_dict())
 

@@ -89,6 +89,7 @@ def init_celery(app=None):
     celery.Task = ContextTask
     return celery
 
+
 def setup_logging(app, logfile_name):
     log_path = app.config["LOG_PATH"]
     logger = logging.getLogger("timeline")
@@ -97,6 +98,7 @@ def setup_logging(app, logfile_name):
     handler = RotatingFileHandler(log_path + '/' + logfile_name, maxBytes=10**7, backupCount=5)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
 
 def create_db(app):
     create = app.config["CREATE_DATABASE"]

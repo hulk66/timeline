@@ -45,13 +45,11 @@ def set_display_address(photo_id):
         logger.warning("Can't check GPS data, photo may have been removed?")
         return
 
-    logger.debug("Checking for GPS Data in %s", photo.path)
-
     if photo.gps_id:
-        # resolve_address.delay(photo_id)
+        logger.debug("Photo contains GPS data, scheduling reverse lookup: %s", photo.path)
         resolve_address.apply_async((photo_id,), queue='geo_resolve')
     else:
-        logger.debug("No GPS data for %s, nothing to lookup", photo.path)
+        logger.debug("Photo contains no GPS data, nothing to do: %s", photo.path)
 
 
 @celery.task(rate_limit="1/s", autoretry_for=(GeocoderTimedOut,GeocoderServiceError), name="Address Detection", ignore_result=True)

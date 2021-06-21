@@ -32,6 +32,6 @@ def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]):
 
     logger.info("Found %i files", len(files))
     for file in files:
-        celery.send_task("Process Photo", (str(file),), queue="process" )
+        celery.send_task("Process Photo", (str(file),), queue="process")
         # new_photo.apply_async((str(file),), queue="process")
     logger.debug("Initial Scan done")

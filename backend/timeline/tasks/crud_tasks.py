@@ -53,7 +53,7 @@ def get_size(image):
 
 
 def create_photo(path, commit=True):
-    logger.debug("Create new Photo %s", path)
+    logger.debug("Reading Photo %s", path)
     if not Path(path).exists():
         logger.warning("File does not exist: %s", path)
         return None

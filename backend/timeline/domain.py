@@ -57,7 +57,6 @@ class Face(db.Model, SerializerMixin):
     person_id = db.Column(db.Integer, db.ForeignKey('persons.id'))
     photo_id = db.Column(db.Integer, db.ForeignKey('photos.id'))
     encoding = db.Column(NumpyType)
-    # classified_by = db.Column(db.String(15))
     confidence_level = db.Column(db.Integer)
     already_clustered = db.Column(db.Boolean)
 
