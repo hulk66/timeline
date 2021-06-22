@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-container>
+    <v-container fluid>
     <v-card flat>
     <v-tabs v-model="tab">
         <v-tabs-slider></v-tabs-slider>

@@ -39,18 +39,20 @@ def new_photo(path):
             create_preview(photo.path, 400)
             create_preview(photo.path, 2160)
             
-            chain = (
-                signature("Checking for GPS Information", args=(photo_id,), queue="geo_req") | \
-                signature("Face Detection", args=(photo_id,), queue="face") | \
-                signature("Object Detection", args=(photo_id,), queue="thing") | \
-                signature("timeline.tasks.iq_tasks.predict_quality", args=(photo_id,), queue="iq") | \
-                signature("timeline.tasks.iq_tasks.brisque_score", args=[photo_id], queue="iq")
-            )
-            chain.delay()
+            # for some reason I don't understand the following does not work.
+            # investigate later
+            #chain = (
+            #    signature("Checking for GPS Information", args=(photo_id,), queue="geo_req") | \
+            #    signature("Face Detection", args=(photo_id,), queue="face") | \
+            #    signature("Object Detection", args=(photo_id,), queue="thing") | \
+            #    signature("timeline.tasks.iq_tasks.predict_quality", args=(photo_id,), queue="iq") | \
+            #    signature("timeline.tasks.iq_tasks.brisque_score", args=[photo_id], queue="iq")
+            #)
+            #chain.apply_async()
             
-            #celery.send_task("Checking for GPS Information", (photo_id,), queue="geo_req")
-            #celery.send_task("Face Detection", (photo_id,), queue="face")
-            #celery.send_task("Object Detection", (photo_id,), queue="thing")
-            #celery.send_task("timeline.tasks.iq_tasks.predict_quality", (photo_id,), queue="iq")
-            #celery.send_task("timeline.tasks.iq_tasks.brisque_score", (photo_id,), queue="iq")
+            celery.send_task("Checking for GPS Information", (photo_id,), queue="geo_req")
+            celery.send_task("Face Detection", (photo_id,), queue="face")
+            celery.send_task("Object Detection", (photo_id,), queue="thing")
+            celery.send_task("timeline.tasks.iq_tasks.predict_quality", (photo_id,), queue="iq")
+            celery.send_task("timeline.tasks.iq_tasks.brisque_score", (photo_id,), queue="iq")
 
