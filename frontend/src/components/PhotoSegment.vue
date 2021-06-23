@@ -20,7 +20,10 @@
         v-intersect="{handler:onIntersect, options: {rootMargin:'400px', root:this.$parent.$parent.$el}}" 
         v-resize="resize"
         > 
-        <div class="ma-2 text-h6">{{segmentDate}}</div>
+        <!--
+        <div class="ma-2 text-h6">Segment {{segIndex}} {{segmentDate}} </div>
+        -->
+        <div class="ma-2 text-h6">{{segmentDate}} </div>
         <!-- v-intersect="{handler:onIntersect, options: {rootMargin:this.rootMargin, root:this.$parent.$el}}" -->
 
         <vue-justified-layout

@@ -20,13 +20,13 @@ import logging
 from timeline.domain import Photo
 from timeline.extensions import celery
 from timeline.tasks.crud_tasks import create_photo, create_preview
-from pymysql.err import InternalError
+from pymysql.err import InternalError, OperationalError
 from celery import signature
 logger = logging.getLogger(__name__)
 
 
 # retry in some cases the database throws a lock error
-@celery.task(autoretry_for=(InternalError,), name="Process Photo", ignore_result=True)
+@celery.task(autoretry_for=(InternalError, OperationalError), name="Process Photo", ignore_result=True)
 def new_photo(path):
     if '@eaDir' in path or '@__thumb' in path or "@Recycle" in path:
         logger.debug(

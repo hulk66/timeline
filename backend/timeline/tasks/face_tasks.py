@@ -30,7 +30,7 @@ from timeline.domain import Face, Photo
 from timeline.extensions import celery, db
 from timeline.util.image_ops import read_transpose_scale_image_as_array
 from timeline.util.path_util import get_full_path
-from timeline.tasks.match_tasks import match_unknown_face
+from timeline.tasks.match_tasks import match_unknown_face, match_ignored_faces
 from timeline.util.path_util import get_preview_path
 
 logger = logging.getLogger(__name__)
@@ -140,6 +140,8 @@ def find_faces(photo_id):
         for face in photo.faces:
             # for all found faces we will check if we can match is already to some known face
             match_unknown_face.apply_async((face.id,), queue="match")
+            # and if it is close to an already ignored face, then also ignore it
+            match_ignored_faces.apply_async((face.id,), queue="match")
 
 
 def save_preview(id, image):

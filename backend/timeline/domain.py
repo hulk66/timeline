@@ -40,6 +40,7 @@ class Person(db.Model, SerializerMixin):
     name = db.Column(db.String(200))
     faces = db.relationship("Face", back_populates="person")
     confirmed = db.Column(db.Boolean)
+    ignore = db.Column(db.Boolean, index = True)
     serialize_rules = ('-faces',)
 
 

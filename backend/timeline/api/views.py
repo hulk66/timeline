@@ -25,7 +25,7 @@ from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
 from timeline.api.photos import send_image
-from timeline.api.util import list_as_json, list_as_json_only
+from timeline.api.util import list_as_json
 from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
                              photo_thing, Exif, photo_album)
 from timeline.extensions import db
@@ -36,6 +36,7 @@ from timeline.tasks.match_tasks import (assign_new_person,
                                         match_all_unknown_faces)
 from timeline.util.image_ops import read_and_transpose, resize_width
 from timeline.util.path_util import get_full_path, get_preview_path
+from timeline.extensions import celery
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 logger = logging.getLogger(__name__)
@@ -348,6 +349,7 @@ def assign_face_to_person():
         person = Person()
         person.name = name
         person.confirmed = True
+        person.ignore = False
 
     logger.debug("Assign face %d to %d", face_id, person.id)
     face = Face.query.get(face_id)
@@ -422,13 +424,18 @@ def set_facename():
     return flask.jsonify(True)
 
 
+def _ignore_face(face):
+    face.ignore = True
+    face.person = None
+    face.confidence_level = None
+    face.distance_to_human_classified = 0
+
+
 @blueprint.route('/person/ignore_unknown_person/<int:person_id>', methods=['GET'])
 def ignore_unknonw_person(person_id):
     person = Person.query.get(person_id)
     for face in person.faces:
-        face.ignore = True
-        face.person = None
-        face.con
+        _ignore_face(face)
     db.session.delete(person)
     db.session.commit()
     return all_persons()
@@ -436,15 +443,22 @@ def ignore_unknonw_person(person_id):
 
 @blueprint.route('/person/forget/<int:person_id>', methods=['GET'])
 def forget_person(person_id):
+    logger.debug("Forgetting person %d", person_id)
     person = Person.query.get(person_id)
-    for face in person.faces:
-        face.ignore = False
-        face.person = None
-        face.already_clustered = False
-        face.confidence_level = None
-        face.distance_to_human_classified = None
-    db.session.delete(person)
+    # just ignore the person for the time being
+    person.ignore = True
+    #  and do the rest of the cleaning in the background as it can consume some time
+    celery.send_task("timeline.tasks.match_tasks.reset_person", (person_id,), queue="beat")
     db.session.commit()
+
+    #for face in person.faces:
+    #    face.ignore = False
+    #    face.person = None
+    #    face.already_clustered = False
+    #    face.confidence_level = None
+    #   face.distance_to_human_classified = None
+    #db.session.delete(person)
+
     return all_persons()
 
 
@@ -484,14 +498,14 @@ def rename_persons():
 
 @blueprint.route('/person/all', methods=['GET'])
 def all_persons():
-    persons = Person.query.order_by(Person.name).all()
+    persons = Person.query.filter(Person.ignore != True).order_by(Person.name).all()
     return flask.jsonify([p.to_dict() for p in persons])
 
 
 @blueprint.route('/person/known', methods=['GET'])
 def known_persons():
     persons = Person.query.filter(
-        Person.confirmed == True).order_by(Person.name).all()
+        and_(Person.confirmed == True, Person.ignore != True)).order_by(Person.name).all()
     return flask.jsonify([p.to_dict() for p in persons])
 
 
@@ -537,12 +551,18 @@ def thing_preview_photo():
 
 @blueprint.route('/face/data/by_person/<int:person_id>', methods=['GET'])
 def faces_by_person(person_id):
-    faces = Person.query.get(person_id).faces
-    index = 0
+    # get data only for faces we are really sure they belong to a person
+    face = Face.query.join(Person).filter(
+        or_(
+            and_(Person.confirmed == True,  Face.person_id == person_id, Person.id == person_id, Face.confidence_level >= Face.CLASSIFICATION_CONFIDENCE_LEVEL_SAFE),
+            and_(Person.confirmed == False, Face.person_id == person_id, Person.id == person_id)
+        )
+    ).first()
+    # index = 0
     #index = request.args.get("index")
     # if not index:
     #    index = random.randrange(len(faces))
-    return flask.jsonify(faces[index].to_dict())
+    return flask.jsonify(face.to_dict())
 
 
 @blueprint.route('/photo/by_person/<int:person_id>/<int:page>/<int:size>', methods=['GET'])
@@ -555,7 +575,7 @@ def photos_by_person(person_id, page, size):
 @blueprint.route('/person/by_photo/<int:photo_id>', methods=['GET'])
 def get_persons_by_photo(photo_id):
     persons = Person.query.join(Face, and_(
-        Face.photo_id == photo_id, Person.id == Face.person_id))
+        Person.ignore != True, Face.photo_id == photo_id, Person.id == Face.person_id))
     return jsonify_items(persons)
 
 
@@ -568,8 +588,7 @@ def get_faces_by_photo(photo_id):
 @blueprint.route('/face/ignore/<int:face_id>', methods=['GET'])
 def ignore_face(face_id):
     face = Face.query.get(face_id)
-    face.ignore = True
-    face.person = None
+    _ignore_face(face)
     db.session.commit()
     return flask.jsonify(True)
 

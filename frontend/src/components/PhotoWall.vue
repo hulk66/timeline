@@ -499,7 +499,7 @@
                 let start = this.currentSection.section.id + dir;
                 let el = this.$refs['section' + start];
                 // let result = this.currentSection;
-                while (el && !el[0]) {
+                while (!el || (el && !el[0])) {
                     start += dir;
                     el = this.$refs['section' + start];
                 }

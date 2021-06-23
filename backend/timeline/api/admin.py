@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route('/reset_learning')
 def reset_learning():
-    celery.send_task("timeline.tasks.match_tasks.reset_persons", queue="beat")
+    celery.send_task("timeline.tasks.match_tasks.reset_person", queue="beat")
     # reset_persons.apply_async((), queue="beat")
     return flask.jsonify(True)
 
@@ -50,11 +50,10 @@ def trigger_section_compute():
 
 
 @blueprint.route('/match_unknown_faces', methods=['GET'])
-def trigger_match_unknown_faces(dimension):
+def trigger_match_unknown_faces():
     logger.debug("trigger match unknown faces")
     # match_all_unknown_faces.apply_async((), queue="beat")
-    celery.send_task(
-        name="Match all unknown Faces", args=(dimension, ), queue="beat")
+    celery.send_task(name="Match all unknown Faces", queue="beat")
 
     return flask.jsonify(True)
 
@@ -65,6 +64,11 @@ def recreate_previews(dimension):
     celery.send_task("Recreate Previews", args=(dimension, ), queue="process")   
     return flask.jsonify(True)
     
+
+@blueprint.route('/face_background_tasks', methods=['GET'])
+def trigger_face_background_job():
+    logger.debug("Trigger face matching background jobs")
+    celery.send_task("timeline.tasks.match_tasks.do_background_face_tasks",  queue="beat")   
 
 
 

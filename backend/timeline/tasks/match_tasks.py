@@ -16,7 +16,6 @@ GNU General Public License for more details.
 '''
 
 import logging
-
 import numpy
 from celery import chain
 from flask import current_app
@@ -143,7 +142,7 @@ def group_faces():
                 for index in indices[0][:MAX_CLUSTER_SIZE]:
                     face_id = int(face_ids[index])
                     face = Face.query.get(face_id)
-                    face.already_clustered = True
+                    # face.already_clustered = True
                     if not face.person or not face.person.confirmed:
                         face.distance_to_human_classified = 2
                         face.confidence_level = Face.CLASSIFICATION_CONFIDENCE_NONE
@@ -157,6 +156,7 @@ def group_faces():
                     person = Person()
                     person.name = "Unknown"
                     person.confirmed = False
+                    person.ignore = False
                     logger.debug("Create new person for face group")
 
                 # Now make sure all faces belong to the same person we already have identified
@@ -220,7 +220,7 @@ def find_unclassified_and_unclustered_faces(limit=None):
                      Face.already_clustered == False,
                      Face.photo_id == Photo.id,
                      or_(Face.person == None,
-                         Face.confidence_level == Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))).order_by(Photo.created.desc())
+                         Face.confidence_level <= Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))).order_by(Photo.created.desc())
 
     if limit:
         q = q.limit(limit)
@@ -294,7 +294,7 @@ def match_all_unknown_faces():
             logger.debug("Found %i unclassified faces to match against %i classified faces", len(
                 unmatched), len(known_faces))
 
-            logger.debug("Calc Distances")
+            logger.debug("Calculating Distances - might take a few minutes")
             distances = cdist(unkown_encodings,
                               known_encodings, metric="euclidean")
             logger.debug("Calc Distances done")
@@ -302,7 +302,7 @@ def match_all_unknown_faces():
             l = len(distances)
             counter = 0
             for d in distances:
-                percent = int(counter/l * 100)
+                percent = counter/l * 100
                 if percent % 10 == 0:
                     logger.debug("Checking unknown face %i percent", percent)
                 unknown_face_id = int(unknown_ids[counter])
@@ -317,7 +317,7 @@ def match_all_unknown_faces():
                 if classify_face(distance, found_face, unknown_face):
                     totalAssigned += 1
 
-                db.session.commit()
+            db.session.commit()
 
     logger.debug("Match Faces - could classify %i faces", totalAssigned)
 
@@ -325,6 +325,7 @@ def match_all_unknown_faces():
 @celery.task(ignore_result=True)
 def do_background_face_tasks():
     match_all_unknown_faces()
+    match_all_ignored_faces()
     group_faces()
     match_faces_schedule = int(current_app.config['MATCH_FACES_EVERY_MINUTES'])
     do_background_face_tasks.apply_async(
@@ -362,23 +363,6 @@ def classify_face(distance, found_face, unknown_face):
     return False
 
 
-""" def classify_face(distance, found_face, unknown_face):
-    confidence_level = get_confidence_level(distance)
-
-    if confidence_level > Face.CLASSIFICATION_CONFIDENCE_NONE:
-        assign_new_person(unknown_face, found_face.person)
-        unknown_face.confidence_level = confidence_level
-        unknown_face.confidence = distance.item()
-        # unknown_face.classified_by = Face.CLASSIFIER
-        # unknown_face.distance_to_human_classified = 2
-        logger.debug("Face %i is %s with distance %f",
-                     unknown_face.id, found_face.person.name, 
-                     unknown_face.confidence)
-        return True
-    return False
- """
-
-
 @celery.task(ignore_result=True)
 def schedule_next_match_all_unknown_faces(minutes=None):
     if minutes:
@@ -408,7 +392,6 @@ def match_unknown_face(face_id):
     face_id - The Face ID which is to classified against existing other faces
     """
     unknown_face = Face.query.get(face_id)
-    # classified_faces = find_all_classified_faces()
     classified_faces = find_all_classified_known_faces()
 
     classified_faces_len = len(classified_faces)
@@ -426,12 +409,95 @@ def match_unknown_face(face_id):
         classify_face(distance, found_face, unknown_face)
         db.session.commit()
 
+@celery.task(name="Match allignored Faces", ignore_result=True)
+def match_all_ignored_faces():
+    """Iterate over all unknown faces and compare them against already ignored faces.
+    For each classified face it is recognized how "far" it is away from a manual face 
+    confirmed by the user (distance = 0).
+    The closeer an unknow face to a manual ignored faces is, the less closer it has to be.
+    This is to prevent that the radius of a detected person is getting wider and wider 
+    (and therefore less precise with more false positive matches)
+    """
+    logger.debug("Match all ignored faces")
 
-# def find_classified_faces():
-#    classified_faces = Face.query.join(Person) \
-#        .filter(and_(Face.person_id == Person.id, Person.confirmed == True)) \
-#        .with_entities(Face.id, Face.encoding).all()
-#    return classified_faces
+    totalAssigned = 0
+
+    max_faces = int(current_app.config['FACE_CLUSTER_MAX_FACES'])
+    unmatched = find_all_non_manual_classified_or_unclassified_faces(
+        limit=max_faces)
+    if len(unmatched) > 0:
+        unknown_ids, unkown_encodings = get_ids_and_encodings(unmatched)
+        ignored_faces = find_all_ignored_faces()
+        if len(ignored_faces) > 0:
+
+            ignored_ids, ignored_encodings = get_ids_and_encodings(ignored_faces)
+            logger.debug("Found %i unclassified faces to match against %i ignored faces", len(
+                unmatched), len(ignored_faces))
+
+            logger.debug("Calculating Distances - might take a few minutes")
+            distances = cdist(unkown_encodings,
+                              ignored_encodings, metric="euclidean")
+            logger.debug("Calc Distances done")
+
+            counter = 0
+            l = len(distances)
+
+            for d in distances:
+                percent = counter/l * 100
+                if percent % 10 == 0:
+                    logger.debug("Checking ignored face %i percent", percent)
+                unknown_face_id = int(unknown_ids[counter])
+                unknown_face = Face.query.get(unknown_face_id)
+                counter += 1
+
+                min_index = numpy.argmin(d)
+                distance = d[min_index]
+                found_face_id = int(ignored_ids[min_index])
+                found_face = Face.query.get(found_face_id)
+                if check_ignore(found_face, unknown_face, distance):
+                    totalAssigned += 1
+
+            db.session.commit()
+
+    logger.debug("atch all ignored faces - additionaly %i faces will be ignored", totalAssigned)
+
+
+def check_ignore(found_face, unknown_face, distance):
+    if found_face.distance_to_human_classified == 0 and distance < distance_safe():
+        logger.debug("Ignoring face %d as it is close to an already ignored face %d", unknown_face.id, found_face.id)
+        unknown_face.ignore = True
+        unknown_face.distance_to_human_classified = 1
+        return  True
+    elif found_face.distance_to_human_classified == 1 and distance < distance_very_safe():
+        logger.debug("Ignoring face %d as it is close to an already ignored face %d", unknown_face.id, found_face.id)
+        unknown_face.ignore = True
+        unknown_face.distance_to_human_classified = 2
+        return True
+    return False
+
+
+@celery.task(name="Match ignored Faces", autoretry_for=(InternalError,))
+def match_ignored_faces(face_id):
+    """Compare the face with the ignored faces. If it is very close this will be also categorized 
+    as ignore. Ortherwise we will see the same face over over popping up during the grouping
+    """
+    unknown_face = Face.query.get(face_id)
+    ignored_faces = find_all_ignored_faces()
+    ignored_faces_len = len(ignored_faces)
+    logger.debug("Match unknown Face %i - Considering %i ignored faces",
+                 face_id, ignored_faces_len)
+    if ignored_faces_len > 0:
+        id, distance = find_closest(unknown_face, ignored_faces)
+        found_face = Face.query.get(id)
+        check_ignore(found_face, unknown_face, distance)
+        db.session.commit()
+
+
+def find_all_ignored_faces():
+    faces = Face.query.filter(Face.ignore == True) \
+        .with_entities(Face.id, Face.encoding).all()
+    return faces
+
 
 def find_all_classified_faces():
     classified_faces = Face.query.join(Person) \
@@ -476,12 +542,15 @@ def find_closest(face, face_id_encoding_list):
 
 
 @celery.task
-def reset_persons():
-    persons = Person.query.all()
-    for p in persons:
-        p.faces = []
-
-    Person.query.delete()
+def reset_person(person_id):
+    logger.debug("Forgetting person %d, cleaning everything", person_id)
+    Face.query.filter(Face.person_id == person_id).update( 
+        {"person_id": None, 
+        "ignore":False, 
+        "already_clustered": False,
+        "confidence_level": None,
+        "distance_to_human_classified": None} )
+    Person.query.filter(Person.id == person_id).delete()
     db.session.commit()
 
 

@@ -25,6 +25,9 @@
         v-intersect="{handler:onIntersect, options: {rootMargin:rootMargin, root:this.$parent.$el}}" 
         :min-height="initialHeight" 
         elevation="0" > 
+        <!--
+        <v-card-title>Section {{section.id}}</v-card-title>
+        -->
         <photo-segment  :ref="'segment' + index"
                         v-for="(segment, index) in segments"
                         :seg-index="index"
