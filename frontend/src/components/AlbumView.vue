@@ -34,7 +34,7 @@
             <photo-wall  
                 ref="photoWall"
                 :showPhotoCount="false"
-                :selectionAllowed="false"
+                :selectionAllowed="true"
                 :albumId="albumId">
             </photo-wall>
         </div>

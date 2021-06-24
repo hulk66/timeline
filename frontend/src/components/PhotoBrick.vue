@@ -22,6 +22,10 @@
                 @mouseover="hover = true" 
                 @mouseleave="hover = false"
                 ref="img">
+                <!--
+                                v-intersect="{handler:onIntersect}"
+                -->
+
                 <v-fade-transition>
                     <div v-if="hover || selected || marked" class="gradient fill-height container">
                         <v-checkbox class="top-left" 
@@ -54,6 +58,7 @@
 <script>
 
     import { mapState } from 'vuex'
+    import { isVisible} from "./Util";
 
     export default {
     
@@ -125,6 +130,10 @@
             getImgElement() {
                 return this.$refs.img;
             },
+
+            isVisible() {
+                return isVisible(this.$refs.img.$el, true)
+            },
             // eslint-disable-next-line no-unused-vars
             /*
             onIntersect(entries, observer) {
@@ -133,6 +142,7 @@
                 // console.log("Index " + this.index + " is " + this.visible);
             },
             */
+            
         }
     }
 </script>

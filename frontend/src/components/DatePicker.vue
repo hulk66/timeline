@@ -25,7 +25,7 @@
   >
     <template v-slot:activator="{ on, attrs }">
       <v-text-field
-        v-model="value"
+        v-model="date"
         :label="title"
         prepend-icon="mdi-calendar"
         readonly
@@ -34,7 +34,7 @@
         v-on="on"
       ></v-text-field>
     </template>
-    <v-date-picker v-bind:value="value" @input="menu = false"  v-on:input="change"></v-date-picker>
+    <v-date-picker v-model="date" v-on:input="change"></v-date-picker>
   </v-menu>
 </template>
 <script> 
@@ -44,12 +44,12 @@ export default {
     components: {},
 
     props: {
-        value: String,
-        title: String
+        title: String,
+        value: String
     },
     data() {
         return {
-        // date: new Date().toISOString().substr(0, 10),
+          date: null,
           menu: false,
         };
     },
@@ -64,12 +64,17 @@ export default {
     computed: {
     
     },
-    watch: {},
+    watch: {
+      value(v) {
+        this.date = v;
+      }
+    },
 
     methods: {
-		change(v) {
-			this.$emit("input", v)
-		}
+      change(v) {
+        this.menu = false
+        this.$emit("input", v)
+      }
 	},
 };
-</script>
+</script> 

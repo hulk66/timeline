@@ -108,7 +108,7 @@
             <v-tooltip v-if="showRemoveButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
-                        @click="deletePhotosOrAlbum" 
+                        @click="deletePhotosDialog = true" 
                         icon
                         color="primary"
                         dark
@@ -117,8 +117,24 @@
                     <v-icon>mdi-delete</v-icon>
                 </v-btn>
             </template>
-            <span>Delete ...</span>
+            <span>Delete Photos</span>
             </v-tooltip>
+
+            <v-tooltip v-if="showAlbumRemoveButton" bottom>
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        @click="deleteAlbumDialog = true" 
+                        icon
+                        color="primary"
+                        dark
+                        v-bind="attrs"
+                        v-on="on">
+                    <v-icon>mdi-delete-sweep</v-icon>
+                </v-btn>
+            </template>
+            <span>Delete Album</span>
+            </v-tooltip>
+
 
             <v-tooltip v-if="showAlbumButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
@@ -470,9 +486,12 @@
             },
 
             showRemoveButton() {
-                return this.selectedPhotos.length > 0 || this.selectedAlbum != null;
+                return this.selectedPhotos.length > 0;
             },
 
+            showAlbumRemoveButton() {
+                return this.selectedAlbum != null;
+            }, 
             title() {
                 return this.selectedPhotos.length > 0 ? this.selectedPhotos.length.toString() + " Photos selected" : this.defaultTitle;
             }
@@ -511,14 +530,6 @@
         },
         methods: {
 
-            deletePhotosOrAlbum() {
-                // this is most likely not a good solution but I don't know better at the moment
-                if (this.selectedPhotos.length > 0) 
-                    this.deletePhotosDialog = true
-                else if (this.selectedAlbum)
-                    this.deleteAlbumDialog = true
-                
-            },
             deletePhotos() {
                 axios.post("/photos/remove", {
                         physically: false,

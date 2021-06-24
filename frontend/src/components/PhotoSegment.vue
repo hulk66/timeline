@@ -104,8 +104,9 @@
 
             photoIsVisible(index) {
                 let photoElement =  this.$refs['p' + index];
+                return photoElement.isVisible()
                 // let result = isReallyVisible(photoElement.getImgElement(), true);
-                return photoElement.visible;
+                // return photoElement.visible;
                 // return result;
             },
 
@@ -122,7 +123,7 @@
                     photoElement = this.$refs['p' + i]
                     
                     // if (isReallyVisible(photoElement.getImgElement(), true, this.targetHeight)) {
-                    if (photoElement.visible) {
+                    if (photoElement.isVisible()) {
                         index = i
                         break;
                     }

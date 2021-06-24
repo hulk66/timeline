@@ -1,10 +1,12 @@
 // import axios from "axios";
 export const photo = {
     state: {
+        /*
         selectedSegment: Object,
         selectedSection: Object,
         selectedIndex: 0,
         selectedPhoto: Object,
+        */
         selectedPhotos: [],
         selectionAllowed: true,
         selectedAlbum: null,

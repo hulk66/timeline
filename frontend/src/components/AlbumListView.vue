@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-container fluid class="fill-height">
-        <v-row no-gutters>
-            <v-col
+    <v-container fluid >
+        <v-row no-gutters >
+            <v-col 
                 v-for="album in albums" :key="album.id"
                 class="d-flex child-flex"
                 cols="6" md="4" lg="2" xl="1">

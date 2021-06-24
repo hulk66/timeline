@@ -22,12 +22,12 @@
                     <v-container fluid>
                     <v-row dense>
                         <v-col>
-                            <date-picker v-model="from" title="From"></date-picker>
+                            <date-picker :value="from" @input="changeFrom" title="From"></date-picker>
                         </v-col>
                     </v-row>
                     <v-row dense>
                         <v-col>
-                            <date-picker v-model="to" title="To"></date-picker>
+                            <date-picker :value="to" @input="changeTo" title="To"></date-picker>
                         </v-col>
                     </v-row>
                     <v-row dense>
@@ -127,7 +127,6 @@
             })
         },
         watch: {
-
         },
 
          // eslint-disable-next-line no-unused-vars
@@ -137,6 +136,14 @@
         },
         
         methods: {
+            changeFrom(val) {
+                this.from = val;
+                this.to = val;
+            },
+
+            changeTo(val) {
+                this.to = val;
+            },
             loadData() {
                 axios.get("/api/location/countries").then (result => {
                     this.countries = result.data

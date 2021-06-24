@@ -373,24 +373,25 @@
             },
 
             clearSelection() { 
-                let lowerBoundary = this.$store.state.photo.lowerSelectionBound;
-                let upperBoundary = this.$store.state.photo.upperSelectionBound;
-                let startSection = this.$refs['section' + lowerBoundary.section][0];
-                let startSegment = startSection.getSegmentEl(lowerBoundary.segment);
-                let photoIndex = lowerBoundary.index;
-                let endSection = this.$refs['section' + upperBoundary.section][0]
-                let endSegment = endSection.getSegmentEl(upperBoundary.segment);
-                let endIndex = upperBoundary.index;
-                while (this.isBefore(startSection.section, startSegment.data, photoIndex, endSection.section, endSegment.data, endIndex)) {
-                    startSegment.selectPhoto(photoIndex, false);
-                    let next = this.getNextSectionSegmentAndPhoto(startSection, startSegment, photoIndex, 1)
-                    startSection = next.section;
-                    startSegment = next.segment;
-                    photoIndex = next.index;            
-                }
-                this.$store.commit("emptySelectedPhotos");
-                this.$emit("set-goback", null);
-                
+                if (this.selectedPhotos.length > 0) {
+                    let lowerBoundary = this.$store.state.photo.lowerSelectionBound;
+                    let upperBoundary = this.$store.state.photo.upperSelectionBound;
+                    let startSection = this.$refs['section' + lowerBoundary.section][0];
+                    let startSegment = startSection.getSegmentEl(lowerBoundary.segment);
+                    let photoIndex = lowerBoundary.index;
+                    let endSection = this.$refs['section' + upperBoundary.section][0]
+                    let endSegment = endSection.getSegmentEl(upperBoundary.segment);
+                    let endIndex = upperBoundary.index;
+                    while (this.isBefore(startSection.section, startSegment.data, photoIndex, endSection.section, endSegment.data, endIndex)) {
+                        startSegment.selectPhoto(photoIndex, false);
+                        let next = this.getNextSectionSegmentAndPhoto(startSection, startSegment, photoIndex, 1)
+                        startSection = next.section;
+                        startSegment = next.segment;
+                        photoIndex = next.index;            
+                    }
+                    this.$store.commit("emptySelectedPhotos");
+                    this.$emit("set-goback", null);
+                }                
             },
 
             selectMultiEvent() {
@@ -423,13 +424,14 @@
                 }
             },
 
+            /*
             checkDigit(event) {
                 if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
                     this.setRating(value);
                 }
             },
-
+            */
 
             keyboardActionWall(event) {
                 // are these values somewhere defined as constants?
@@ -484,21 +486,21 @@
             findFirstVisibleSegment() {
 
                 let sectionElement = null;
-                
+                /*
                 for (let i=0; i<this.sections.length; i++) {
                     sectionElement = this.$refs['section' + i][0];
                     if (sectionElement && sectionElement.isVisible())
                         break;
                 }
-                
-               /*
+                */
+               
                 this.sections.some(section => {
                     sectionElement = this.$refs['section' + section.id][0];
                     if (sectionElement.isVisible())
                         return sectionElement
 
                 });
-                */
+                
                 if (sectionElement) {
                     // now we have the first visible section
                     // let's find the fist visible segment
@@ -662,7 +664,7 @@
             
             getNextSection(sectionIndex, dir) {
                 let next_section_id = sectionIndex + dir;
-                if (next_section_id < 0 || next_section_id > this.sections.length)
+                if (next_section_id < 0 || next_section_id >= this.sections.length)
                     return this.$refs['section' + sectionIndex][0]
 
                 let el = this.$refs['section' + next_section_id]

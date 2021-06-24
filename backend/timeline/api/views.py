@@ -656,13 +656,25 @@ def de_tupelize(list_of_tupel):
     l = [v for v, in list_of_tupel]
     return flask.jsonify(l)
 
+
+""" def amend_query_for_search_page(request, q):
+    country = request.args.get("country")
+    person_id = request.args.get("person_id")
+    city = request.args.get("city")
+    toDate = request.args.get("to")
+    album_id = request.args.get("album_id")
+
+    if person_id:
+        q = q.join(Face, and_(and_(Face.person_id == person_id, Face.photo_id == Photo.id)
+    if country:
+ """
+
 @blueprint.route('/exif/camera_makes', methods=['GET'])
 def exif_camera_makes():
     camera_makes = Exif.query.filter(
         Exif.key == 'Make').with_entities(Exif.value).distinct()
     # with_entities returns tupel, we are only interested in the first and only one, so get rid of the tupel
     return de_tupelize(camera_makes.all())
-
 
 @blueprint.route('/location/countries', methods=['GET'])
 def locations_country():
