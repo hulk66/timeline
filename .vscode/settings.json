@@ -1,7 +1,0 @@
-{
-    "python.pythonPath": "/home/tobias/.local/share/virtualenvs/backend-fSJ8WHBg/bin/python3",
-    "python.linting.pylintEnabled": false,
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true,
-    "python.analysis.extraPaths": ["./backend"]
-}
