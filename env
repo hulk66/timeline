@@ -58,5 +58,5 @@ FACE_CLUSTER_MAX_FACES=8000
 # Smaller values result more false negative matches => Faces are not named at all
 # Bigger values result in more false positive matches => Faces are are named wrong
 FACE_DISTANCE_VERY_SAFE=0.55
-FACE_DISTANCE_SAFE=0.625
-FACE_DISTANCE_MAYBE=0.725
+FACE_DISTANCE_SAFE=0.65
+FACE_DISTANCE_MAYBE=0.75
