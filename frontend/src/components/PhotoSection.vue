@@ -82,7 +82,7 @@
 
         computed: {
             rootMargin() {
-                return (this.targetHeight * 3).toString() + "px";
+                return (this.targetHeight * 5).toString() + "px";
             }
         },
         mounted() {
@@ -164,6 +164,7 @@
                 }
                 return null;
             },
+            /*
             advanceSegment(segment, dir) {
                 let el = this.nextSegment(segment, dir);
                 if (el) {
@@ -175,7 +176,7 @@
                 }
                 return el;
             },
-
+            */
             
             clickFirstPhoto() {
                 this.$refs.segment0[0].clickPhoto(0);
@@ -233,10 +234,10 @@
                         this.loadPhotos(this.section);
                     this.visible = true;
                     // eslint-disable-next-line no-console
-                    console.log("Section " + this.section.id + " visible");
+                    // console.log("Section " + this.section.id + " visible");
                 } else {
                     // eslint-disable-next-line no-console
-                    console.log("Section " + this.section.id + " invisible");
+                    // console.log("Section " + this.section.id + " invisible");
                     this.photos = [];
                     this.visible = false;
                 }

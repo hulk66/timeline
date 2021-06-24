@@ -17,11 +17,12 @@
 <template>
     <div ref="segmentCont" 
         :id="'seg' + segIndex"
-        v-intersect="{handler:onIntersect, options: {rootMargin:'400px', root:this.$parent.$parent.$el}}" 
+        v-intersect="{handler:onIntersect, options: {rootMargin:'600px', root:this.$parent.$parent.$parent.$el}}" 
         v-resize="resize"
         > 
         <!--
-        <div class="ma-2 text-h6">Segment {{segIndex}} {{segmentDate}} </div>
+        <div class="ma-2 text-h6">Width {{contWidth}}</div>
+        <div class="ma-2 text-h6">Segment {{segIndex}}</div>
         -->
         <div class="ma-2 text-h6">{{segmentDate}} </div>
         <!-- v-intersect="{handler:onIntersect, options: {rootMargin:this.rootMargin, root:this.$parent.$el}}" -->
@@ -167,12 +168,12 @@
             onIntersect(entries, observer) {
                 let element = entries[0];
                 if (element.isIntersecting) {
-                    console.log(element.target.id + " visible")
+                    // console.log(element.target.id + " visible")
                     this.visible = true;
                     this.$emit('update-timeline', this.data.date)
                 } else {
                     this.visible = false;
-                    console.log(element.target.id + " invisible")
+                    // console.log(element.target.id + " invisible")
 
                 }
             },
