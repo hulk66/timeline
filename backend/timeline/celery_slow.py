@@ -21,23 +21,24 @@ from timeline.app import create_app, setup_logging
 from timeline.extensions import celery, db
 from timeline.tasks.classify_tasks import init_classify_services
 from timeline.tasks.face_tasks import init_face_services
+from timeline.tasks.iq_tasks import init_iq
 
 import timeline.tasks.iq_tasks
 import timeline.tasks.face_tasks
 import timeline.tasks.classify_tasks
 
 flask_app = create_app()
-# app = init_celery(flask_app)
 app = celery
 setup_logging(flask_app, 'slow_worker.log')
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
-    init_face_services()
-    init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
+    #init_face_services()
+    # init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
+    pass
 
 @worker_process_init.connect
-def prep_db_pool(**kwargs):
+def init_worker(**kwargs):
     """
         When Celery fork's the parent process, the db engine & connection pool is included in that.
         But, the db connections should not be shared across processes, so we tell the engine
@@ -50,3 +51,6 @@ def prep_db_pool(**kwargs):
     # on your SQLAlchemy db engine.
     with flask_app.app_context():
         db.engine.dispose()
+    init_iq()
+    init_face_services()
+    # init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])

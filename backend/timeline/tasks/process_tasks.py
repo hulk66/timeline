@@ -50,9 +50,15 @@ def new_photo(path):
             #)
             #chain.apply_async()
             
-            celery.send_task("Checking for GPS Information", (photo_id,), queue="geo_req")
-            celery.send_task("Face Detection", (photo_id,), queue="face")
-            celery.send_task("Object Detection", (photo_id,), queue="thing")
-            celery.send_task("timeline.tasks.iq_tasks.predict_quality", (photo_id,), queue="iq")
-            celery.send_task("timeline.tasks.iq_tasks.brisque_score", (photo_id,), queue="iq")
+            #celery.send_task("Checking for GPS Information", (photo_id,), queue="geo_req")
+            #celery.send_task("Face Detection", (photo_id,), queue="face")
+            #celery.send_task("Object Detection", (photo_id,), queue="thing")
+            #celery.send_task("timeline.tasks.iq_tasks.predict_quality", (photo_id,), queue="iq")
+
+            celery.send_task("Checking for GPS Information", (photo_id,), queue="process")
+            celery.send_task("Face Detection", (photo_id,), queue="process")
+            celery.send_task("Object Detection", (photo_id,), queue="process")
+            celery.send_task("timeline.tasks.iq_tasks.predict_quality", (photo_id,), queue="process")
+
+            # celery.send_task("timeline.tasks.iq_tasks.brisque_score", (photo_id,), queue="iq")
 

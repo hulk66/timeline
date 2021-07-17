@@ -37,7 +37,11 @@
         },
 
         props: {
-            album: Object
+            album: Object,
+            smart: {
+                type: Boolean,
+                value: false
+            }
         },
         data() {
             return {

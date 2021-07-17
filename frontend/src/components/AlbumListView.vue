@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 <template>
+    <div>
     <v-container fluid >
         <v-row no-gutters >
             <v-col 
@@ -25,6 +26,18 @@
                 </v-col>
         </v-row>
     </v-container>
+    <v-container fluid >
+        <v-row no-gutters >
+            <v-col 
+                v-for="album in smartAlbums" :key="album.id"
+                class="d-flex child-flex"
+                cols="6" md="4" lg="2" xl="1">
+                    <album-preview smart :album="album"></album-preview>
+                </v-col>
+        </v-row>
+    </v-container>
+
+    </div>
 </template>
 <script>
     import axios from 'axios';
@@ -43,7 +56,8 @@
         },
         data() {
             return {
-                albums: []
+                albums: [],
+                smartAlbums: []
             };
         },
 
@@ -51,6 +65,10 @@
             axios.get(`/albums/all`).then((result) => {
                 this.albums = result.data;
             });
+            axios.get(`/albums/smartalbum/all`).then((result) => {
+                this.smartAlbums = result.data;
+            });
+
             this.$store.commit("setSelectedAlbum", null);
         },
 

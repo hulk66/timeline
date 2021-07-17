@@ -60,6 +60,19 @@
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn color="primary" text @click="$refs.photoWall.loadAllSections()">Search</v-btn>
+
+                </v-card-actions>
+                <v-container fluid>
+                    <v-row dense>
+                        <v-col>
+                            <v-text-field label="Album Name" clearable  v-model="albumName"></v-text-field>
+                        </v-col>
+                    </v-row>
+                </v-container>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" :disabled="!albumName" text @click="saveSmartAlbum">Save Smart Album</v-btn>
+
                 </v-card-actions>
                 </v-card>
             </v-col>
@@ -96,6 +109,7 @@
         },
 
         props: {
+            albumId: Number
         },
         data() {
             return {
@@ -113,12 +127,16 @@
                 personId: null,
                 rating: 0,
                 from: "", 
-                to: ""
+                to: "",
+                albumName: null,
+                id: null
             };
         },
 
         mounted() {
             this.loadData();
+            this.id = this.albumId;
+            this.loadSmartAlbum();
         },
 
         computed: {
@@ -136,6 +154,62 @@
         },
         
         methods: {
+
+            loadSmartAlbum() {
+                if (this.id)
+                    axios.get(`/albums/smartalbum/${this.id}`).then(result => {
+                        this.loadSmartAlbumFromData(result.data);
+                    })
+            },
+
+            loadSmartAlbumFromData(data) {
+                this.personId = data.personId;
+                this.thing_id = data.thing_id;
+                this.camera = data.camera;
+                this.city = data.city;
+                this.country = data.country;
+                this.county = data.county;
+                this.rating = data.rating;
+                this.to = data.to;
+                this.from = data.from;
+                this.id = data.id;
+                this.albumName = data.name;
+            
+            },
+            saveSmartAlbum() {
+                let params = {};
+                let config ={ params: params };
+                params["person_id"] = this.personId;
+                // params["thing_id"] = this.thing_id;
+                params["city"] = this.city;
+                params["county"] = this.county;
+                params["country"] = this.country;
+                // params["state"] = this.state;
+                params["from"] = this.from;
+                params["to"] = this.to;
+                params["camera"] = this.camera;
+                params["name"] = this.albumName;
+                params["rating"] = this.rating;
+
+                axios.get("/albums/create_or_update_smartalbum", config).then(result => {
+                    this.loadSmartAlbumFromData(result.data)    
+                });
+                /*
+                axios.get("/albums/create_or_update_smartalbum", {
+                    person_id: this.personId,
+                    city: this.city,
+                    country: this.country,
+                    camera: this.camera,
+                    from: this.from,
+                    to: this.to, 
+                    rating: this.rating,
+                    name: this.albumName,
+                    id: this.albumId
+                }).then(result => {
+                    this.id = result.data;
+                })
+                */
+            },
             changeFrom(val) {
                 this.from = val;
                 this.to = val;

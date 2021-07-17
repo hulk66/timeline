@@ -4,11 +4,16 @@ FROM python:3.8
 RUN wget -O ssd.tgz https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1?tf-hub-format=compressed && \
     mkdir -p /tmp/myapp/models/thing/ssd && \
     tar -xzf ssd.tgz -C /tmp/myapp/models/thing/ssd && \
-    rm ssd.tgz
+    rm ssd.tgz 
+
+RUN apt update && apt -y install cmake
 
 ADD https://github.com/rcmalli/keras-vggface/releases/download/v2.0/rcmalli_vggface_tf_notop_resnet50.h5 /root/.keras/models/vggface/
 # ADD https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1?tf-hub-format=compressed /tmp/myapp/models/thing/ssd
 
+ADD https://github.com/serengil/deepface_models/releases/download/v1.0/gender_model_weights.h5 /tmp/myapp/models/facial
+ADD https://github.com/serengil/deepface_models/releases/download/v1.0/age_model_weights.h5 /tmp/myapp/models/facial
+ADD https://github.com/serengil/deepface_models/releases/download/v1.0/facial_expression_model_weights.h5 /tmp/myapp/models/facial
 
 # COPY models/face/rcmalli_vggface_tf_notop_resnet50.h5 /root/.keras/models/vggface/
 COPY requirements.txt /tmp

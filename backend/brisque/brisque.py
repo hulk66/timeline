@@ -4,7 +4,6 @@
 # coding=utf-8
 import os
 from ctypes import c_double
-
 import cv2
 import numpy as np
 from scipy.special import gamma
@@ -100,6 +99,7 @@ class BRISQUE(object):
         return alpha, left_std, right_std
 
     def get_feature(self, img):
+        
         """Get brisque feature given an image.
         :param img: The path or array of the image.
         :type img: str, np.ndarray

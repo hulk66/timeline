@@ -18,7 +18,7 @@ GNU General Public License for more details.
 import flask
 from flask import Blueprint, request
 import logging
-from timeline.domain import Album, Photo
+from timeline.domain import Album, Photo, SmartAlbum
 from timeline.extensions import db
 from timeline.api.util import list_as_json
 from sqlalchemy import and_
@@ -94,3 +94,72 @@ def photos(album_id, count):
     if count:
         photos = photos.limit(count)
     return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))
+
+
+
+@blueprint.route('/smartalbum/all', methods=['GET'])
+def all_smartalbum():
+    albums = SmartAlbum.query
+    return list_as_json(albums)
+
+@blueprint.route('/smartalbum/<int:id>', methods=['GET'])
+def get_smartalbum(id):
+    smart_album = SmartAlbum.query.get(id)
+    return flask.jsonify(smart_album.to_dict())
+
+@blueprint.route('/create_or_update_smartalbum', methods=['GET'])
+def create_or_update_smart_album():
+    id = request.args.get("id")
+    name = request.args.get("name")
+    person_id = request.args.get("person_id")
+    thing_id = request.args.get("thing_id")
+    country = request.args.get("country")
+    county = request.args.get("county")
+    city = request.args.get("city")
+    state = request.args.get("state")
+    camera = request.args.get("camera")
+    rating = request.args.get("rating")
+    fromDate = request.args.get("from")
+    toDate = request.args.get("to")
+
+    if id:
+        smart_album = SmartAlbum.query.get(id)
+    else:
+        smart_album = SmartAlbum()
+        db.session.add(smart_album)
+
+    smart_album.name = name
+
+    if person_id:
+        smart_album.person_id = person_id
+
+    if thing_id:
+        smart_album.thing_id = thing_id
+
+    if country:
+        smart_album.country = country
+
+    if county:
+        smart_album.county = county
+
+    if city:
+        smart_album.city = city
+
+    if state:
+        smart_album.state = state
+
+    if camera:
+        smart_album.camera_make = camera
+
+    if country:
+        smart_album.rating = rating
+
+    if fromDate:
+        smart_album.start_date = fromDate
+
+    if toDate:
+        smart_album.end_date = toDate
+
+    db.session.commit()
+    return get_smartalbum(smart_album.id)
+

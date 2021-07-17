@@ -35,14 +35,14 @@
             "args": [
                 "-A", 
                 "timeline.celery_slow", 
-                "worker"
+                "worker",
                 "-P",
-                "eventlet",
-                "--concurrency=6",
+                "prefork",
+                "--concurrency=2",
                 "-n",
                 "face_thing@%n",
                 "-Q",
-                "face,thing,iq"
+                "face,iq,thing"
             ]
         },
         {
@@ -57,12 +57,12 @@
                 "timeline.celery_fast", 
                 "worker",
                 "-P",
-                "solo",
-                "--concurrency=4",
+                "prefork",
+                "--concurrency=6",
                 "-n",
                 "fast@%n",
                 "-Q",
-                "beat,geo_req,process,match,geo_resolve"
+                "beat,geo_req,process,match,geo_resolve,face,iq,thing"
             ]
         },
         {

@@ -33,15 +33,16 @@ logger = logging.getLogger(__name__)
 class ImageQualifier:
 
     def __init__(self):
+
         self.nima_aesthetics = Nima("MobileNet", weights=None)
         self.nima_aesthetics.build()
         self.nima_aesthetics.nima_model.load_weights(
-            "model/weights_mobilenet_aesthetic_0.07.hdf5")
+            "models/iq/weights_mobilenet_aesthetic_0.07.hdf5")
 
         self.nima_technical = Nima("MobileNet", weights=None)
         self.nima_technical.build()
         self.nima_technical.nima_model.load_weights(
-            "model/weights_mobilenet_technical_0.11.hdf5")
+            "models/iq/weights_mobilenet_technical_0.11.hdf5")
         self.brisque = BRISQUE()
 
     def _preprocess(self, img):
@@ -78,7 +79,6 @@ class ImageQualifier:
                      photo.path, photo.score_brisque)
 
 
-qualifier = ImageQualifier()
 
 
 @celery.task(ignore_result=True)
@@ -89,3 +89,8 @@ def predict_quality(photo_id):
 @celery.task(ignore_result=True)
 def brisque_score(photo_id):
     qualifier.calculate_brisque(photo_id)
+
+def init_iq():
+    global qualifier
+    qualifier = ImageQualifier()
+

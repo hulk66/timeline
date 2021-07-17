@@ -18,7 +18,7 @@ GNU General Public License for more details.
 import flask
 
 
-def list_as_json(list, excludes=None):
+def list_as_json(list, excludes=[]):
     result = [element.to_dict(rules=excludes) for element in list]
     return flask.jsonify(result)
 

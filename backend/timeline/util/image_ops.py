@@ -64,14 +64,14 @@ def read_and_transpose(image_path):
     return exif_transpose(image_data)
 
 
-def read_transpose_scale_image_as_array(image_path, dimension):
+def read_transpose_scale_image_as_array(image_path, dimension = None):
     image = read_and_transpose(image_path)
     factor = 1.0
     if image.size[0] > image.size[1]:
         max_dim = image.size[0]
     else:
         max_dim = image.size[1]
-    if max_dim > dimension:
+    if dimension and max_dim > dimension:
         factor = max_dim / dimension
         image.thumbnail((dimension, dimension))
     return numpy.asarray(image), factor

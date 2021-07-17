@@ -23,6 +23,7 @@ from timeline.extensions import db
 
 
 class NumpyType(sqlalchemy.types.TypeDecorator):
+    cache_ok = True
     impl = sqlalchemy.types.LargeBinary
 
     def process_bind_param(self, value, dialect):
@@ -74,6 +75,12 @@ class Face(db.Model, SerializerMixin):
     person = db.relationship("Person", back_populates="faces")
     photo = db.relationship("Photo", back_populates="faces")
 
+    emotion = db.Column(db.String(20))
+    emotion_confidence = db.Column(db.Float)
+
+    predicted_age = db.Column(db.Integer) 
+    predicted_gender = db.Column(db.String(10))
+       
     serialize_rules = ('-encoding', '-photo')
 
 
@@ -94,21 +101,49 @@ class Album(db.Model, SerializerMixin):
     serialize_rules = ('-photos',)
 
 
-class SmartAlbumDateCriteria(db.Model, SerializerMixin):
+""" class SmartAlbumCriteria(db.Model, SerializerMixin):
+    __tablename__ = 'smartalbum_criteria'
+
     id = db.Column(db.Integer, primary_key=True)
+
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
+    rating = db.Column(db.Integer)
+    person_id = db.Column(db.Integer)
+    country = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+    county = db.Column(db.String(100))
+    village = db.Column(db.String(100))
+    municipality = db.Column(db.String(100))
+    camera_make = db.Column(db.String(100))
+    thing_id = db.Column(db.String(100))
 
+    smart_album_id = db.Column(db.Integer, db.ForeignKey('smartalbum.id'))
+    smart_album = db.relationship("SmartAlbum", back_populates="criterias")
+    serialize_rules = ('-smart_album',)
+ """
 
 class SmartAlbum(db.Model, SerializerMixin):
+    __tablename__ = 'smartalbum'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
 
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
-    min_stars = db.Column(db.Integer)
+    rating = db.Column(db.Integer)
+    person_id = db.Column(db.Integer)
+    country = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+    county = db.Column(db.String(100))
+    village = db.Column(db.String(100))
+    municipality = db.Column(db.String(100))
+    camera_make = db.Column(db.String(100))
+    thing_id = db.Column(db.String(100))
 
-    serialize_rules = ('-photos',)
+    # criterias = db.relationship("SmartAlbumCriteria", cascade="all, delete, delete-orphan")
+
+
 
 
 photo_thing = db.Table('photo_thing', db.Model.metadata,

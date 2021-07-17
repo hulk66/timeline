@@ -6,85 +6,80 @@
 #
 
 -i https://pypi.org/simple
-absl-py==0.11.0
-amqp==5.0.5; python_version >= '3.6'
+absl-py==0.13.0
+amqp==5.0.6; python_version >= '3.6'
 astunparse==1.6.3
-billiard==3.6.3.0
-cachetools==4.2.1; python_version ~= '3.5'
-celery==5.0.5
-certifi==2020.12.5
-chardet==4.0.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
+billiard==3.6.4.0
+cachetools==4.2.2; python_version ~= '3.5'
+celery==5.1.2
+certifi==2021.5.30
+charset-normalizer==2.0.3; python_version >= '3'
 click-didyoumean==0.0.3
 click-plugins==1.1.1
-click-repl==0.1.6
+click-repl==0.2.0
 click==7.1.2; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
-dnspython==1.16.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-eventlet==0.30.1
-flake8==3.8.4
-flask-sqlalchemy==2.4.4
-flask-testing==0.8.1
-flask==1.1.2
+dlib==19.22.0
+face-recognition-models==0.3.0
+face-recognition==1.3.0
+flask-sqlalchemy==2.5.1
+flask==2.0.1
 flatbuffers==1.12
 gast==0.3.3; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-geographiclib==1.50
-geopy==2.1.0
-google-auth-oauthlib==0.4.2; python_version >= '3.6'
-google-auth==1.25.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
+geographiclib==1.52
+geopy==2.2.0
+google-auth-oauthlib==0.4.4; python_version >= '3.6'
+google-auth==1.33.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
 google-pasta==0.2.0
-greenlet==1.0.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
+greenlet==1.1.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
 grpcio==1.32.0
-gunicorn==20.0.4
+gunicorn==20.1.0
 h5py==2.10.0
-idna==2.10; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-itsdangerous==1.1.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-jinja2==2.11.3; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
+idna==3.2; python_version >= '3'
+itsdangerous==2.0.1; python_version >= '3.6'
+jinja2==3.0.1; python_version >= '3.6'
 joblib==1.0.1; python_version >= '3.6'
 keras-applications==1.0.8
 keras-preprocessing==1.1.2
 keras-vggface==0.6
 keras==2.4.3
-kombu==5.0.2; python_version >= '3.6'
+kombu==5.1.0; python_version >= '3.6'
 libsvm==3.23.0.4
-markdown==3.3.3; python_version >= '3.6'
-markupsafe==1.1.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-mccabe==0.6.1
-mtcnn==0.1.0
+markdown==3.3.4; python_version >= '3.6'
+markupsafe==2.0.1; python_version >= '3.6'
 numpy==1.19.5; python_version >= '3.6'
-oauthlib==3.1.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-opencv-python-headless==4.5.1.48
-opencv-python==4.5.1.48; python_version >= '3.6'
+oauthlib==3.1.1; python_version >= '3.6'
+opencv-python-headless==4.5.3.56
 opt-einsum==3.3.0; python_version >= '3.5'
-pillow==8.1.0
-prompt-toolkit==3.0.14; python_full_version >= '3.6.1'
-protobuf==3.14.0
+pillow==8.3.1; python_version >= '3.6'
+prompt-toolkit==3.0.19; python_full_version >= '3.6.1'
+protobuf==3.17.3
 pyasn1-modules==0.2.8
 pyasn1==0.4.8
-pycodestyle==2.6.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-pyflakes==2.2.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 pymysql==1.0.2
-python-dotenv==0.15.0
+python-dotenv==0.18.0
 pytz==2021.1
 pyyaml==5.4.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
 requests-oauthlib==1.3.0
-requests==2.25.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
-rsa==4.7; python_version >= '3.6'
-scikit-learn==0.24.1
-scipy==1.6.0; python_version >= '3.7'
+requests==2.26.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
+rsa==4.7.2; python_version >= '3.6'
+scikit-learn==0.24.2
+scipy==1.7.0; python_version < '3.10' and python_version >= '3.7'
 six==1.15.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-sqlalchemy-serializer==1.3.4.4
-sqlalchemy==1.3.23
+sqlalchemy-serializer==1.4.1
+sqlalchemy==1.4.6
+tensorboard-data-server==0.6.1; python_version >= '3.6'
 tensorboard-plugin-wit==1.8.0
-tensorboard==2.4.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
+tensorboard==2.5.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 tensorflow-estimator==2.4.0
-tensorflow-hub==0.11.0
-tensorflow==2.4.1
+tensorflow-hub==0.12.0
+tensorflow==2.4.2
 termcolor==1.1.0
-threadpoolctl==2.1.0; python_version >= '3.5'
+threadpoolctl==2.2.0; python_version >= '3.6'
 typing-extensions==3.7.4.3
-urllib3==1.26.3; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'
+urllib3==1.26.6; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'
 vine==5.0.0; python_version >= '3.6'
-watchdog==1.0.2
+watchdog==2.1.3
 wcwidth==0.2.5
-werkzeug==1.0.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
+werkzeug==2.0.1; python_version >= '3.6'
 wheel==0.36.2; python_version >= '3'
 wrapt==1.12.1

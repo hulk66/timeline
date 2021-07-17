@@ -40,8 +40,7 @@ def init_classify_services(path_to_model):
     # module_handle = "https://tfhub.dev/google/faster_rcnn/openimages_v4/inception_resnet_v2/1"
     # module_handle = "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1"
     # module_handle = "models/thing/ssd"
-    module_handle = path_to_model 
-    object_detector = hub.load(module_handle).signatures['default']
+    object_detector = hub.load(path_to_model).signatures['default']
     logger.debug("Initialize Thing Detection Services done")
 
 def run_detector(image_path):
@@ -49,6 +48,8 @@ def run_detector(image_path):
     # logger.debug("run_object_detector for %s", image_path)
     jpg_file = load_and_resize_image(image_path)
     tensor = image_to_tensor(jpg_file)
+    #if object_detector is None:
+    #    init_classify_services("models/thing/ssd")
     detection_result = object_detector(tensor)
 
     r = {key: value.numpy() for key, value in detection_result.items()}
