@@ -1,2 +1,4 @@
 data
 models/inception_resnet_v2
+models/facial
+models/thing

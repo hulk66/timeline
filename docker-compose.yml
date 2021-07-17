@@ -56,10 +56,10 @@ services:
       - db
       - rabbitmq
 
-  worker_process:
+  worker:
     image: hulk66/timeline_be:0.82
     # build: backend
-    restart: always
+    # restart: always
     environment:
       APP: "worker_process"
       THREADS: ${THREADS_PROCESS}
@@ -74,28 +74,8 @@ services:
       FACE_DISTANCE_VERY_SAFE: ${FACE_DISTANCE_VERY_SAFE}
       FACE_DISTANCE_SAFE: ${FACE_DISTANCE_SAFE}
       FACE_DISTANCE_MAYBE: ${FACE_DISTANCE_MAYBE}
-    volumes:
-      - ${PHOTO_PATH}:/photos:ro
-      - ${PREVIEW_PATH}:/preview
-      - ${LOG_PATH}:/log
-    depends_on:
-      - webapp
-      - db
-      - rabbitmq
-
-  worker_thing_face:
-    # image: hulk66/timeline_be:0.82
-    image: hulk66/timeline_be:0.82
-    # build: backend
-    restart: always
-    environment:
-      APP: "worker_thing_face"
-      THREADS: ${THREADS_THING_FACE}
-      WAIT_HOSTS: db:3306, rabbitmq:5672, webapp:5000 
-      WAIT_HOSTS_TIMEOUT: 120
-      WAIT_SLEEP_INTERVAL: 3     
-      WAIT_AFTER_HOSTS: 2
-      DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
+      #INITIAL_SCAN: ${INITIAL_SCAN}
+      #POLLING: ${POLLING}
     volumes:
       - ${PHOTO_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
