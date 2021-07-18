@@ -70,9 +70,9 @@ def run_detector(image_path):
     return result
 
 @celery.task(autoretry_for=(OperationalError,), name="Object Detection", ignore_result=True)
-def analyze_photo(photo_id):
+def object_detection(photo_id):
     photo = Photo.query.get(photo_id)
-    logger.debug("Analyze Photo %s", photo.path)
+    logger.debug("Object Detection for Photo %s", photo.path)
 
     if not photo:
         logger.error("Something is wrong. Photo with id %i not found")

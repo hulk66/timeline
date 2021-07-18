@@ -61,8 +61,8 @@ services:
     # build: backend
     # restart: always
     environment:
-      APP: "worker_process"
-      THREADS: ${THREADS_PROCESS}
+      APP: "worker"
+      WORKER: ${WORKER}
       WAIT_HOSTS: db:3306, rabbitmq:5672, webapp:5000 
       WAIT_HOSTS_TIMEOUT: 120
       WAIT_SLEEP_INTERVAL: 3     

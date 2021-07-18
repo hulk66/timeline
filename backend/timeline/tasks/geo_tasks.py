@@ -47,7 +47,7 @@ def set_display_address(photo_id):
 
     if photo.gps_id:
         logger.debug("Photo contains GPS data, scheduling reverse lookup: %s", photo.path)
-        resolve_address.apply_async((photo_id,), queue='geo_resolve')
+        resolve_address.apply_async((photo_id,), queue='analyze')
     else:
         logger.debug("Photo contains no GPS data, nothing to do: %s", photo.path)
 

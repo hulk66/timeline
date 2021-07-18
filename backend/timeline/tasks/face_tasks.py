@@ -38,9 +38,7 @@ import face_recognition
 from timeline.facial.expression import FacialExpression, AgeGender
 
 logger = logging.getLogger(__name__)
-
 MIN_DIMENSION_SIZE = 50
-
 
 
 def init_face_services():
@@ -132,13 +130,13 @@ def find_faces2(photo_id, call_match_tasks = True):
             for face in photo.faces:
 
                 # for all found faces we will check if we can match is already to some known face
-                match_unknown_face.apply_async((face.id,), queue="match")
+                match_unknown_face.apply_async((face.id,), queue="analyze")
                 # and if it is close to an already ignored face, then also ignore it
-                match_ignored_faces.apply_async((face.id,), queue="match")
+                match_ignored_faces.apply_async((face.id,), queue="analyze")
                 # and finally find out the emotion of a face for later grouping
-                detect_facial_expression.apply_async((face.id,), queue="match")
-                detect_age.apply_async((face.id,), queue="match")
-                detect_gender.apply_async((face.id,), queue="match")
+                detect_facial_expression.apply_async((face.id,), queue="analyze")
+                detect_age.apply_async((face.id,), queue="analyze")
+                detect_gender.apply_async((face.id,), queue="analyze")
                 
 
     logger.debug("Found %d faces in %s", num_faces, photo.path)
@@ -288,11 +286,11 @@ def find_faces(photo_id, call_match_tasks):
         if call_match_tasks:
             for face in photo.faces:
                 # for all found faces we will check if we can match is already to some known face
-                match_unknown_face.apply_async((face.id,), queue="match")
+                match_unknown_face.apply_async((face.id,), queue="analyze")
                 # and if it is close to an already ignored face, then also ignore it
-                match_ignored_faces.apply_async((face.id,), queue="match")
+                match_ignored_faces.apply_async((face.id,), queue="analyze")
                 # and finally find out the emotion of a face for later grouping
-                detect_facial_expression.apply_async((face.id,), queue="match")
+                detect_facial_expression.apply_async((face.id,), queue="analyze")
 
 
 def save_preview(id, image):

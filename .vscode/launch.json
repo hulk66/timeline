@@ -62,7 +62,7 @@
                 "-n",
                 "fast@%n",
                 "-Q",
-                "beat,geo_req,process,match,geo_resolve,face,iq,thing"
+                "beat,process,analyze"
             ]
         },
         {

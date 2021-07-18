@@ -19,7 +19,6 @@ import logging
 
 import numpy as np
 import tensorflow as tf
-from brisque.brisque import BRISQUE
 from idealo.handlers.model_builder import Nima
 from idealo.utils.utils import calc_mean_score
 from tensorflow.keras.applications.mobilenet import preprocess_input
@@ -81,14 +80,9 @@ class ImageQualifier:
 
 
 
-@celery.task(ignore_result=True)
+@celery.task(name="Quality Assessment", ignore_result=True)
 def predict_quality(photo_id):
     qualifier.predict(photo_id)
-
-
-@celery.task(ignore_result=True)
-def brisque_score(photo_id):
-    qualifier.calculate_brisque(photo_id)
 
 def init_iq():
     global qualifier
