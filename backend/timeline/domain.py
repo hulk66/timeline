@@ -187,7 +187,7 @@ class Photo(db.Model, SerializerMixin):
     stars = db.Column(db.Integer)
     score_aesthetic = db.Column(db.Float)
     score_technical = db.Column(db.Float)
-    score_brisque = db.Column(db.Float)
+    # score_brisque = db.Column(db.Float)
 
     gps = db.relationship(
         "GPS", uselist=False, cascade="all, delete, delete-orphan", 
