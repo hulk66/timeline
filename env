@@ -22,7 +22,7 @@ RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 # seems reasonable
 # On something more powerful 4-6 is good
 # In general a good approach is to go with the number of physical processors
-WORKER=4
+WORKERS=4
 
 # This is the password to access adminer
 # under http://<machine>:9091/adminer

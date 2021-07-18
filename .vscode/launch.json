@@ -58,7 +58,6 @@
                 "worker",
                 "-P",
                 "prefork",
-                "--concurrency=6",
                 "-n",
                 "fast@%n",
                 "-Q",

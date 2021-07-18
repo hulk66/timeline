@@ -14,7 +14,7 @@ elif [ $APP = 'worker' ]
       # celery -A timeline.celery_main purge -f -Q beat 
       celery -A timeline.celery_fast amqp queue.purge beat
       celery -A timeline.celery_fast amqp queue.delete beat
-      celery -A timeline.celery_fast worker --concurrency=$WORKER -Q beat,process,analyze
+      celery -A timeline.celery_fast worker --concurrency=$WORKERS -Q beat,process,analyze
 elif [ $APP = 'watchdog' ]
   then
       ./wait
