@@ -30,24 +30,22 @@ import timeline.tasks.iq_tasks
 import timeline.tasks.classify_tasks
 
 from timeline.tasks.classify_tasks import init_classify_services
-from timeline.tasks.face_tasks import init_face_services, init_face_age_gender
+from timeline.tasks.face_tasks import init_vgg_face, init_face_age_gender
 from timeline.tasks.iq_tasks import init_iq
+from celery.concurrency import asynpool
 
+asynpool.PROC_ALIVE_TIMEOUT = 10.0
 flask_app = create_app()
-app = celery
-setup_logging(flask_app, 'fast_worker.log')
-
+# app = celery
+setup_logging(flask_app, 'worker.log')
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
     # let's see the first photos after 5min and after this according to the plan (15min)
     schedule_next_compute_sections(5)
-    # schedule_next_grouping()
-    # schedule_next_match_all_unknown_faces()
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
-    init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
-    init_iq()
- 
+
+
 
 @worker_process_init.connect
 def init_worker(**kwargs):
@@ -64,5 +62,8 @@ def init_worker(**kwargs):
     with flask_app.app_context():
         db.engine.dispose()
 
-    init_face_services()
+    init_vgg_face()
     init_face_age_gender()
+    init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
+    init_iq()
+ 

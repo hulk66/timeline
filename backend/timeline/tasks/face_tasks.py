@@ -19,12 +19,9 @@ import logging
 import os
 from datetime import datetime
 
-# import mtcnn
 import numpy
 from keras_vggface import VGGFace
 from keras_vggface.utils import preprocess_input
-#from vggface.vggface import VGGFace
-#from vggface.utils import preprocess_input
 from PIL import Image
 from pymysql.err import InternalError
 from sklearn.preprocessing import normalize
@@ -50,11 +47,9 @@ def init_face_age_gender():
     logger.debug("Age/Gender Detector initialized")
 
 
-def init_face_services():
-    # global face_detector
+def init_vgg_face():
     global face_identifier
-    logger.debug(
-        "Initialize Face Detection Services. Potentially downloading a model, might need a couple of seconds")
+    logger.debug("Initialize VGGFace, might need a couple of seconds")
 
     # face_detector = mtcnn.MTCNN()
     face_identifier = VGGFace(model='resnet50',
@@ -68,8 +63,6 @@ def _get_face_embeddings(faces):
     samples = numpy.asarray(faces, 'float32')
     samples = preprocess_input(samples, version=2)
     return face_identifier.predict(samples)
-    #return face_recognition.face_encodings(faces)
-
 
 def _find_faces_in_image2(image):
     required_size = (224, 224)

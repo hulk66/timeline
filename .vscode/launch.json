@@ -38,7 +38,7 @@
                 "worker",
                 "-P",
                 "prefork",
-                "--concurrency=1",
+                "--concurrency=4",
                 "-n",
                 "fast@%n",
                 "-Q",
