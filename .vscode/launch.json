@@ -26,27 +26,7 @@
         },
 
         {
-            "name": "Worker - Slow - Face and Thing",
-            "type": "python",
-            "request": "launch",
-            "module": "celery",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend",
-            "args": [
-                "-A", 
-                "timeline.celery_slow", 
-                "worker",
-                "-P",
-                "prefork",
-                "--concurrency=2",
-                "-n",
-                "face_thing@%n",
-                "-Q",
-                "face,iq,thing"
-            ]
-        },
-        {
-            "name": "Worker - Fast",
+            "name": "Worker",
             "type": "python",
             "request": "launch",
             "module": "celery",
@@ -58,6 +38,7 @@
                 "worker",
                 "-P",
                 "prefork",
+                "--concurrency=1",
                 "-n",
                 "fast@%n",
                 "-Q",
