@@ -6,6 +6,9 @@ from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, AveragePooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.layers import Input, Convolution2D, ZeroPadding2D, MaxPooling2D, Flatten, Dense, Dropout, Activation
 from PIL import Image, ImageOps
+import logging
+
+logger = logging.getLogger(__name__) 
 
 
 # Courtesy of https://github.com/serengil
@@ -123,12 +126,13 @@ class AgeGender:
 
 
     def _setup_gender_model(self):
-        classes = 2
+        logger.debug("Setup Gender Model")
         self.gender_model = self._setup_model(2)
         self.gender_model.load_weights('models/facial/gender_model_weights.h5')
 
 
     def _setup_age_model(self):
+        logger.debug("Setup Age Model")
         self.age_model = self._setup_model(101)
         self.age_model.load_weights('models/facial/age_model_weights.h5')
 

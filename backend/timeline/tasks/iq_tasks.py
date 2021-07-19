@@ -42,7 +42,6 @@ class ImageQualifier:
         self.nima_technical.build()
         self.nima_technical.nima_model.load_weights(
             "models/iq/weights_mobilenet_technical_0.11.hdf5")
-        self.brisque = BRISQUE()
 
     def _preprocess(self, img):
         preprocessed_img = tf.keras.preprocessing.image.load_img(
@@ -67,17 +66,6 @@ class ImageQualifier:
                      photo.path, photo.score_aesthetic, photo.score_technical)
 
         db.session.commit()
-
-    def calculate_brisque(self, photo_id):
-        photo = Photo.query.get(photo_id)
-        logger.debug("Brisque score for %s", photo.path)
-        path = get_full_path(photo.path)
-        photo.score_brisque = self.brisque.get_score(path)
-        db.session.commit()
-        logger.debug("Brisque score for %s: %f",
-                     photo.path, photo.score_brisque)
-
-
 
 
 @celery.task(name="Quality Assessment", ignore_result=True)

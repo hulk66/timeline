@@ -37,15 +37,22 @@ from timeline.util.path_util import get_preview_path
 import face_recognition
 from timeline.facial.expression import FacialExpression, AgeGender
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) 
 MIN_DIMENSION_SIZE = 50
 
 
-def init_face_services():
-    global face_detector
-    global face_identifier
+def init_face_age_gender():
     global face_expression
     global age_gender
+    face_expression = FacialExpression()
+    logger.debug("Expression Detector initialized")                              
+    age_gender = AgeGender()
+    logger.debug("Age/Gender Detector initialized")
+
+
+def init_face_services():
+    # global face_detector
+    global face_identifier
     logger.debug(
         "Initialize Face Detection Services. Potentially downloading a model, might need a couple of seconds")
 
@@ -54,15 +61,15 @@ def init_face_services():
                               include_top=False,
                               input_shape=(224, 224, 3),
                               pooling='avg')
-    face_expression = FacialExpression()
-    age_gender = AgeGender()
-    logger.debug("Face Detection Services initialized")
+    logger.debug("VGGFace initialized")                              
 
 
 def _get_face_embeddings(faces):
     samples = numpy.asarray(faces, 'float32')
     samples = preprocess_input(samples, version=2)
     return face_identifier.predict(samples)
+    #return face_recognition.face_encodings(faces)
+
 
 def _find_faces_in_image2(image):
     required_size = (224, 224)
@@ -70,7 +77,7 @@ def _find_faces_in_image2(image):
     face_result = []
 
     face_locations = face_recognition.face_locations(image)    
-
+    
     for face_location in face_locations:
         y1, x2, y2, x1 = face_location
 

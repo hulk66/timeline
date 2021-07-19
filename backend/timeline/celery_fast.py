@@ -30,7 +30,7 @@ import timeline.tasks.iq_tasks
 import timeline.tasks.classify_tasks
 
 from timeline.tasks.classify_tasks import init_classify_services
-from timeline.tasks.face_tasks import init_face_services
+from timeline.tasks.face_tasks import init_face_services, init_face_age_gender
 from timeline.tasks.iq_tasks import init_iq
 
 flask_app = create_app()
@@ -45,7 +45,9 @@ def setup_direct_queue(sender, instance, **kwargs):
     # schedule_next_grouping()
     # schedule_next_match_all_unknown_faces()
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
-
+    init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
+    init_iq()
+ 
 
 @worker_process_init.connect
 def init_worker(**kwargs):
@@ -63,5 +65,4 @@ def init_worker(**kwargs):
         db.engine.dispose()
 
     init_face_services()
-    init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
-    init_iq()
+    init_face_age_gender()
