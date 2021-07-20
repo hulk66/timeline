@@ -29,15 +29,8 @@ import timeline.tasks.face_tasks
 import timeline.tasks.iq_tasks
 import timeline.tasks.classify_tasks
 
-from timeline.tasks.classify_tasks import init_classify_services
-from timeline.tasks.face_tasks import init_vgg_face, init_face_age_gender
-from timeline.tasks.iq_tasks import init_iq
-from celery.concurrency import asynpool
-
-asynpool.PROC_ALIVE_TIMEOUT = 10.0
 flask_app = create_app()
-# app = celery
-setup_logging(flask_app, 'worker.log')
+setup_logging(flask_app, 'process_worker.log')
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
@@ -62,8 +55,4 @@ def init_worker(**kwargs):
     with flask_app.app_context():
         db.engine.dispose()
 
-    init_vgg_face()
-    init_face_age_gender()
-    init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
-    init_iq()
  

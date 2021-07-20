@@ -33,6 +33,7 @@ object_detector = None
 logger = logging.getLogger(__name__)
 
 
+
 def init_classify_services(path_to_model):
 
     global object_detector
@@ -42,6 +43,7 @@ def init_classify_services(path_to_model):
     # module_handle = "models/thing/ssd"
     object_detector = hub.load(path_to_model).signatures['default']
     logger.debug("Initialize Thing Detection Services done")
+
 
 def run_detector(image_path):
 

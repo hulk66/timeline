@@ -26,7 +26,7 @@
         },
 
         {
-            "name": "Worker",
+            "name": "Worker - Fast",
             "type": "python",
             "request": "launch",
             "module": "celery",
@@ -34,7 +34,7 @@
             "cwd": "${workspaceFolder}/backend",
             "args": [
                 "-A", 
-                "timeline.celery_fast", 
+                "timeline.celery_process", 
                 "worker",
                 "-P",
                 "prefork",
@@ -42,9 +42,30 @@
                 "-n",
                 "fast@%n",
                 "-Q",
-                "beat,process,analyze"
+                "beat,process"
             ]
         },
+        {
+            "name": "Worker - Slow",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/backend",
+            "args": [
+                "-A", 
+                "timeline.celery_analyze", 
+                "worker",
+                "-P",
+                "prefork",
+                "--concurrency=2",
+                "-n",
+                "slow@%n",
+                "-Q",
+                "analyze"
+            ]
+        },
+
         {
             "name": "Webapp",
             "type": "python",

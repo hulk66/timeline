@@ -75,4 +75,3 @@ def predict_quality(photo_id):
 def init_iq():
     global qualifier
     qualifier = ImageQualifier()
-
