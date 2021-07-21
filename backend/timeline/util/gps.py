@@ -19,7 +19,6 @@ import logging
 from PIL.ExifTags import TAGS
 from PIL.ExifTags import GPSTAGS
 
-
 logger = logging.getLogger(__name__)
 
 exif_tags_exclude_list = ['ComponentsConfiguration', 'JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'MakerNote', 'ShutterSpeedValue', 'ApertureValue']
@@ -160,6 +159,20 @@ def get_labeled_exif(exif):
     return labeled
 
 
+def get_exif_table(exif_data) -> dict:
+    exif_table = {}
+    for tag, value in exif_data.items():
+        decoded = TAGS.get(tag, tag)
+        exif_table[decoded] = value
+
+def get_gps_data(exif_table: dict) -> dict:
+    gps_info = {}
+    for key in exif_table['GPSInfo'].keys():
+        decode = GPSTAGS.get(key,key)
+        gps_info[decode] = exif_table['GPSInfo'][key]
+
+    return gps_info
+
 def get_exif_value(key, raw_value):
     v = str(raw_value)[0:100]
     if key in ("XResolution", "YResolution"):
@@ -178,18 +191,12 @@ def get_exif_value(key, raw_value):
     return v
 
 
-def get_geotagging(exif: dict) -> dict:
+def get_geotagging(exif) -> dict:
     geotagging = {}
     if exif:
-        for (idx, tag) in TAGS.items():
-            if tag == 'GPSInfo' and idx in exif:
-
-                for (key, val) in GPSTAGS.items():
-                    dictionary = exif[idx]
-                    # In some cases it seems the exif data state that there
-                    # is a dict with GPS data - but this is not the case
-                    # it is just an int
-                    if isinstance(dictionary, dict) and key in dictionary:
-                        geotagging[val] = exif[idx][key]
+        dictionary = exif.get_ifd(0x8825)
+        for (key, val) in GPSTAGS.items():
+            if key in dictionary:
+                geotagging[val] = dictionary[key]
 
     return geotagging

@@ -59,12 +59,12 @@ services:
   worker:
     image: hulk66/timeline_be:0.82
     # build: backend
-    # restart: always
+    restart: always
     environment:
-      APP: "worker"
-      WORKERS: ${WORKERS}
+      APP: "worker_process"
+      WORKERS_PROCESS: ${WORKERS_PROCESS}
       WAIT_HOSTS: db:3306, rabbitmq:5672, webapp:5000 
-      WAIT_HOSTS_TIMEOUT: 120
+      WAIT_HOSTS_TIMEOUT: 180
       WAIT_SLEEP_INTERVAL: 3     
       WAIT_AFTER_HOSTS: 2
       DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
@@ -98,7 +98,7 @@ services:
       BE_HOST: webapp
       BE_PORT: 5000
       WAIT_HOSTS: webapp:5000
-      WAIT_HOSTS_TIMEOUT: 120
+      WAIT_HOSTS_TIMEOUT: 180
       WAIT_SLEEP_INTERVAL: 3     
       WAIT_AFTER_HOSTS: 2
     depends_on:
@@ -111,7 +111,7 @@ services:
     environment:
       APP: "watchdog"
       WAIT_HOSTS: db:3306, rabbitmq:5672, webapp:5000 # redis:6379
-      WAIT_HOSTS_TIMEOUT: 120
+      WAIT_HOSTS_TIMEOUT: 180
       WAIT_SLEEP_INTERVAL: 3     
       WAIT_AFTER_HOSTS: 2
       DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}

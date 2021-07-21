@@ -52,4 +52,5 @@ class FlaskCelery(Celery):
 
 
 celery = FlaskCelery()
+celery.conf.worker_proc_alive_timeout = 240.0
 db = SQLAlchemy()

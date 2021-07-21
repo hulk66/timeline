@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-from celery.signals import worker_process_init
+from celery.signals import celeryd_after_setup, worker_process_init
 
 from timeline.app import create_app, setup_logging
 from timeline.extensions import db, celery
@@ -26,6 +26,10 @@ from timeline.tasks.iq_tasks import init_iq
 
 flask_app = create_app()
 setup_logging(flask_app, "analyze_worker.log")
+
+@celeryd_after_setup.connect
+def setup_direct_queue(sender, instance, **kwargs):
+    pass
 
 @worker_process_init.connect
 def init_worker(**kwargs):
@@ -46,3 +50,4 @@ def init_worker(**kwargs):
     init_iq()
     init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
     init_vgg_face()
+

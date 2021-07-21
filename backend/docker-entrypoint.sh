@@ -14,7 +14,7 @@ elif [ $APP = 'worker_process' ]
       # celery -A timeline.celery_main purge -f -Q beat 
       celery -A timeline.celery_process amqp queue.purge beat
       celery -A timeline.celery_process amqp queue.delete beat
-      celery -A timeline.celery_process worker --autoscale=$WORKERS_PROCESS,0 -Q beat,process
+      celery -A timeline.celery_process worker --autoscale=$WORKERS_PROCESS,1 -Q beat,process,analyze
 elif [ $APP = 'worker_analyze' ]
   then 
       ./wait

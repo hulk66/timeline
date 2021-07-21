@@ -137,12 +137,8 @@ def status():
     numThings = Photo.query.filter(Photo.things != None).count()
 
     result = {
-        "faces": get_queue_len("face"),
-        "things": get_queue_len("thing"),
-        "geo": get_queue_len("geo_resolve"),
         "process": get_queue_len("process"),
-        "match": get_queue_len("match"),
-        "iq": get_queue_len("iq"),
+        "analyze": get_queue_len("analyze"),
         "totalFaces": numFaces,
         "totalThings": numThings,
         "totalPhotos": Photo.query.count()

@@ -18,15 +18,26 @@ DATABASE_DATA=/Users/johndoe/timeline/data/db
 RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 
 # Adjust this with the number of parallel workers / tasks to be allowed
-# Depends on your machine; for a NAS with 4GB and 4 processors a limit of 2
+# Depends on your machine; for a NAS with 4GB and 4 processors a limit of 1
 # seems reasonable
 # On something more powerful 4-6 is good
 # In general a good approach is to go with the number of physical processors
+# The workers are on one hand CPU intensive but on the other hand also
+# memory intensive as the loaded models for face and thing detection
+# already eat up a a few hundret megabyte. 
+# That means that a single worker process need around 1.9GB RAM. 
+# In case you only have as NAS with 4GB just just use one. With 8GB 2-4 should work.
+# On my Dev machine I have 16 and 8 workers are ok
+# Once the workers are done anymore they will shut down and only 1 worker will 
+# remain. That means if the initial work is done the memory (and CPU) 
+# footprint should reduce  
+WORKERS_PROCESS=4
+
+# vvv --- Ignore this for now. Old
 # There are two workers, one that just reads the photos, extracts exif, 
 # creates preview and so on. They are CPU intensive but not very memory intensive 
 # When everything is done, those worker processes will be scaled down automatically
 # by Celery
-WORKERS_PROCESS=4
 # The other worker does all the machine learning stuff. Due to the loaded models
 # they are CPU intensive and quite memory intensive, so we create fewer of them
 # on process can eat up to 2.5GB Memory. So be reasonable with them
@@ -34,7 +45,8 @@ WORKERS_PROCESS=4
 # prefork workers. Moreoever, each forked process need very own instances 
 # of each model. That is why they are so memory intensive. 
 # Also the autoscaling from Celery Unfortunatley does not work here
-WORKERS_ANALYZE=2
+# WORKERS_ANALYZE=2
+# ^^^ -- not used atm
 
 # This is the password to access adminer
 # under http://<machine>:9091/adminer

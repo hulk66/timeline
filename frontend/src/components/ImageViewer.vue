@@ -115,6 +115,7 @@
                                                     v-html="face.person.name">
                                                 </v-list-item-title>
                                                 <v-list-item-subtitle class="font-italic">{{face.classified_by}} ({{face.confidence}})</v-list-item-subtitle>
+                                                <v-list-item-subtitle class="font-italic">{{face.emotion}} ({{face.emotion_confidence}})</v-list-item-subtitle>
                                             </span>
                                             <v-list-item-subtitle v-else>Unknown</v-list-item-subtitle>
                                         </span>
@@ -222,7 +223,7 @@
                                 </v-card-text>
                             </div>     
 
-                            <div v-if="photo.score_aesthetic || photo.score_technical || photo.score_brisque">
+                            <div v-if="photo.score_aesthetic || photo.score_technical">
                                 <v-card-text >
                                     <div class="font-weight-bold">Scores</div>
                                 </v-card-text>
@@ -234,9 +235,6 @@
                                         <v-list-item-subtitle>Aesthetic {{photo.score_aesthetic}}</v-list-item-subtitle>
                                         <v-list-item-subtitle>
                                             Technical {{photo.score_technical}}
-                                        </v-list-item-subtitle>
-                                        <v-list-item-subtitle>
-                                            Brisque {{photo.score_brisque}}
                                         </v-list-item-subtitle>
 
                                     </v-list-item-content>

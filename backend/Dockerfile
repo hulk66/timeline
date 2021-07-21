@@ -9,8 +9,8 @@ RUN apt update && apt -y install cmake
 
 ADD https://github.com/rcmalli/keras-vggface/releases/download/v2.0/rcmalli_vggface_tf_notop_resnet50.h5 /root/.keras/models/vggface/
 
-ADD https://github.com/serengil/deepface_models/releases/download/v1.0/gender_model_weights.h5 /tmp/myapp/models/facial/
-ADD https://github.com/serengil/deepface_models/releases/download/v1.0/age_model_weights.h5 /tmp/myapp/models/facial/
+#ADD https://github.com/serengil/deepface_models/releases/download/v1.0/gender_model_weights.h5 /tmp/myapp/models/facial/
+#ADD https://github.com/serengil/deepface_models/releases/download/v1.0/age_model_weights.h5 /tmp/myapp/models/facial/
 ADD https://github.com/serengil/deepface_models/releases/download/v1.0/facial_expression_model_weights.h5 /tmp/myapp/models/facial/
 
 # COPY models/face/rcmalli_vggface_tf_notop_resnet50.h5 /root/.keras/models/vggface/

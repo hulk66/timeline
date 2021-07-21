@@ -25,7 +25,7 @@ from flask import current_app
 from PIL import Image, UnidentifiedImageError
 from timeline.domain import Album, GPS, Exif, Person, Photo, Section, Status
 from timeline.extensions import celery, db
-from timeline.util.gps import (get_exif_value, get_geotagging,
+from timeline.util.gps import (get_exif_value, get_geotagging, get_gps_data,
                                get_labeled_exif, get_lat_lon)
 from timeline.util.image_ops import read_and_transpose
 from timeline.util.path_util import (get_full_path, get_preview_path,
@@ -84,6 +84,7 @@ def create_photo(path, commit=True):
     exif_raw = image.getexif()
     exif_data = get_labeled_exif(exif_raw)
     geotags = get_geotagging(exif_raw)
+    # geotags = get_gps_data(exif_data)
     # latitude, longitude = get_coordinates(geotags)
     gps_data = get_lat_lon(geotags)
     if gps_data:

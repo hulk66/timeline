@@ -15,12 +15,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
  
-from celery.signals import celeryd_after_setup, worker_process_init
+from celery.signals import celeryd_after_setup, worker_process_init, worker_init
 
 from timeline.app import create_app, setup_logging
 from timeline.extensions import celery, db
 from timeline.tasks.crud_tasks import schedule_next_compute_sections
 from timeline.tasks.match_tasks import do_background_face_tasks
+from timeline.tasks.classify_tasks import init_classify_services
+from timeline.tasks.face_tasks import init_vgg_face, init_face_age_gender
+from timeline.tasks.iq_tasks import init_iq
+
 
 import timeline.tasks.geo_tasks
 import timeline.tasks.match_tasks
@@ -39,7 +43,6 @@ def setup_direct_queue(sender, instance, **kwargs):
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
 
 
-
 @worker_process_init.connect
 def init_worker(**kwargs):
     """
@@ -54,5 +57,10 @@ def init_worker(**kwargs):
     # on your SQLAlchemy db engine.
     with flask_app.app_context():
         db.engine.dispose()
+
+    init_face_age_gender()
+    init_iq()
+    init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
+    init_vgg_face()
 
  

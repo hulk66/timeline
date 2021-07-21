@@ -38,11 +38,11 @@
                 "worker",
                 "-P",
                 "prefork",
-                "--concurrency=4",
+                "--autoscale=8,1",
                 "-n",
                 "fast@%n",
                 "-Q",
-                "beat,process"
+                "beat,process,analyze"
             ]
         },
         {

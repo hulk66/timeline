@@ -40,11 +40,11 @@ MIN_DIMENSION_SIZE = 50
 
 def init_face_age_gender():
     global face_expression
-    global age_gender
+    #global age_gender
     face_expression = FacialExpression()
     logger.debug("Expression Detector initialized")                              
-    age_gender = AgeGender()
-    logger.debug("Age/Gender Detector initialized")
+    #age_gender = AgeGender()
+    #logger.debug("Age/Gender Detector initialized")
 
 
 def init_vgg_face():
@@ -105,10 +105,9 @@ def find_faces2(photo_id, call_match_tasks = True):
     result = []
     if len(face_positions) > 0:
 
-        logger.debug("Get embedding")
+        logger.debug("Get Feature Vector for Face")
         model_scores = _get_face_embeddings(faces)
         scores_nomalized = normalize(model_scores)
-        logger.debug("Get embedding - done")
 
         i = 0
         for face_locations in face_positions:
@@ -130,13 +129,13 @@ def find_faces2(photo_id, call_match_tasks = True):
             for face in photo.faces:
 
                 # for all found faces we will check if we can match is already to some known face
-                match_unknown_face.apply_async((face.id,), queue="analyze")
+                match_unknown_face.apply_async((face.id,), queue="process")
                 # and if it is close to an already ignored face, then also ignore it
-                match_ignored_faces.apply_async((face.id,), queue="analyze")
+                match_ignored_faces.apply_async((face.id,), queue="process")
                 # and finally find out the emotion of a face for later grouping
                 detect_facial_expression.apply_async((face.id,), queue="analyze")
-                detect_age.apply_async((face.id,), queue="analyze")
-                detect_gender.apply_async((face.id,), queue="analyze")
+                #detect_age.apply_async((face.id,), queue="analyze")
+                #detect_gender.apply_async((face.id,), queue="analyze")
                 
 
     logger.debug("Found %d faces in %s", num_faces, photo.path)
