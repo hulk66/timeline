@@ -32,7 +32,7 @@ def insert_things(csv_thing_file):
     f = open(csv_thing_file)
     csv_reader = csv.reader(f)
     i = 0
-
+    first_run = True
     init_required = True
     for row in csv_reader:
         if i % 100 == 0:
@@ -41,14 +41,15 @@ def insert_things(csv_thing_file):
         id = row[0]
         label = row[1]
 
-        t = Thing.query.get(id)
-        if not t:
-            t = Thing(id = id, label_en = label)
-            db.session.add(t)
-        else:
-            # might need to change it back but during devlopment it just takes uncessary time
-            init_required = False
-            break
+        if first_run:
+            t = Thing.query.get(id)
+            first_run = False
+            if t:
+                init_required = False
+                break
+
+        t = Thing(id = id, label_en = label)
+        db.session.add(t)
     db.session.commit()
     return init_required
 

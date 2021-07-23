@@ -26,12 +26,12 @@ RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 # memory intensive as the loaded models for face and thing detection
 # already eat up a a few hundret megabyte. 
 # That means that a single worker process need around 1.9GB RAM. 
-# In case you only have as NAS with 4GB just just use one. With 8GB 2-4 should work.
-# On my Dev machine I have 16 and 8 workers are ok
+# In case you only have as NAS with 4GB just just use one. With 8GB 2-3 should work.
+# On my Dev machine with 16GB RAM 6 workers are ok
 # Once the workers are done anymore they will shut down and only 1 worker will 
 # remain. That means if the initial work is done the memory (and CPU) 
 # footprint should reduce  
-WORKERS_PROCESS=4
+WORKERS_PROCESS=2
 
 # vvv --- Ignore this for now. Old
 # There are two workers, one that just reads the photos, extracts exif, 

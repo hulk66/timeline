@@ -129,9 +129,9 @@ def find_faces2(photo_id, call_match_tasks = True):
             for face in photo.faces:
 
                 # for all found faces we will check if we can match is already to some known face
-                match_unknown_face.apply_async((face.id,), queue="process")
+                match_unknown_face.apply_async((face.id,), queue="analyze")
                 # and if it is close to an already ignored face, then also ignore it
-                match_ignored_faces.apply_async((face.id,), queue="process")
+                match_ignored_faces.apply_async((face.id,), queue="analyze")
                 # and finally find out the emotion of a face for later grouping
                 detect_facial_expression.apply_async((face.id,), queue="analyze")
                 #detect_age.apply_async((face.id,), queue="analyze")

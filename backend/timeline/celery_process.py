@@ -33,8 +33,11 @@ import timeline.tasks.face_tasks
 import timeline.tasks.iq_tasks
 import timeline.tasks.classify_tasks
 
+import logging
+
 flask_app = create_app()
 setup_logging(flask_app, 'process_worker.log')
+logger = logging.getLogger(__name__) 
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
@@ -55,6 +58,7 @@ def init_worker(**kwargs):
     # The "with" here is for a flask app using Flask-SQLAlchemy.  If you don't
     # have a flask app, just remove the "with" here and call .dispose()
     # on your SQLAlchemy db engine.
+    logger.debug("Initialize Worker")
     with flask_app.app_context():
         db.engine.dispose()
 
@@ -62,5 +66,6 @@ def init_worker(**kwargs):
     init_iq()
     init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
     init_vgg_face()
+    logger.debug("Initialize Worker - done")
 
  

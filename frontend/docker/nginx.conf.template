@@ -35,6 +35,7 @@ http {
 
 
     location ~ "^/photos/full/(?<path>.+)$" {
+        expires 30d;
         alias /preview/2160/$path;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
@@ -42,6 +43,7 @@ http {
     }
 
     location /photos/preview {
+        expires 30d;
         alias /preview;
         try_files $uri @generate_preview;
 

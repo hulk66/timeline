@@ -260,9 +260,9 @@
                         curElement.nr = nr++;
                         res.push(curElement)
                     }
-                    let ar = photo.width / photo.height;
-                    photo.height = this.targetHeight;
-                    photo.width = ar * this.targetHeight;
+                    // let ar = photo.width / photo.height;
+                    // photo.height = this.targetHeight;
+                    // photo.width = ar * this.targetHeight;
 
                     curElement.photos.push(photo);
                 });

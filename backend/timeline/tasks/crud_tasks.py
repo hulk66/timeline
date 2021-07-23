@@ -23,13 +23,15 @@ from pathlib import Path
 from celery import chain
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
-from timeline.domain import Album, GPS, Exif, Person, Photo, Section, Status
+from sqlalchemy.util.compat import u
+from timeline.domain import Album, GPS, Exif, Person, Photo, Section, Status, DateRange
 from timeline.extensions import celery, db
 from timeline.util.gps import (get_exif_value, get_geotagging, get_gps_data,
                                get_labeled_exif, get_lat_lon)
 from timeline.util.image_ops import read_and_transpose
 from timeline.util.path_util import (get_full_path, get_preview_path,
                                      get_rel_path)
+from sqlalchemy import and_
 
 logger = logging.getLogger(__name__)
 
@@ -122,14 +124,13 @@ def create_photo(path, commit=True):
         photo.created = datetime.today()
         photo.no_creation_date = True
         # they will be moved to the end later
-
     db.session.add(photo)
+    # sort_photo_into_date_range(photo, commit = False)
     add_to_last_import(photo)
 
     if commit:
         db.session.commit()
     return photo.id
-
 
 def add_to_last_import(photo):
     status = Status.query.first()
@@ -197,7 +198,121 @@ def move_photo(img_path_src, img_path_dest):
     Status.query.first().sections_dirty = True
     db.session.commit()
 
+def sort_photo_into_date_range_task(photo_id):
+    photo = Photo.query.get(photo_id)
+    if not photo:
+        logger.error("Something is wrong. Photo with id %i not found. Deleted already?")
+        return
+    sort_photo_into_date_range(photo, commit = True)
 
+
+def find_date_range(photo: Photo) -> DateRange:
+    date_range = DateRange.query.filter( photo.created >= DateRange.start_date).order_by(DateRange.start_date.desc()).with_for_update().first()
+    if not date_range:
+        date_range = DateRange()
+        date_range.start_date = photo.created.date()
+        db.session.add(date_range)
+        db.session.commit()
+    return date_range
+
+
+def find_date_range2(photo: Photo) -> DateRange:
+    date_range = DateRange.query.filter( and_(DateRange.end_date > photo.created, photo.created >= DateRange.start_date)).first()
+
+    if not date_range:
+        # no specific date range was found
+        # so try to find one bloew or up
+
+        date_range = DateRange.query.filter( DateRange.end_date > photo.created).order_by(DateRange.end_date.asc()).first()
+
+        if not date_range:
+            date_range = DateRange.query.filter( photo.created >= DateRange.start_date).order_by(DateRange.start_date.desc()).first()
+
+            if not date_range:
+                date_range = DateRange()
+                date_range.start_date = photo.created
+                date_range.end_date = date_range.start_date + timedelta(days = 1)
+                db.session.add(date_range)
+    
+    if photo.created >= date_range.end_date:
+        date_range.end_date = photo.created
+    if photo.created < date_range.start_date:
+        date_range.start_date = photo.created
+    return date_range
+
+def find_upper_start_date(date_range: DateRange) -> DateRange:
+    upper_date_range = DateRange.query.filter( DateRange.start_date > date_range.start_date).order_by(DateRange.start_date.desc()).first()
+    if not upper_date_range:
+        upper_date_range = DateRange()
+        #  = date_range.start_date.date() +  timedelta(days = 1)
+        upper_date_range.start_date = date_to_datetime(datetime.today().date())
+        db.session.add(upper_date_range)
+    return upper_date_range
+
+def date_to_datetime(d: datetime.date):
+    return datetime(year = d.year, month = d.month, day = d.day)
+
+def split_date_range(date_range: DateRange):
+    upper_date_range = find_upper_start_date(date_range)
+    if upper_date_range:
+
+        delta = upper_date_range.start_date - date_range.start_date
+        if delta.days > 1:
+            # Only split it if the data range is more than just one day
+            # if we exceeed the number of photos in one day then we just accept it
+            new_date_range = DateRange()
+            new_date_range.start_date = upper_date_range.start_date - timedelta(days = int(delta.days / 2))
+            db.session.add(new_date_range)
+
+def level_date_ranges(start_photo: Photo = None):
+    logger.debug("Level data ranges for sectioning")
+
+    status = Status.query.first()
+
+    if not status.sections_dirty and Photo.query.filter(Photo.section == None).count() == 0:
+        logger.debug("Level Date Ranges- nothing to do")
+        status.next_import_is_new = True
+        db.session.commit()
+        return
+        
+    if not start_photo:
+        start_photo = Photo.query.order_by(Photo.created.asc()).first()
+
+    lower_date_range = DateRange.query.filter( start_photo.created >= DateRange.start_date).order_by(DateRange.start_date.desc()).first()
+    if not lower_date_range:
+        lower_date_range = DateRange()
+        lower_date_range.start_date = date_to_datetime(start_photo.created.date())
+        db.session.add(lower_date_range)
+
+    upper_date_range = find_upper_start_date(lower_date_range)
+    photos = Photo.query.filter( and_(upper_date_range.start_date > Photo.created, Photo.created >= lower_date_range.start_date ))
+
+    if photos.count() < 300:
+        # continue here 
+        pass
+    if DateRange.query.count() == 0:
+        # create initial DateRange
+        date_range = DateRange()
+
+
+def sort_photo_into_date_range(photo, commit = True):
+    logger.debug("Insert Photo into Section Range for %s", photo.path)
+    
+    date_range = find_date_range(photo)
+    photos_in_range = Photo.query.filter( Photo.created >= date_range.start_date )
+
+    if photos_in_range.count() > 300:
+        split_date_range(date_range)
+    elif photos_in_range.count() == 0:
+        db.session.remove(date_range)
+    else:
+        if photo.created < date_range.start_date:
+            date_range.start_date = photo.created
+    if commit:
+        db.session.commit()
+
+    
+    
 @celery.task(name="Sort old Photos to end")
 def sort_old_photos():
     logger.debug("Sort undated Photos")
@@ -230,9 +345,61 @@ def new_import():
         album.name = 'Last Import'
     album.photos = []
 
-
+    
 @celery.task(ignore_result=True)
 def compute_sections():
+    logger.debug("Sectioning Photos")
+
+    status = Status.query.first()
+
+    if not status.sections_dirty and Photo.query.filter(Photo.section == None).count() == 0:
+        logger.debug("Sectioning Photos - nothing to do")
+        status.next_import_is_new = True
+        db.session.commit()
+        return
+    sort_old_photos()
+
+    batch_size = 200
+    current_section = 0
+
+    # Get all photos sorted descending, meaning the newest first
+    photos = Photo.query.filter(Photo.ignore == False).order_by(
+        Photo.created.desc()).limit(batch_size).all()
+    while len(photos) > 0:
+        # get the date of the oldest photo of that batch
+        oldest_photo = photos[-1]
+        # Find all photos that are on the same day as the oldest photo
+        oldest_photo_prev_day = date_to_datetime(oldest_photo.created.date() - timedelta(days = 1))
+        # now find all photos that a older as the oldest photo from batch but newer as the next day
+        same_day_photos = Photo.query.filter( and_(Photo.ignore == False, Photo.created < oldest_photo.created, Photo.created > oldest_photo_prev_day)).all()
+
+        # these photos will be added to the same section, so that each setion always start with a new day
+        logger.debug("Sectioning %i photos", len(photos) + len(same_day_photos))
+        section = Section.query.get(current_section)
+        if not section:
+            logger.debug("Creating new Section")
+            section = Section()
+            db.session.add(section)
+            section.id = current_section
+
+        #Photo.query.filter( and_(Photo.ignore == False, Photo.created > oldest_photo.created, Photo.created < oldest_photo_prev_day)).update( {Photo.section: section}, synchronize_session=False)
+
+        for photo in photos:
+            photo.section = section
+        for photo in same_day_photos:
+            photo.section = section
+    
+        photos = Photo.query \
+            .filter(and_(Photo.ignore == False, Photo.created <= oldest_photo_prev_day)) \
+            .order_by(Photo.created.desc()).limit(batch_size).all()
+        current_section += 1
+    
+    Section.query.filter(Section.id >= current_section).delete()
+    db.session.commit()
+    logger.debug("Sectioning done")
+
+
+def compute_sections_old():
     logger.debug("Compute Sections")
     status = Status.query.first()
 

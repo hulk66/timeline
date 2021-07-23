@@ -15,6 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
+from enum import unique
 import pickle
 import zlib
 from sqlalchemy_serializer import SerializerMixin
@@ -212,6 +213,12 @@ class Photo(db.Model, SerializerMixin):
     def rel_path(self):
         return
 
+class DateRange(db.Model, SerializerMixin):
+    __tablename__ = 'date_range'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    start_date = db.Column(db.DateTime, unique = True)
+    # end_date = db.Column(db.DateTime, unique = True)
+
 
 class Section(db.Model, SerializerMixin):
     __tablename__ = 'section'
@@ -221,7 +228,6 @@ class Section(db.Model, SerializerMixin):
     photos = db.relationship("Photo")
     num_photos = db.Column(db.Integer)
     serialize_rules = ('-photos',)
-    start_date = db.Column(db.DateTime)
 
 # class Sec(db.Model, SerializerMixin):
 #    __tablename__ = 'sec'

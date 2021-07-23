@@ -264,16 +264,17 @@
                     -->
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title>Processing</v-list-item-title>
+                            <v-list-item-title>Photos to read</v-list-item-title>
                         </v-list-item-content>
-                        <v-list-item-action>{{process_count}}</v-list-item-action>
+                        <v-list-item-action v-text="process_count"></v-list-item-action>
                     </v-list-item>
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title>Face detection</v-list-item-title>
+                            <v-list-item-title>Analyze Tasks</v-list-item-title>
                         </v-list-item-content>
-                        <v-list-item-action v-text="faces_count"></v-list-item-action>
+                        <v-list-item-action v-text="analyze_count"></v-list-item-action>
                     </v-list-item>
+                    <!--
                     <v-list-item>
                         <v-list-item-content>
                         <v-list-item-title>Object detection</v-list-item-title>
@@ -293,7 +294,8 @@
                         </v-list-item-content>
                         <v-list-item-action v-text="iq_count"></v-list-item-action>
                     </v-list-item>
-                                            </v-list-group>
+                    -->
+                    </v-list-group>
 
                     <v-list-group @click.stop>
                     <template v-slot:activator>
@@ -441,16 +443,19 @@
                 drawer: null,
                 updateInProgress: false,
                 active: Object,
+                /*
                 faces_count: 0,
                 things_count: 0,
-                process_count: 0,
                 geo_count: 0,
+                iq_count: 0,
+                */
+                analyze_count: 0,
+                process_count: 0,
                 inStatusCheck: false,
                 about: false,
                 totalFaces: 0,
                 totalThings: 0,
                 totalPhotos: 0,
-                iq_count: 0,
                 targetHeight: 200,
                 albumDialog: false,
                 albums: [],
@@ -615,12 +620,14 @@
                 axios.get("/inspect/status", {params: {timestamp:new Date().getTime()}}).then((result) => {
                     if (result.data.active)
                         this.active = result.data.active;
-
+                    /*
                     this.geo_count = result.data.geo;
                     this.faces_count = result.data.faces;
                     this.things_count = result.data.things;
-                    this.process_count = result.data.process;
                     this.iq_count = result.data.iq;
+                    */
+                    this.analyze_count = result.data.analyze;
+                    this.process_count = result.data.process;
                     this.inStatusCheck = false,
                     this.totalFaces = result.data.totalFaces;
                     this.totalThings = result.data.totalThings;
