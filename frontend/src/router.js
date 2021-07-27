@@ -62,7 +62,9 @@ export default new Router({
     {
       path: '/search',
       name: 'search',
-      component: SearchView
+      component: SearchView,
+      props: castRouteParams
+
     },
     {
       path: '/album',
@@ -90,7 +92,7 @@ export default new Router({
 
 function castRouteParams(route) {
   return {
-    personId: Number(route.query.person_id), 
+    personId: Number.parseInt(route.query.person_id) || null, 
     thingId: route.query.thing_id,
     city: route.query.city,
     county: route.query.county,
@@ -100,7 +102,7 @@ function castRouteParams(route) {
     from: route.query.from,
     to: route.query.to,
     rating: route.query.rating,
-    albumId: Number(route.query.album_id),
+    albumId: Number.parseInt(route.query.album_id) || null,
     newAlbum: Boolean(route.query.newAlbum)
   };
 }

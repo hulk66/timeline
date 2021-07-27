@@ -25,9 +25,9 @@ from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
 from timeline.api.photos import send_image
-from timeline.api.util import list_as_json
+from timeline.api.util import list_as_json, refine_query, photos_from_smart_album
 from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
-                             photo_thing, Exif, photo_album)
+                             photo_thing, Exif, photo_album, Album)
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, 
                                         distance_safe,
@@ -37,6 +37,7 @@ from timeline.tasks.match_tasks import (assign_new_person,
 from timeline.util.image_ops import read_and_transpose, resize_width
 from timeline.util.path_util import get_full_path, get_preview_path
 from timeline.extensions import celery
+
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 logger = logging.getLogger(__name__)
@@ -211,6 +212,7 @@ def photo_by_face(id):
 
 
 def amend_query(request, q):
+    fromDate = toDate = rating = None
     person_id = request.args.get("person_id")
     thing_id = request.args.get("thing_id")
     country = request.args.get("country")
@@ -218,43 +220,28 @@ def amend_query(request, q):
     city = request.args.get("city")
     state = request.args.get("state")
     camera = request.args.get("camera")
-    rating = request.args.get("rating")
-    fromDate = request.args.get("from")
-    toDate = request.args.get("to")
+    rating_s = request.args.get("rating")
+    fromDate_s = request.args.get("from")
+    toDate_s = request.args.get("to")
     album_id = request.args.get("album_id")
-    
-    if person_id:
-        q = q.join(Face, and_(Face.person_id ==
-                              person_id, Face.photo_id == Photo.id,
-                              Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
-    if thing_id:
-        q = q.join(photo_thing, and_(photo_thing.c.photo_id ==
-                                     Photo.id, photo_thing.c.thing_id == thing_id))
-    if city:
-        q = q.join(GPS).filter(GPS.city == city)
-    if county:
-        q = q.join(GPS).filter(GPS.county == county)
-    if country:
-        q = q.join(GPS).filter(GPS.country == country)
-    if state:
-        q = q.join(GPS).filter(GPS.state == state)
-    if camera:
-        q = q.join(Exif).filter(and_(Exif.key == 'Make', Exif.value == camera))
-    if rating:
-        r = int(rating)
-        if r > 0:
-            q = q.filter(Photo.stars >= r)
-    if fromDate:
-        fd = datetime.strptime(fromDate, "%Y-%m-%d")
-        q = q.filter(Photo.created >= fd)
-    if toDate:
-        td = datetime.strptime(toDate, "%Y-%m-%d")
-        q = q.filter(Photo.created < td)
- 
+
+    if rating_s:
+        rating = int(rating_s)
+    if fromDate_s:
+        fromDate = datetime.strptime(fromDate_s, "%Y-%m-%d")
+    if toDate_s:
+        toDate = datetime.strptime(toDate_s, "%Y-%m-%d")
+
+    q = refine_query(q, person_id = person_id, thing_id = thing_id, country = country, county = county, 
+                     city = city, state = state, camera = camera, rating = rating, fromDate = fromDate, toDate = toDate)
+
     if album_id:
-        q = q.join(photo_album).filter(photo_album.c.album_id == album_id)
-        # q = q.join(Photo.albums).filter( and_(Photo.albums.photo_id == Photo.id, Photo.albums.album_id == album_id))
-        print(q)
+        album = Album.query.get(album_id)
+        if album.smart:
+            q = photos_from_smart_album(album, q)
+        else:
+            q = q.join(photo_album).filter(photo_album.c.album_id == album_id)
+        logger.debug(q)
     return q
 
 

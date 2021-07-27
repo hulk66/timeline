@@ -151,6 +151,21 @@
             <span>Select or create new Album...</span>
             </v-tooltip>
 
+            <v-tooltip v-if="showAlbumEditButton" bottom>
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        @click="editSmartAlbum" 
+                        icon
+                        color="primary"
+                        dark
+                        v-bind="attrs"
+                        v-on="on">
+                    <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+            </template>
+            <span>Edit Smart Album Critera</span>
+            </v-tooltip>
+
 
             
             <v-menu left bottom>
@@ -497,6 +512,10 @@
             showAlbumRemoveButton() {
                 return this.selectedAlbum != null;
             }, 
+
+            showAlbumEditButton() {
+                return this.selectedAlbum != null && this.selectedAlbum.smart;
+            },
             title() {
                 return this.selectedPhotos.length > 0 ? this.selectedPhotos.length.toString() + " Photos selected" : this.defaultTitle;
             }
@@ -534,6 +553,10 @@
 
         },
         methods: {
+
+            editSmartAlbum() {
+                this.$router.push({name:"search",  query: {album_id:this.selectedAlbum.id}});    
+            },
 
             deletePhotos() {
                 axios.post("/photos/remove", {

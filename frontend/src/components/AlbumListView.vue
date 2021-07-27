@@ -26,6 +26,7 @@
                 </v-col>
         </v-row>
     </v-container>
+    <!--
     <v-container fluid >
         <v-row no-gutters >
             <v-col 
@@ -36,7 +37,7 @@
                 </v-col>
         </v-row>
     </v-container>
-
+    -->
     </div>
 </template>
 <script>
@@ -57,16 +58,12 @@
         data() {
             return {
                 albums: [],
-                smartAlbums: []
             };
         },
 
         mounted() {
             axios.get(`/albums/all`).then((result) => {
                 this.albums = result.data;
-            });
-            axios.get(`/albums/smartalbum/all`).then((result) => {
-                this.smartAlbums = result.data;
             });
 
             this.$store.commit("setSelectedAlbum", null);

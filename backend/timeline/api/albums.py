@@ -15,14 +15,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
+from timeline.api.util import photos_from_smart_album
 import flask
 from flask import Blueprint, request
 import logging
-from timeline.domain import Album, Photo, SmartAlbum
+from timeline.domain import Album, Photo
 from timeline.extensions import db
 from timeline.api.util import list_as_json
 from sqlalchemy import and_
-
+import datetime
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ def create_new_album():
     album_name = req_data.get("albumName")
     photo_ids = req_data["pids"]
     album = Album()
+    album.smart = False
     album.name = album_name
     add_photos(album, photo_ids)
     db.session.add(album)
@@ -85,12 +87,16 @@ def info(id):
         return flask.jsonify(album.to_dict())
     return flask.jsonify(None)
 
+
 @blueprint.route('/photos/<int:album_id>', defaults={'count': None}, methods=['GET'])
 @blueprint.route('/photos/<int:album_id>/<int:count>', methods=['GET'])
 def photos(album_id, count):
-    # q = Photo.query.join(Photo.albums).filter(id == album_id)   
-    # q = Photo.query.filter(Photo.albums.any(id == album_id))
-    photos = Photo.query.join(Photo.albums).filter(Album.id == album_id)
+    album = Album.query.get(album_id)
+    if album.smart:
+        photos = photos_from_smart_album(album)
+    else:
+        photos = Photo.query.join(Photo.albums).filter(Album.id == album_id)
+
     if count:
         photos = photos.limit(count)
     return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))
@@ -104,8 +110,8 @@ def all_smartalbum():
 
 @blueprint.route('/smartalbum/<int:id>', methods=['GET'])
 def get_smartalbum(id):
-    smart_album = SmartAlbum.query.get(id)
-    return flask.jsonify(smart_album.to_dict())
+    album = Album.query.get(id)
+    return flask.jsonify(album.to_dict())
 
 @blueprint.route('/create_or_update_smartalbum', methods=['GET'])
 def create_or_update_smart_album():
@@ -123,43 +129,31 @@ def create_or_update_smart_album():
     toDate = request.args.get("to")
 
     if id:
-        smart_album = SmartAlbum.query.get(id)
+        smart_album = Album.query.get(id)
     else:
-        smart_album = SmartAlbum()
+        smart_album = Album()
+        smart_album.smart = True
         db.session.add(smart_album)
 
     smart_album.name = name
 
-    if person_id:
-        smart_album.person_id = person_id
+    smart_album.person_id = person_id
 
-    if thing_id:
-        smart_album.thing_id = thing_id
-
-    if country:
-        smart_album.country = country
-
-    if county:
-        smart_album.county = county
-
-    if city:
-        smart_album.city = city
-
-    if state:
-        smart_album.state = state
-
-    if camera:
-        smart_album.camera_make = camera
-
-    if country:
-        smart_album.rating = rating
-
+    smart_album.thing_id = thing_id
+    smart_album.country = country
+    smart_album.county = county
+    smart_album.city = city
+    smart_album.state = state
+    smart_album.camera_make = camera
+    smart_album.rating = rating
     if fromDate:
-        smart_album.start_date = fromDate
-
+        fromDate = datetime.strptime(fromDate, "%Y-%m-%d")
     if toDate:
-        smart_album.end_date = toDate
+        toDate = datetime.strptime(toDate, "%Y-%m-%d")
 
+    if rating:
+        rating = int(rating)
+    smart_album.rating = rating
     db.session.commit()
     return get_smartalbum(smart_album.id)
 

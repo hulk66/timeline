@@ -99,6 +99,20 @@ class Album(db.Model, SerializerMixin):
     name = db.Column(db.String(100))
     photos = db.relationship(
         'Photo', secondary=photo_album, back_populates='albums')
+
+    smart = db.Column(db.Boolean)
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    rating = db.Column(db.Integer)
+    person_id = db.Column(db.Integer)
+    country = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+    county = db.Column(db.String(100))
+    village = db.Column(db.String(100))
+    municipality = db.Column(db.String(100))
+    camera_make = db.Column(db.String(100))
+    thing_id = db.Column(db.String(100))
+
     serialize_rules = ('-photos',)
 
 
@@ -124,7 +138,7 @@ class Album(db.Model, SerializerMixin):
     serialize_rules = ('-smart_album',)
  """
 
-class SmartAlbum(db.Model, SerializerMixin):
+""" class SmartAlbum(db.Model, SerializerMixin):
     __tablename__ = 'smartalbum'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -143,8 +157,7 @@ class SmartAlbum(db.Model, SerializerMixin):
     thing_id = db.Column(db.String(100))
 
     # criterias = db.relationship("SmartAlbumCriteria", cascade="all, delete, delete-orphan")
-
-
+ """
 
 
 photo_thing = db.Table('photo_thing', db.Model.metadata,

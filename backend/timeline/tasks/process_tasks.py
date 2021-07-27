@@ -55,7 +55,7 @@ def new_photo(path):
             #celery.send_task("Object Detection", (photo_id,), queue="thing")
             #celery.send_task("timeline.tasks.iq_tasks.predict_quality", (photo_id,), queue="iq")
 
-            celery.send_task("Checking for GPS Information", (photo_id,), queue="process")
+            celery.send_task("Checking for GPS Information", (photo_id,), queue="analyze")
             celery.send_task("Face Detection", (photo_id,), queue="analyze")
             celery.send_task("Object Detection", (photo_id,), queue="analyze")
             celery.send_task("Quality Assessment", (photo_id,), queue="analyze")

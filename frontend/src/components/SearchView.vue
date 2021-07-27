@@ -109,7 +109,10 @@
         },
 
         props: {
-            albumId: Number
+            albumId: {
+                type: Number,
+                default: null
+            }
         },
         data() {
             return {
@@ -121,13 +124,13 @@
                 cities: [],
                 countries: [],
                 cameras: [],
-                camera: "",
-                country: "",
-                city: "",
+                camera: null,
+                country: null,
+                city: null,
                 personId: null,
                 rating: 0,
-                from: "", 
-                to: "",
+                from: null, 
+                to: null,
                 albumName: null,
                 id: null
             };
@@ -190,7 +193,7 @@
                 params["camera"] = this.camera;
                 params["name"] = this.albumName;
                 params["rating"] = this.rating;
-
+                params["id"] = this.id;
                 axios.get("/albums/create_or_update_smartalbum", config).then(result => {
                     this.loadSmartAlbumFromData(result.data)    
                 });

@@ -16,6 +16,8 @@ GNU General Public License for more details.
 '''
 
 import flask
+from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
+                             photo_thing, Exif, photo_album, Album)
 
 
 def list_as_json(list, excludes=[]):
@@ -26,3 +28,44 @@ def list_as_json(list, excludes=[]):
 def list_as_json_only(list, only):
     result = [element.to_dict(only=only) for element in list]
     return flask.jsonify(result)
+
+
+def refine_query(q, person_id = None, thing_id = None, city = None, 
+      county = None, country = None, state = None, camera = None, rating = None, 
+      fromDate = None, toDate = None):
+
+    if person_id:
+        q = q.join(Face, and_(Face.person_id ==
+                              person_id, Face.photo_id == Photo.id,
+                              Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
+    if thing_id:
+        q = q.join(photo_thing, and_(photo_thing.c.photo_id ==
+                                     Photo.id, photo_thing.c.thing_id == thing_id))
+    if city:
+        q = q.join(GPS).filter(GPS.city == city)
+    if county:
+        q = q.join(GPS).filter(GPS.county == county)
+    if country:
+        q = q.join(GPS).filter(GPS.country == country)
+    if state:
+        q = q.join(GPS).filter(GPS.state == state)
+    if camera:
+        q = q.join(Exif).filter(and_(Exif.key == 'Make', Exif.value == camera))
+    if rating:
+        if rating > 0:
+            q = q.filter(Photo.stars >= rating)
+    if fromDate:
+        q = q.filter(Photo.created >= fromDate)
+    if toDate:
+        q = q.filter(Photo.created < toDate)
+    
+    return q
+
+def photos_from_smart_album(album: Album, q = None):
+    if not q:
+        q = Photo.query
+    q = refine_query(q, person_id = album.person_id, thing_id = album.thing_id, 
+                country = album.country, county = album.county, state = album.state,
+                camera = album.camera_make, fromDate = album.start_date, toDate = album.end_date,
+                rating = album.rating)
+    return q
