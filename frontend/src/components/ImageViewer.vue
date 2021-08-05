@@ -16,73 +16,64 @@
  */
 
 <template>
-    <v-card ref="viewer" dark key="photo.id" @mousemove="mouseMove">
+    <v-card ref="viewer" dark @mousemove="mouseMove" >
         <v-row no-gutters style="min-height: 100vh">
-                <v-col style="position: relative" fill-height>
-                    <div style="position: absolute; top: 50%; left:0px; transform: translateY(-50%); width:100%">
-                        <v-img :transition="transition" :key="photo.id" :src="photoUrl(photo)" contain max-height="100vh" style="position: relative">
-                            <v-fade-transition>
-                                <v-icon v-if="mousemove" style="position: absolute; top: 50%; left: 10px;"  large @click="left()">
-                                    mdi-chevron-left
-                                </v-icon>
-                            </v-fade-transition>
-                            <v-fade-transition>
-                                <v-icon v-if="mousemove" style="position: absolute; top: 50%; right: 10px;" large @click="right()">
-                                    mdi-chevron-right
-                                </v-icon>
-                            </v-fade-transition>
-                            <!--
-                            <v-fade-transition>
-                                <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="goFullScreen(true)" v-if="mousemove &&showFullscreenBt && !fullscreen">
-                                    mdi-fullscreen
-                                </v-icon>
-                            </v-fade-transition>
-                            <v-fade-transition>
-                                <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="goFullScreen(false)" v-if="mousemove && fullscreen">
-                                    mdi-fullscreen-exit
-                                </v-icon>
-                            </v-fade-transition>
-                            -->
-                            <v-fade-transition>
-                                <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="info = !info" v-if="!info && mousemove">
-                                    mdi-information-outline
-                                </v-icon>
-                            </v-fade-transition>
-                            <v-fade-transition>
-                                <v-icon v-if="mousemove" style="position: absolute; top: 20px; right: 10px;"  @click="close()">
-                                    mdi-close
-                                </v-icon> 
-                            </v-fade-transition>
-                            <v-fade-transition>
-                                <v-rating 
-                                    v-if="mousemove"
-                                    style="position: absolute; bottom: 20px; left: 10px;"
-                                    class="align-end" 
-                                    background-color="grey" 
-                                    color="white" 
-                                    length="5"
-                                    @input="ratePhoto"
-                                    @click.native.stop
-                                    clearable
-                                    :value="photo.stars">
-                                </v-rating>
+            <v-col style="position: relative" fill-height>
+                <transition-group tag="div" class="img-slider" :name="transition">
+                    <div :key="photo.id" :id="photo.id" class="img-cont"> 
+                        <img :src="photoUrl(photo)" >
+                        <!-- these many fade blocks can probably all go into one, to be done later -->
+                        <v-fade-transition>
+                            <v-icon v-if="mousemove" style="position: absolute; top: 50%; left: 10px;"  large @click="left()">
+                                mdi-chevron-left
+                            </v-icon>
+                        </v-fade-transition>
+                        <v-fade-transition>
+                            <v-icon v-if="mousemove" style="position: absolute; top: 50%; right: 10px;" large @click="right()">
+                                mdi-chevron-right
+                            </v-icon>
+                        </v-fade-transition>
 
-                            </v-fade-transition>
-                        <template v-slot:placeholder>
-                    <v-row
-                        class="fill-height ma-0"
-                        align="center"
-                        justify="center">
-                    <v-progress-circular
-                    indeterminate
-                    color="grey lighten-5"
-                    ></v-progress-circular>
-                  </v-row>
-                </template>
+                        <v-fade-transition>
+                            <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="info = !info" v-if="!info && mousemove">
+                                mdi-information-outline
+                            </v-icon>
+                        </v-fade-transition>
+                        <v-fade-transition>
+                            <v-icon v-if="mousemove" style="position: absolute; top: 20px; right: 10px;"  @click="close()">
+                                mdi-close
+                            </v-icon> 
+                        </v-fade-transition>
+                        <v-fade-transition>
+                            <v-rating 
+                                v-if="mousemove"
+                                style="position: absolute; bottom: 20px; left: 10px;"
+                                class="align-end" 
+                                background-color="grey" 
+                                color="white" 
+                                length="5"
+                                @input="ratePhoto"
+                                @click.native.stop
+                                clearable
+                                :value="photo.stars">
+                            </v-rating>
+                        </v-fade-transition>
 
-                        </v-img>
                     </div>
-                </v-col>
+                </transition-group>
+                        <!--
+                        <v-fade-transition>
+                            <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="goFullScreen(true)" v-if="mousemove &&showFullscreenBt && !fullscreen">
+                                mdi-fullscreen
+                            </v-icon>
+                        </v-fade-transition>
+                        <v-fade-transition>
+                            <v-icon style="position: absolute; top: 20px; right: 60px;"  @click="goFullScreen(false)" v-if="mousemove && fullscreen">
+                                mdi-fullscreen-exit
+                            </v-icon>
+                        </v-fade-transition>
+                        -->
+            </v-col>
             <v-expand-x-transition>
                 <v-card light style="position:relative; width:360px; min-height:100vh" v-show="info">
                     <div class="scroller" v-if="info">
@@ -262,7 +253,7 @@
             prevPhoto: Object,
             photo: Object,
             nextPhoto: Object,
-            direction: Number       
+            direction: Number,
         },
 
         data() {
@@ -283,7 +274,6 @@
                 editId: 0,
                 prevImage: null,
                 nextImage: null,
-                transition: "slide-x-transition",
                 mousemove: false,
                 timedFunction: Object,
                 showFullscreenBt: false,
@@ -300,19 +290,24 @@
         computed: {
             ...mapState({
                 knownPersons: state => state.person.allPersons
-            })
+            }),
+
+            transition() {
+                if (this.direction == 1)
+                    return "slide";
+                else if (this.direction == -1)
+                    return "slideback";
+                else
+                    return "fade-transition";
+
+            }
         },
         watch: {
             photo(p) {
                 if (this.info)
                     this.loadData(p);
-            },
-            direction(val) {
-                if (val == -1)
-                    this.transition = "slide-x-reverse-transition";
-                else
-                    this.transition = "slide-x-transition";
-            },
+            },            
+            /* Preload next and previous photo */
             prevPhoto(val) {
                 this.prevImage = new Image();
                 this.prevImage.src = this.photoUrl(val)
@@ -321,6 +316,7 @@
                 this.nextImage = new Image();
                 this.nextImage.src = this.photoUrl(val)
             },
+            
             info(v) {
                 if (v)
                     this.loadData(this.photo)
@@ -449,14 +445,59 @@
         margin-right: 12px;
     }
 
-.slide-fade-enter-active {
-   transition: all .3s ease;
+    .slide-leave-active,
+    .slide-enter-active {
+        transition: 0.3s;
+    }
+    .slide-enter {
+        transform: translate(100%, 0);
+    }
+    .slide-leave-to {
+        transform: translate(-100%, 0);
+    }
+
+    .slideback-leave-active,
+    .slideback-enter-active {
+        transition: 0.3s;
+    }
+    .slideback-enter {
+        transform: translate(-100%, 0);
+    }
+    .slideback-leave-to {
+        transform: translate(100%, 0);
+    }
+
+    .component-fade-enter-active, .component-fade-leave-active {
+  transition: opacity .3s ease;
 }
-.slide-fade-leave-active {
-   transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+.component-fade-enter, .component-fade-leave-to
+/* .component-fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
 }
-.slide-fade-enter, .slide-fade-leave-to {
-   transform: translateX(10px);
-   opacity: 0;
+
+.img-slider {
+  overflow: hidden;
+  position: relative;
+  height: 100vh;
 }
+
+.img-slider .img-cont  {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right:0;
+}
+
+img {
+    border-style: none;
+    max-width: 100%;
+    max-height: 100%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
+}
+
+
 </style>

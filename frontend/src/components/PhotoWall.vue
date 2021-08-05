@@ -146,7 +146,7 @@
                 totalPhotos: 0,
                 prevPhoto: null,
                 nextPhoto: null,
-                imageViewerDirection: 1,
+                imageViewerDirection: 0,
                 selectMulti: false
             };
         },
@@ -399,13 +399,8 @@
             },
 
             clickPhoto(section, segment, photoIndex) {
-                /*
-                this.$store.commit("setSelectedSection", section);
-                this.$store.commit("setSelectedSegment", segment);
-                this.$store.commit("setSelectedIndex", photoIndex);
-                this.$store.commit("setSelectedPhoto", segment.data.photos[photoIndex]);
-                */
                 this.photoFullscreen = true;
+                this.imageViewerDirection = 0;
                 this.currentSection = this.$refs['section' + section.id][0];
                 this.currentSegment = segment;
                 this.currentIndex = photoIndex;
@@ -416,6 +411,11 @@
             },
 
             setRating(value, segment, index) {
+                if (segment == null && index == null) {
+                    // if this is coming from the imageviewer then it is simply the currentIndex in the currentSegment
+                    segment = this.currentSegment;
+                    index = this.currentIndex;
+                }
                 if (value <= 5 && segment && this.currentIndex >= 0) {
                      segment.setRating(index, value); 
                      if (this.photoFullscreen) 
@@ -423,15 +423,6 @@
                            
                 }
             },
-
-            /*
-            checkDigit(event) {
-                if (event.code.startsWith("Digit")) {
-                    let value = parseInt(event.key);
-                    this.setRating(value);
-                }
-            },
-            */
 
             keyboardActionWall(event) {
                 // are these values somewhere defined as constants?
@@ -577,22 +568,24 @@
 
             navigate(dir) {
                 // this.$store.commit("markMode", true);
-
+                this.imageViewerDirection = dir;
                 if (!this.currentSection || !this.currentSegment || !this.currentPhoto) {
                     this.currentSection = this.getNextSection(0, 0);
                     this.currentSegment = this.currentSection.getFirstSegment();
                     this.currentIndex = -1;
                     this.currentPhoto = this.currentSegment.data.photos[0];
 
-                }
-                if (dir == 1) {
-                    this.prevPhoto = this.currentPhoto; 
-                    this.nextPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, dir);
                 } else {
-                    this.prevPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, dir);
-                    this.nextPhoto = this.currentPhoto;
+                    if (dir == 1) {
+                        this.prevPhoto = this.currentPhoto; 
+                        this.currentPhoto = this.nextPhoto;
+                        this.nextPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, dir*2);
+                    } else {
+                        this.nextPhoto = this.currentPhoto;
+                        this.currentPhoto = this.prevPhoto;
+                        this.prevPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, dir*2);
+                    }
                 }
-
                 if (this.currentIndex == -1) {
                     this.findFirstVisibleSegment();
                     this.currentSegment.markPhoto(this.currentIndex, true);
@@ -662,9 +655,13 @@
                 return {section:nextSection, segment:nextSegment, index:nextIndex, photo: nextPhoto };
             },
             
+            getLastSectionIndex() {
+                let lastSection = this.sections[this.sections.length-1]
+                return lastSection.id
+            },
             getNextSection(sectionIndex, dir) {
                 let next_section_id = sectionIndex + dir;
-                if (next_section_id < 0 || next_section_id >= this.sections.length)
+                if (next_section_id < 0 || next_section_id > this.getLastSectionIndex())
                     return this.$refs['section' + sectionIndex][0]
 
                 let el = this.$refs['section' + next_section_id]
@@ -705,18 +702,19 @@
                 return nextSegment;
             },
             */
-            getNextPhotoNewAA(section, segment, index, dir) {
+            getNextPhotoNewAA(sectionElement, segment, index, dir) {
                 let nextPhoto = null;
                 let nextIndex = index + dir;
                     
                 if (nextIndex >= 0 && nextIndex < segment.data.photos.length) {
-                    nextPhoto = segment.data.photos[nextIndex-1];
+                    nextPhoto = segment.data.photos[nextIndex];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
-                    let nextSegment = this.getNextSegment(section, dir)
+                    //  let nextSegment = this.getNextSegment(section, dir)
+                    let nextSegment = sectionElement.nextSegment(segment, dir);
                     if (!nextSegment) {
-                        nextSegment = this.findNextSegment(section.section.id, dir)
+                        nextSegment = this.findNextSegment(sectionElement.section.id, dir)
                     } 
                     if (nextSegment)
                         if (dir == 1)

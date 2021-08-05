@@ -28,6 +28,17 @@ a resolved address along with a little map and some important Exif data)
 * New Search View. Photos can be searched by Date Range, Rating, Camera Make, Country, City, People
 * A new default Album "Last Import" is created and filled by last added photos accessible with a new navigation shortcut 
 * A new simple view showing the photos to be sorted into the index is available
+
+## New 0.85
+* Major re-arrangement with regards to workers. Now only one worker process is required - should be fast but due to loading the models now in each preforked worker process they consume more memory. On something with only 4GB RAM the number of worker should only be 1. With 8GB 3-4 should be ok. Due to using preforked workers they will now be scaled down when not needed anymore. 
+* Searching for Photos by date, rating, location can now be saved as "smart album" (not really smart but I didn't find a better name). Once defined they also can be edited afterwards.
+* For faces it is now detect the expression (happy, sad, neutral ...). This will be later used to find some nice photos of happy people. I was also trying this with gender and age but it was not very precise
+
+## Next to come
+* Upload of photos
+* Bug fixing
+* 
+
 ### General View
 <img src="assets/start_view.jpg" width="400"/>
 
@@ -137,11 +148,6 @@ Frontend
 
 # Known issues
 
-* Sometimes the so called sectioning of photos hangs. This can be observed in the worker log when you see the same message 
-   > `Sectioning next batch X with Y initial photos`
-
-   and neither the number for X nor Y are changing. 
-
 * During the the processing it may happen the the database provide a Timeout error due to a locked resource. This actually should not be a problem as the so failed task is repeated at a later point in time by Celery
 
 # Improvements/Outlook
@@ -149,11 +155,11 @@ Frontend
 Where should I start?
 
 * Remove bugs
-* Improve AI tasks (faces and things) performance
+* Improve AI tasks (faces and things) performance: not sure I will have the capacity and/or knowledge for this
 * Improve user interface, especially implement search capabilities for People, Things and places
 * Improve frontend performance by generating previews for Places and Things view
-* Implement (Smart) Albums
-* Implement Ratings. For both point the database model is already prepared
+* Implement (Smart) Albums: done
+* Implement Ratings. For both point the database model is already prepared: Done
 * This is nearly test-free code (which is very bad). Needs to be improved
 * Multi Language support. Nothing done here at the moment.
 * Ability to upload new photos
