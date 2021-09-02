@@ -23,7 +23,7 @@ from timeline.domain import Album, Photo
 from timeline.extensions import db
 from timeline.api.util import list_as_json
 from sqlalchemy import and_
-import datetime
+from datetime import datetime
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 logger = logging.getLogger(__name__)
@@ -147,9 +147,9 @@ def create_or_update_smart_album():
     smart_album.camera_make = camera
     smart_album.rating = rating
     if fromDate:
-        fromDate = datetime.strptime(fromDate, "%Y-%m-%d")
+        smart_album.start_date = datetime.strptime(fromDate, "%Y-%m-%d")
     if toDate:
-        toDate = datetime.strptime(toDate, "%Y-%m-%d")
+        smart_album.end_date = datetime.strptime(toDate, "%Y-%m-%d")
 
     if rating:
         rating = int(rating)

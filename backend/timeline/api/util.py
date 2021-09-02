@@ -18,6 +18,7 @@ GNU General Public License for more details.
 import flask
 from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
                              photo_thing, Exif, photo_album, Album)
+from sqlalchemy import and_, or_
 
 
 def list_as_json(list, excludes=[]):
