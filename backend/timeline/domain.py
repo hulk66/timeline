@@ -188,9 +188,9 @@ class Photo(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(512), unique=True)
-
-    ignore = db.Column(db.Boolean, index=True)
     filename = db.Column(db.String(100))
+    directory = db.Column(db.String(512))
+    ignore = db.Column(db.Boolean, index=True)
     faces = db.relationship("Face", back_populates="photo",
                             cascade="all, delete, delete-orphan")
     exif = db.relationship("Exif", cascade="all, delete, delete-orphan")

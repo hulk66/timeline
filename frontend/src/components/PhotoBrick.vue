@@ -17,15 +17,16 @@
 <template>
         <v-img @click="clickPhoto"
                 :src="thumbSrc"
-                eager
+                :lazy-src="lowRes"
                 :class="markedClass"
+                transition="false"
                 @mouseover="hover = true" 
                 @mouseleave="hover = false"
                 ref="img">
                 <!--
                                 v-intersect="{handler:onIntersect}"
                 -->
-
+                <!--
                 <v-fade-transition>
                     <div v-if="hover || selected || marked" class="gradient fill-height container">
                         <v-checkbox class="top-left" 
@@ -52,8 +53,9 @@
                     </div>
                                         
                 </v-fade-transition>
+                -->
         </v-img>
-
+ 
 </template>
 <script>
 
@@ -86,9 +88,13 @@
 
         computed: {
             thumbSrc() {
-                return encodeURI("/photos/preview/400/" + this.photo.path);
+                return encodeURI("/photos/preview/400/high_res/" + this.photo.path);
             },
 
+            lowRes() {
+                return encodeURI("/photos/preview/400/low_res/" + this.photo.path);
+
+            },
             markedClass() {
                 return this.marked ? "marked" : "";
             },

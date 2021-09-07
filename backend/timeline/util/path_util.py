@@ -20,9 +20,6 @@ import os
 from flask import current_app
 
 
-def get_full_path(rel_path):
-    base_path = current_app.config['PHOTO_PATH']
-    return os.path.join(base_path, rel_path)
 
 
 def get_rel_path(full_path):
@@ -31,6 +28,8 @@ def get_rel_path(full_path):
     return relpath
 
 
-def get_preview_path(rel_path, prefix='default'):
-    path = os.path.join(current_app.config['PREVIEW_PATH'], prefix, rel_path)
-    return path
+def get_preview_path(rel_path, *prefix):
+    return os.path.join(current_app.config['PREVIEW_PATH'], *prefix, rel_path)
+
+def get_full_path(rel_path, *prefix):
+    return os.path.join(current_app.config['PHOTO_PATH'], *prefix, rel_path)

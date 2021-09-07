@@ -17,6 +17,7 @@ GNU General Public License for more details.
 
 import logging
 import os
+import os.path
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -81,7 +82,8 @@ def create_photo(path, commit=True):
     photo.ignore = False
     photo.exif = []
     photo.path = img_path
-    photo.filename = os.path.basename(img_path)
+    photo.directory, photo.filename = os.path.split(img_path)
+    # photo.directory = os.path.
     photo.width, photo.height = get_size(image)  # image.size
     exif_raw = image.getexif()
     exif_data = get_labeled_exif(exif_raw)
@@ -481,18 +483,30 @@ def schedule_next_compute_sections(minutes=None):
 
 
 @celery.task
-def create_preview(photo_path, max_dim):
+def create_preview(photo_path, max_dim, low_res=True):
     # logger.debug("Create Preview for %s in size %d", photo_path, max_dim)
     path = get_full_path(photo_path)
     image = read_and_transpose(path)
     image.thumbnail((max_dim, max_dim), Image.ANTIALIAS)
-    preview_path = get_preview_path(photo_path, str(max_dim))
+    preview_path = get_preview_path(photo_path, str(max_dim), "high_res")
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    image.save(preview_path)
+    image.save(preview_path, optimize=True, progressive=True)
 
+    if low_res:
+        preview_path_low_res = get_preview_path(photo_path, str(max_dim), "low_res")
+        os.makedirs(os.path.dirname(preview_path_low_res), exist_ok=True)
+        image.thumbnail((max_dim/10, max_dim/10), Image.ANTIALIAS)
+        image.save(preview_path_low_res, optimize=True, quality=20, progressive=False)
 
 @celery.task(name="Recreate Previews")
-def recreate_previews(dimension=400):
+def recreate_previews(dimension=400, low_res=True):
     logger.debug("Recreating Previews for size %d", dimension)
     for photo in Photo.query:
-        create_preview.apply_async((photo.path, dimension), queue='process')
+        create_preview.apply_async((photo.path, dimension, low_res), queue='process')
+
+@celery.task(name="Split path and filename")
+def split_filename_and_path():
+    logger.debug("Splitting up filename and path for all photos again")
+    for photo in Photo.query:
+        photo.directory, photo.filename = os.path.split(photo.path)
+    db.session.commit()

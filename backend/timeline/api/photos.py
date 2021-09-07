@@ -64,25 +64,25 @@ def photo_by_path(path):
 @blueprint.route('/full/<path:path>', methods=['GET'])
 def photo(path):
     logger.debug("photo full")
-    # path = request.args.get("path")
     photo = photo_by_path(path)
     if photo is not None:
-        p = get_full_path(photo.path)
+        # p = get_full_path(photo.path, resolution)
+        p = get_preview_path(photo.path, "2160", "high_res")
         image = Image.open(p)
         return send_image(image, fullscreen=True, last_modified=photo.created)
     return flask.redirect('/404')
 
 
-@blueprint.route('/preview/<int:max_dim>/<path:path>', methods=['GET'])
-def photo_preview(max_dim, path):
+@blueprint.route('/preview/<int:max_dim>/<resolution>/<path:path>', methods=['GET'])
+def photo_preview(max_dim, resolution, path):
     logger.debug("photo preview: %s", path)
     photo = photo_by_path(path)
     if photo is None:
         return flask.redirect('/404')
 
-    preview_path = Path(get_preview_path(photo.path, str(max_dim)))
+    preview_path = Path(get_preview_path(photo.path, str(max_dim), resolution))
     if not preview_path.exists():
-        create_preview(photo.path, max_dim)
+        create_preview(photo.path, max_dim, True)
 
     return flask.send_file(preview_path.absolute())
 

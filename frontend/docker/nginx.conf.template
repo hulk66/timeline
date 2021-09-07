@@ -36,7 +36,7 @@ http {
 
     location ~ "^/photos/full/(?<path>.+)$" {
         expires 30d;
-        alias /preview/2160/$path;
+        alias /preview/2160/high_res/$path;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
 

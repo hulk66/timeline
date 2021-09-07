@@ -36,8 +36,8 @@ def new_photo(path):
         photo_id = create_photo(path)
         if photo_id:
             photo = Photo.query.get(photo_id)
-            create_preview(photo.path, 400)
-            create_preview(photo.path, 2160)
+            create_preview(photo.path, 400,  True)
+            create_preview(photo.path, 2160, False)
             
             # for some reason I don't understand the following does not work.
             # investigate later
