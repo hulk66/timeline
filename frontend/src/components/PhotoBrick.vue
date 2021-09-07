@@ -26,7 +26,6 @@
                 <!--
                                 v-intersect="{handler:onIntersect}"
                 -->
-                <!--
                 <v-fade-transition>
                     <div v-if="hover || selected || marked" class="gradient fill-height container">
                         <v-checkbox class="top-left" 
@@ -53,7 +52,6 @@
                     </div>
                                         
                 </v-fade-transition>
-                -->
         </v-img>
  
 </template>
