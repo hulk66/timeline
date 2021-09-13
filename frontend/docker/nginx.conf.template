@@ -98,6 +98,12 @@ http {
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }
 
+    location /photos {
+        proxy_pass http://${BE_HOST}:${BE_PORT}/photos;
+        # auth_basic "Protected area";
+        # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
+    }
+
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
         root   /usr/share/nginx/html;

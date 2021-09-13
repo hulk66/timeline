@@ -103,6 +103,7 @@ def photo_preview_by_rp(max_dim):
 
 def _remove_photo(id, physically):
     photo = Photo.query.get(id)
+    logger.debug("Remove photo %s from catalog", photo.path)
     photo.ignore = True
     photo.albums = []
     photo.exif = []
