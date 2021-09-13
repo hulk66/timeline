@@ -37,7 +37,7 @@
                     <v-list-item to="/persons">
                         <v-list-item-action>
                             <v-badge :content="newFaces" dot :value="newFaces">
-                                <v-icon>mdi-face</v-icon>
+                                <v-icon>mdi-face-man</v-icon>
                             </v-badge>
                         </v-list-item-action>
                         <v-list-item-content>
@@ -548,9 +548,24 @@
 
         mounted() {
             this.checkNewFaces();
-            setInterval( this.getStatusJobs, 5000 ); // 5 seconds
+            setInterval( this.getStatusJobs, 10000 ); // 10 seconds
             setInterval( this.checkNewFaces, 1000*60*5 ); // 5 Minutes
-
+            let targetheight = 250
+            switch (this.$vuetify.breakpoint.name) {
+                case 'xs':
+                    targetheight = 100;
+                    break;
+                case 'sm':
+                    targetheight = 150;
+                    break;
+                case 'md':
+                    targetheight = 200;
+                    break;
+                case 'lg':
+                    targetheight = 200;
+                    break;
+            }
+            this.previewHeight = targetheight;
         },
         methods: {
 

@@ -57,11 +57,11 @@ def trigger_match_unknown_faces():
 
     return flask.jsonify(True)
 
-@blueprint.route('/recreatePreviews', methods=['GET'], defaults={'dimension': 400})
-@blueprint.route('/recreatePreviews/<int:dimension>', methods=['GET'])
-def recreate_previews(dimension):
+@blueprint.route('/recreatePreviews', methods=['GET'], defaults={'dimension': 400, 'low_res':True})
+@blueprint.route('/recreatePreviews/<int:dimension>/<int:low_res>', methods=['GET'])
+def recreate_previews(dimension, low_res):
     logger.debug("Trigger recreation of previews for size %d", dimension)
-    celery.send_task("Recreate Previews", args=(dimension, ), queue="process")   
+    celery.send_task("Recreate Previews", args=(dimension, low_res), queue="process")   
     return flask.jsonify(True)
     
 
@@ -70,6 +70,12 @@ def trigger_face_background_job():
     logger.debug("Trigger face matching background jobs")
     celery.send_task("timeline.tasks.match_tasks.do_background_face_tasks",  queue="beat")   
 
+
+@blueprint.route('/split_filename_path', methods=['GET'])
+def split_filename_and_path():
+    logger.debug("Trigger filename and path correction")
+    celery.send_task("Split path and filename", queue="process")   
+    return flask.jsonify(True)
 
 
 

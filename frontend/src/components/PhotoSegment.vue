@@ -17,7 +17,7 @@
 <template>
     <div ref="segmentCont" 
         :id="'seg' + segIndex"
-        v-intersect="{handler:onIntersect, options: {rootMargin:'600px', root:this.$parent.$parent.$parent.$el}}" 
+        v-intersect="{handler:onIntersect, options: {rootMargin:'1200px', root:this.$parent.$parent.$parent.$el}}" 
         v-resize="resize"
         > 
         <!--
@@ -77,6 +77,7 @@
         },
 
         mounted() {
+            // console.log("Segment root: ", this.$parent.$parent.$parent.$el)
         },
 
         computed: {

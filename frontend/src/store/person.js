@@ -7,7 +7,7 @@ export const person = {
         unknownFaces: [],
         facesToConfirm: [],
         markMode: false,
-        previewHeight: 200,
+        previewHeight: 100,
 
     },
 

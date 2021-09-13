@@ -38,7 +38,7 @@
                 "worker",
                 "-P",
                 "prefork",
-                "--autoscale=3,1",
+                "--autoscale=4,1",
                 "-n",
                 "fast@%n",
                 "-Q",

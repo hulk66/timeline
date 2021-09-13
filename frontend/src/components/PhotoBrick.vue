@@ -19,10 +19,11 @@
                 :src="thumbSrc"
                 :lazy-src="lowRes"
                 :class="markedClass"
-                transition="false"
+                transition="true"
                 @mouseover="hover = true" 
                 @mouseleave="hover = false"
                 ref="img">
+                
                 <!--
                                 v-intersect="{handler:onIntersect}"
                 -->

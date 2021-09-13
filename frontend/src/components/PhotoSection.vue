@@ -22,12 +22,12 @@
     -->
     <v-card  
         ref="card"
-        v-intersect="{handler:onIntersect, options: {rootMargin:rootMargin, root:this.$parent.$el}}" 
+        v-intersect="{handler:onIntersect, options: {rootMargin:'1200px', root:this.$parent.$el}}" 
         :min-height="initialHeight" 
         elevation="0" > 
-<!-- 
+        <!--
         <v-card-title>Section {{section.id}}</v-card-title>
- -->
+        -->
         <photo-segment  :ref="'segment' + index"
                         v-for="(segment, index) in segments"
                         :seg-index="index"
@@ -87,6 +87,8 @@
         },
         mounted() {
             //this.createObserver();
+            // console.log("Section root: ", this.$parent.$el);
+
         },
 
         watch: {
@@ -232,6 +234,7 @@
                 if (element.isIntersecting) {
                     if (!this.photos || this.photos.length == 0)
                         this.loadPhotos(this.section);
+                    
                     this.visible = true;
                     // eslint-disable-next-line no-console
                     // console.log("Section " + this.section.id + " visible");

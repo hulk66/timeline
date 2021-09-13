@@ -69,7 +69,7 @@
 
         methods: {
             src(p) {
-                return  encodeURI("/photos/preview/200/" + p.path);
+                return  encodeURI("/photos/preview/400/high_res/" + p.path);
             },
 
             ar() {

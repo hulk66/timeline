@@ -62,7 +62,7 @@
 
         methods: {
             thumbSrc(photo) {
-                return encodeURI("/photos/preview/400/" + photo.path);
+                return encodeURI("/photos/preview/400/high_res/" + photo.path);
             }
         }
     }

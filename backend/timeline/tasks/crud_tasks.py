@@ -484,7 +484,7 @@ def schedule_next_compute_sections(minutes=None):
 
 @celery.task
 def create_preview(photo_path, max_dim, low_res=True):
-    # logger.debug("Create Preview for %s in size %d", photo_path, max_dim)
+    logger.debug("Create Preview for %s in size %d, also in low resolution %s", photo_path, max_dim, low_res)
     path = get_full_path(photo_path)
     image = read_and_transpose(path)
     image.thumbnail((max_dim, max_dim), Image.ANTIALIAS)
