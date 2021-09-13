@@ -273,6 +273,10 @@ class Exif(db.Model, SerializerMixin):
     label = db.Column(db.String(50))
     photo_id = db.Column(db.Integer, db.ForeignKey('photos.id'))
 
+    def __repr__(self):
+        return "<Exif(Key='%s', Value='%s')>" % (
+            self.key, self.value)
+
 
 class GPS(db.Model, SerializerMixin):
     __tablename__ = 'gps'

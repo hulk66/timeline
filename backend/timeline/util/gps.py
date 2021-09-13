@@ -148,7 +148,7 @@ def get_lat_lon(geotags):
 def get_labeled_exif(exif):
     labeled = {}
     if exif:
-        for (key, val) in exif.items():
+        for (key, val) in exif.get_ifd(0x8769).items():
             label = TAGS.get(key)
             if val and label and label not in exif_tags_exclude_list:
                 if isinstance(val, bytes):
