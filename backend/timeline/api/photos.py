@@ -113,6 +113,7 @@ def _remove_photo(id, physically):
     photo.things = []
     status = Status.query.first()
     status.sections_dirty = True
+    db.session.delete(photo)
 
     # remove empty albums
     albums = Album.query.filter(Album.photos == None)
@@ -122,12 +123,11 @@ def _remove_photo(id, physically):
     # same for persons
     for person in Person.query.filter(Person.faces == None):
         db.session.delete(person)
-
+        
     if physically:
         path = get_full_path(photo.path)
         os.remove(path)
-        db.session.delete(photo)
-
+    # todo remove previews
 
 # should actually be a DELETE request
 @blueprint.route('/remove', methods=['POST'])
