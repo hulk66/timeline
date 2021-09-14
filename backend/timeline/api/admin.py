@@ -77,6 +77,11 @@ def split_filename_and_path():
     celery.send_task("Split path and filename", queue="process")   
     return flask.jsonify(True)
 
+@blueprint.route('/recreate_exif', methods=['GET'])
+def recreate_exif_data():
+    logger.debug("Recreate Exif Data")
+    celery.send_task("Extract Exif Data for all Photos", queue="process")   
+    return flask.jsonify(True)
 
 
 # def remove_all_tasks():

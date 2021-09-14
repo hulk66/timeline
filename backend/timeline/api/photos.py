@@ -127,6 +127,7 @@ def _remove_photo(id, physically):
     if physically:
         path = get_full_path(photo.path)
         os.remove(path)
+    db.session.commit()
     # todo remove previews
 
 # should actually be a DELETE request
@@ -138,7 +139,6 @@ def remove_photos():
     physically = req_data["physically"]
     for id in ids:
         _remove_photo(id, physically)
-    db.session.commit()
     return flask.jsonify(True)
 
 

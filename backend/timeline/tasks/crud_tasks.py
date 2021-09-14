@@ -85,18 +85,51 @@ def create_photo(path, commit=True):
     photo.directory, photo.filename = os.path.split(img_path)
     # photo.directory = os.path.
     photo.width, photo.height = get_size(image)  # image.size
+    _extract_exif_data(photo, image)
+    db.session.add(photo)
+    # sort_photo_into_date_range(photo, commit = False)
+    add_to_last_import(photo)
+
+    if commit:
+        db.session.commit()
+    return photo.id
+
+
+@celery.task(name = "Extract Exif")
+def extract_exif_data(photo_id):
+    photo = Photo.query.get(photo_id)
+    if not photo:
+        logger.warning("Photo with ID %d does not exist", photo_id)
+        return
+    _extract_exif_data(photo)
+    db.session.commit()
+
+
+def _extract_exif_data(photo, image = None):
+
+    logger.debug("Extract Exif Data for Photo %s", photo.path)
+    if not image:
+        path = get_full_path(photo.path)
+
+        try:
+            image = Image.open(path)
+        except UnidentifiedImageError:
+            logger.error("Invalid Image Format for %s", path)
+            return None
+        except FileNotFoundError:
+            logger.error("File not found: %s")
+            return None
+
     exif_raw = image.getexif()
     exif_data = get_labeled_exif(exif_raw)
     geotags = get_geotagging(exif_raw)
-    # geotags = get_gps_data(exif_data)
-    # latitude, longitude = get_coordinates(geotags)
     gps_data = get_lat_lon(geotags)
     if gps_data:
-        # latitude, longitude =
         gps = GPS()
         photo.gps = gps
         photo.gps.latitude, photo.gps.longitude = gps_data
 
+    photo.exif = []
     for key in exif_data.keys():
         raw_value = exif_data[key]
         try:
@@ -119,20 +152,20 @@ def create_photo(path, commit=True):
                 photo.no_creation_date = False
             except ValueError:
                 logger.error("%s can not be parsed as Date for %s",
-                             str(value), img_path)
+                             str(value), photo.path)
 
     if not photo.created:
         # there is either no exif date or it can't be parsed for the photo date, so we assumme it is old
         photo.created = datetime.today()
         photo.no_creation_date = True
         # they will be moved to the end later
-    db.session.add(photo)
-    # sort_photo_into_date_range(photo, commit = False)
-    add_to_last_import(photo)
 
-    if commit:
-        db.session.commit()
-    return photo.id
+
+@celery.task(name = "Extract Exif Data for all Photos")
+def extract_exif_all_photos():
+    for photo in Photo.query:
+        extract_exif_data.apply_async((photo.id,), queue = 'process')
+
 
 def add_to_last_import(photo):
     status = Status.query.first()
