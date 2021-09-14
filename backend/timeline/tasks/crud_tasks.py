@@ -95,13 +95,19 @@ def create_photo(path, commit=True):
     return photo.id
 
 
+@celery.task(name = "Extract Exif Data for all Photos")
+def extract_exif_all_photos(overwrite):
+    for photo in Photo.query:
+        extract_exif_data.apply_async((photo.id, overwrite), queue = 'process')
+
 @celery.task(name = "Extract Exif")
-def extract_exif_data(photo_id):
+def extract_exif_data(photo_id, overwrite):
     photo = Photo.query.get(photo_id)
     if not photo:
         logger.warning("Photo with ID %d does not exist", photo_id)
         return
-    _extract_exif_data(photo)
+    if overwrite or not photo.exif:    
+        _extract_exif_data(photo)
     db.session.commit()
 
 
@@ -159,12 +165,6 @@ def _extract_exif_data(photo, image = None):
         photo.created = datetime.today()
         photo.no_creation_date = True
         # they will be moved to the end later
-
-
-@celery.task(name = "Extract Exif Data for all Photos")
-def extract_exif_all_photos():
-    for photo in Photo.query:
-        extract_exif_data.apply_async((photo.id,), queue = 'process')
 
 
 def add_to_last_import(photo):
