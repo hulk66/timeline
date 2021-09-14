@@ -123,11 +123,14 @@ def _remove_photo(id, physically):
     # same for persons
     for person in Person.query.filter(Person.faces == None):
         db.session.delete(person)
-        
+
+
     if physically:
         path = get_full_path(photo.path)
         os.remove(path)
     # todo remove previews
+    db.session.commit()
+
 
 # should actually be a DELETE request
 @blueprint.route('/remove', methods=['POST'])
@@ -138,7 +141,6 @@ def remove_photos():
     physically = req_data["physically"]
     for id in ids:
         _remove_photo(id, physically)
-    db.session.commit()
     return flask.jsonify(True)
 
 
