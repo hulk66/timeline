@@ -113,7 +113,6 @@ def _remove_photo(id, physically):
     photo.things = []
     status = Status.query.first()
     status.sections_dirty = True
-    db.session.delete(photo)
 
     # remove empty albums
     albums = Album.query.filter(Album.photos == None)
@@ -128,6 +127,8 @@ def _remove_photo(id, physically):
     if physically:
         path = get_full_path(photo.path)
         os.remove(path)
+        db.session.delete(photo)
+
     # todo remove previews
     db.session.commit()
 
