@@ -33,6 +33,8 @@ from timeline.util.image_ops import read_and_transpose
 from timeline.util.path_util import (get_full_path, get_preview_path,
                                      get_rel_path)
 from sqlalchemy import and_
+from celery import signature
+from celery import chain
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +99,14 @@ def create_photo(path, commit=True):
 
 @celery.task(name = "Extract Exif Data for all Photos")
 def extract_exif_all_photos(overwrite):
+    logger.debug("Extract Exif and GPS for all Photos")
     for photo in Photo.query:
-        extract_exif_data.apply_async((photo.id, overwrite), queue = 'process')
+        c =  chain(  
+            signature("Extract Exif", args=(photo.id, overwrite), queue = 'process'), 
+            signature("Check GPS", args=(photo.id,), queue="analyze", immutable = True)
+        )
+        c.apply_async()
+
 
 @celery.task(name = "Extract Exif")
 def extract_exif_data(photo_id, overwrite):

@@ -56,7 +56,7 @@ class EventHandler(PatternMatchingEventHandler):
     #    # modify_photo.apply_async( (event.src_path,), queue='process')
 
     def on_moved(self, event):
-        path = os.path.abspath(pyevent.src_path)
+        path = os.path.abspath(event.src_path)
         logger.debug("Move File: %s", path)
         # dest_path = os.path.abspath(event.dest_path)
         # move_photo.delay(event.src_path, event.dest_path)
