@@ -84,6 +84,12 @@ def recreate_exif_data(overwrite):
     celery.send_task("Extract Exif Data for all Photos", args=(overwrite,), queue="process")   
     return flask.jsonify(True)
 
+@blueprint.route('/resync_photos', methods=['GET'])
+def resync_photos():
+    logger.debug("Resync Photos")
+    celery.send_task("Resync Photos",  queue="process")   
+    return flask.jsonify(True)
+
 
 # def remove_all_tasks():
 #     celery.control.purge()

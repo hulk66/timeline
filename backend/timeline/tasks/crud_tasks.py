@@ -202,19 +202,25 @@ def add_to_last_import(photo):
 #            # all good, nothing to do
 
 
+def _delete_photo(photo):
+    db.session.delete(photo)
+    # remove empty albums
+    albums = Album.query.filter(Album.photos == None)
+    for album in albums:
+        db.session.delete(album)
+    # same for persons
+    for person in Person.query.filter(Person.faces == None):
+        db.session.delete(person)
+
+def delete_photo_by_path(path):
+    for p in Photo.query.filter(Photo.path == path):
+        _delete_photo(p)
+
 @celery.task(mame="Delete Photo")
 def delete_photo(img_path, commit=True):
     logger.debug("Delete Photo %s", img_path)
     path = get_rel_path(img_path)
-    for p in Photo.query.filter(Photo.path == path):
-        # for face in p.faces:
-        #    if (face.person is None):
-        #        db.session.delete(face)
-        # todo: remove preview also
-        db.session.delete(p)
-
-    for person in Person.query.filter(Person.faces == None):
-        db.session.delete(person)
+    delete_photo_by_path(path)
 
     Status.query.first().sections_dirty = True
     if commit:
@@ -551,3 +557,24 @@ def split_filename_and_path():
     for photo in Photo.query:
         photo.directory, photo.filename = os.path.split(photo.path)
     db.session.commit()
+
+
+@celery.task()
+def _resync_photo(photo_id):
+    # logger.debug("Resync photo")
+    photo = Photo.query.get(photo_id)
+    if not photo:
+        logger.error("Something is wrong. Photo with id %i not found. Deleted already?", photo_id)
+        return
+    path = get_full_path(photo.path)
+    if not os.path.exists(path):
+        # We are out of sync. The database references a photo which does not exist in the filesystem anymore
+        logger.debug("Photo %s no longer exists. Remove it from the catalog", photo.path)
+        _delete_photo(photo)
+    db.session.commit()
+
+@celery.task(name = "Resync Photos")
+def resync_photos():
+    logger.debug("Sync Photos. Ensure the Database is reflecting the filesystem")
+    for photo in Photo.query:
+        _resync_photo.apply_async((photo.id,), queue = "process")
