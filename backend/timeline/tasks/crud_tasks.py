@@ -33,6 +33,8 @@ from timeline.util.image_ops import read_and_transpose
 from timeline.util.path_util import (get_full_path, get_preview_path,
                                      get_rel_path)
 from sqlalchemy import and_
+from celery import signature
+from celery import chain
 
 logger = logging.getLogger(__name__)
 
@@ -85,18 +87,63 @@ def create_photo(path, commit=True):
     photo.directory, photo.filename = os.path.split(img_path)
     # photo.directory = os.path.
     photo.width, photo.height = get_size(image)  # image.size
+    _extract_exif_data(photo, image)
+    db.session.add(photo)
+    # sort_photo_into_date_range(photo, commit = False)
+    add_to_last_import(photo)
+
+    if commit:
+        db.session.commit()
+    return photo.id
+
+
+@celery.task(name = "Extract Exif Data for all Photos")
+def extract_exif_all_photos(overwrite):
+    logger.debug("Extract Exif and GPS for all Photos")
+    for photo in Photo.query:
+        c =  chain(  
+            signature("Extract Exif", args=(photo.id, overwrite), queue = 'process'), 
+            signature("Check GPS", args=(photo.id,), queue="analyze", immutable = True)
+        )
+        c.apply_async()
+
+
+@celery.task(name = "Extract Exif")
+def extract_exif_data(photo_id, overwrite):
+    photo = Photo.query.get(photo_id)
+    if not photo:
+        logger.warning("Photo with ID %d does not exist", photo_id)
+        return
+    if overwrite or not photo.exif:    
+        _extract_exif_data(photo)
+    db.session.commit()
+
+
+def _extract_exif_data(photo, image = None):
+
+    logger.debug("Extract Exif Data for Photo %s", photo.path)
+    if not image:
+        path = get_full_path(photo.path)
+
+        try:
+            image = Image.open(path)
+        except UnidentifiedImageError:
+            logger.error("Invalid Image Format for %s", path)
+            return None
+        except FileNotFoundError:
+            logger.error("File not found: %s")
+            return None
+
     exif_raw = image.getexif()
     exif_data = get_labeled_exif(exif_raw)
     geotags = get_geotagging(exif_raw)
-    # geotags = get_gps_data(exif_data)
-    # latitude, longitude = get_coordinates(geotags)
     gps_data = get_lat_lon(geotags)
     if gps_data:
-        # latitude, longitude =
         gps = GPS()
         photo.gps = gps
         photo.gps.latitude, photo.gps.longitude = gps_data
 
+    photo.exif = []
     for key in exif_data.keys():
         raw_value = exif_data[key]
         try:
@@ -119,20 +166,14 @@ def create_photo(path, commit=True):
                 photo.no_creation_date = False
             except ValueError:
                 logger.error("%s can not be parsed as Date for %s",
-                             str(value), img_path)
+                             str(value), photo.path)
 
     if not photo.created:
         # there is either no exif date or it can't be parsed for the photo date, so we assumme it is old
         photo.created = datetime.today()
         photo.no_creation_date = True
         # they will be moved to the end later
-    db.session.add(photo)
-    # sort_photo_into_date_range(photo, commit = False)
-    add_to_last_import(photo)
 
-    if commit:
-        db.session.commit()
-    return photo.id
 
 def add_to_last_import(photo):
     status = Status.query.first()
@@ -161,19 +202,25 @@ def add_to_last_import(photo):
 #            # all good, nothing to do
 
 
+def _delete_photo(photo):
+    db.session.delete(photo)
+    # remove empty albums
+    albums = Album.query.filter(Album.photos == None)
+    for album in albums:
+        db.session.delete(album)
+    # same for persons
+    for person in Person.query.filter(Person.faces == None):
+        db.session.delete(person)
+
+def delete_photo_by_path(path):
+    for p in Photo.query.filter(Photo.path == path):
+        _delete_photo(p)
+
 @celery.task(mame="Delete Photo")
 def delete_photo(img_path, commit=True):
     logger.debug("Delete Photo %s", img_path)
     path = get_rel_path(img_path)
-    for p in Photo.query.filter(Photo.path == path):
-        # for face in p.faces:
-        #    if (face.person is None):
-        #        db.session.delete(face)
-        # todo: remove preview also
-        db.session.delete(p)
-
-    for person in Person.query.filter(Person.faces == None):
-        db.session.delete(person)
+    delete_photo_by_path(path)
 
     Status.query.first().sections_dirty = True
     if commit:
@@ -510,3 +557,24 @@ def split_filename_and_path():
     for photo in Photo.query:
         photo.directory, photo.filename = os.path.split(photo.path)
     db.session.commit()
+
+
+@celery.task()
+def _resync_photo(photo_id):
+    # logger.debug("Resync photo")
+    photo = Photo.query.get(photo_id)
+    if not photo:
+        logger.error("Something is wrong. Photo with id %i not found. Deleted already?", photo_id)
+        return
+    path = get_full_path(photo.path)
+    if not os.path.exists(path):
+        # We are out of sync. The database references a photo which does not exist in the filesystem anymore
+        logger.debug("Photo %s no longer exists. Remove it from the catalog", photo.path)
+        _delete_photo(photo)
+    db.session.commit()
+
+@celery.task(name = "Resync Photos")
+def resync_photos():
+    logger.debug("Sync Photos. Ensure the Database is reflecting the filesystem")
+    for photo in Photo.query:
+        _resync_photo.apply_async((photo.id,), queue = "process")

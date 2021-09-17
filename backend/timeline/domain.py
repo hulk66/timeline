@@ -267,11 +267,11 @@ class Status(db.Model, SerializerMixin):
 
 class Exif(db.Model, SerializerMixin):
     __tablename__ = 'exif'
-    id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(100))
+    # id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100),primary_key=True)
     value = db.Column(db.String(100))
-    label = db.Column(db.String(50))
-    photo_id = db.Column(db.Integer, db.ForeignKey('photos.id'))
+    # label = db.Column(db.String(50))
+    photo_id = db.Column(db.Integer, db.ForeignKey('photos.id'), primary_key=True)
 
     def __repr__(self):
         return "<Exif(Key='%s', Value='%s')>" % (

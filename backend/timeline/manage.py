@@ -40,7 +40,7 @@ def cli():
 def watchdog():
     """Start watchdog and perform the initial scan of the directory
     """
-    setup_logging(current_app, "watchdog.log")
+    setup_logging("timeline", current_app, "watchdog.log")
     click.echo("Starting Watchdog")
 
     polling = current_app.config.get("POLLING")

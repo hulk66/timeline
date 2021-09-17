@@ -38,8 +38,8 @@ def check_and_set(dest, name, src):
         setattr(dest, name, v)
 
 
-@celery.task(name="Checking for GPS Information", ignore_result=True)
-def set_display_address(photo_id):
+@celery.task(name="Check GPS")
+def check_gps(photo_id):
     photo = Photo.query.get(photo_id)
     if not photo:
         logger.warning("Can't check GPS data, photo may have been removed?")

@@ -18,4 +18,4 @@ GNU General Public License for more details.
 from timeline.app import create_app, setup_logging
 
 app = create_app()
-setup_logging(app, "webapp.log")
+setup_logging("timeline", app, "webapp.log") 

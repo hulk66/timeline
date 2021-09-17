@@ -90,9 +90,9 @@ def init_celery(app=None):
     return celery
 
 
-def setup_logging(app, logfile_name):
+def setup_logging(package, app, logfile_name):
     log_path = app.config["LOG_PATH"]
-    logger = logging.getLogger("timeline")
+    logger = logging.getLogger(package)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)15s - %(levelname)s - %(message)s')
     handler = RotatingFileHandler(log_path + '/' + logfile_name, maxBytes=10**7, backupCount=5)

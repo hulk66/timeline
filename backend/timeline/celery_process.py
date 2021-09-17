@@ -36,7 +36,9 @@ import timeline.tasks.classify_tasks
 import logging
 
 flask_app = create_app()
-setup_logging(flask_app, 'process_worker.log')
+setup_logging("timeline", flask_app, 'process_worker.log')
+setup_logging("celery.worker.autoscale", flask_app, 'celery.log')
+
 logger = logging.getLogger(__name__) 
 
 @celeryd_after_setup.connect

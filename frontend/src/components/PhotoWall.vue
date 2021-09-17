@@ -56,7 +56,7 @@
                         v-on:mouseleave="scrub(false)"
                         v-on:click="jumpToDate()">
                     <div v-for="(d, index) in tickDates" :key="index" :style="{top:pos_percent(d) + '%',position:'absolute'}" >
-                        <tick :moment="d" :h="tick_height(index)"></tick>
+                        <tick v-if="showTick[index]" :moment="d" :h="tickHeight[index]"></tick>
                     </div>
                     <div id="tick" :style="cssProps"></div>
                     <div v-if="scrubbing" id="currentDate" :style="cssProps">{{currDate}}</div>
@@ -140,6 +140,8 @@
                 max_date: null,
                 total_scale: null,
                 currentTick: 0,
+                lastTickYPos: 0,
+                currentTickYPos: 0,
                 currDate: "",
                 scrubbing: false,
                 tickDates: [],
@@ -147,7 +149,9 @@
                 prevPhoto: null,
                 nextPhoto: null,
                 imageViewerDirection: 0,
-                selectMulti: false
+                selectMulti: false,
+                showTick: [],
+                tickHeight: []
             };
         },
 
@@ -163,6 +167,7 @@
             
             this.$emit("set-goback", null);
             this.$store.commit("setSelectionAllowed", this.selectionAllowed);
+            this.lastTickYPos = Number.MAX_VALUE;
         },
 
         watch: {
@@ -176,6 +181,9 @@
                 }
 
             }*/
+            tick_visible() {
+                this.lastTickYPos = this.currentTickYPos;
+            }
         },
 
         computed: {
@@ -201,6 +209,10 @@
                     '--tick-color': this.$vuetify.theme.secondary
                 }
             },
+
+            tick_visible() {
+                return this.currentTickYPos > this.lastTickYPos > 20; 
+            }
         },
 
          // eslint-disable-next-line no-unused-vars
@@ -211,10 +223,53 @@
         methods: {
 
             // eslint-disable-next-line no-unused-vars
+            /*
             onIntersect(entries, observer) {
                 let element = entries[0];
                 console.log(element.isIntersecting)
-            },                     
+            },     
+            */
+            calcTickPositions() {
+                this.tickDates = this.getTickDates();
+                let currentTickYPos = 0;
+                let lastTickYPos = Number.MIN_SAFE_INTEGER;
+                
+                for (let index=0; index<this.tickDates.length-1; index++) {
+                    let top = this.tickDates[index];
+                    let bottom = this.tickDates[index+1];
+
+                    let start_pos = this.pos_percent(top);
+                    let end_pos = this.pos_percent(bottom);
+
+                    let nextTickYPos = start_pos/100 * this.$refs.timelineContainer.$el.clientHeight;
+                    if (nextTickYPos - lastTickYPos > 30) {
+                        lastTickYPos = currentTickYPos;
+                        this.showTick[index] = true;
+                    } else {
+                        this.showTick[index] = false;
+                    }
+                    currentTickYPos = nextTickYPos;
+                    
+                    let h = (end_pos -  start_pos)/100 * this.$refs.timelineContainer.$el.clientHeight;
+                    this.tickHeight[index] = h;
+                }
+            },
+            /*
+            tick_height(tick_index) {
+
+                if (tick_index+1>this.tickDates.length)
+                    return 0;
+
+                let top = this.tickDates[tick_index];
+                let bottom = this.tickDates[tick_index+1];
+
+                let start_pos = this.pos_percent(top);
+                let end_pos = this.pos_percent(bottom);
+                this.currentTickYPos = start_pos/100 * this.$refs.timelineContainer.$el.clientHeight;
+                let h = (end_pos -  start_pos)/100 * this.$refs.timelineContainer.$el.clientHeight;
+                return h;
+            },
+            */
             getTickDates() {
                 // let start = moment(this.max_date);
                 // let end = moment(this.min_date);
@@ -298,23 +353,8 @@
                 /* eslint-disable no-console */
                 // console.log(event);
             },
-            tick_height(tick_index) {
 
-                if (tick_index+1>this.tickDates.length)
-                    return 0;
-
-                let top = this.tickDates[tick_index];
-                let bottom = this.tickDates[tick_index+1];
-
-                let start_pos = this.pos_percent(top);
-                let end_pos = this.pos_percent(bottom);
-
-                let h = (end_pos -  start_pos)/100 * this.$refs.timelineContainer.$el.clientHeight;
-
-
-
-                return h;
-            },
+            
             pos_percent_log(d) {
                 let duration = moment.duration(this.max_date.diff(d));
                 let durationAsDays = duration.asDays();
@@ -832,7 +872,8 @@
                     this.min_date = moment(result.data.min_date);
                     this.totalPhotos = result.data.totalPhotos;
                     this.total_duration = moment.duration(this.max_date.diff(this.min_date));
-                    this.tickDates = this.getTickDates();
+                    // this.tickDates = this.getTickDates();
+                    this.calcTickPositions();
                 });
             }
         }
