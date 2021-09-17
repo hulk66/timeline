@@ -369,6 +369,8 @@
 
             loadData(p) {
                 let self = this;
+                this.gps = null;
+                this.position = null;
                 this.getKnownPersons();
                 this.getFacesByPhoto(p);
 
