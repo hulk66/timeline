@@ -105,6 +105,22 @@
             <v-toolbar-title>{{title}}</v-toolbar-title>
             
             <v-spacer></v-spacer>
+
+            <v-tooltip bottom> 
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn 
+                        @click="uploadDialog = true"
+                        icon
+                        color="primary"
+                        dark
+                        v-bind="attrs"
+                        v-on="on">
+                        <v-icon>mdi-cloud-upload</v-icon>
+                    </v-btn>
+                </template>
+                <span>Upload Photos</span>
+            </v-tooltip>
+
             <v-tooltip v-if="showRemoveButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
@@ -421,6 +437,49 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <v-dialog 
+            v-model="uploadDialog"
+            max-width = "600px">
+
+            <v-card>
+                <v-card-title>Upload Photos</v-card-title>
+                <v-card-text>
+                    Please upload photos by either selecting with the file selector or dragging them 
+                    on the field below
+                </v-card-text>
+
+                <v-card-text v-if="uploading">
+                    <v-progress-linear height=25 :value="uploadProgress">
+                        <template v-slot:default="{ value }">
+                            <strong>{{uploadCount}} / {{uploadFiles.length}} Files; {{ value }}% </strong>
+                        </template>
+                    </v-progress-linear>
+                </v-card-text>
+
+                <v-card-text v-else>
+                    <v-file-input ref="upload" v-model="uploadFiles" show-size counter multiple accept=".jpg,.jpeg"></v-file-input>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        :disabled="uploading"
+                        color="primary"
+                        text
+                        @click="uploadDialog = false">
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        :disabled="uploading || uploadFiles.length == 0"
+                        color="primary"
+                        text
+                        @click="upload()">
+                        Upload
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <v-snackbar v-model="snackbar" :timeout="6000">
             Use the Left and Right Cursor Keys to navigate.<br/>
             Use Space to add Photos to the selection. <br/>
@@ -479,7 +538,11 @@
                 defaultTitle: "Timeline Photo Organizer",
                 deletePhotosDialog: false,
                 deleteAlbumDialog: false,
-                snackbar: false
+                snackbar: false,
+                uploadDialog: false,
+                uploadFiles: [],
+                uploading: false,
+                uploadCount: 0
             };
         },
 
@@ -518,8 +581,10 @@
             },
             title() {
                 return this.selectedPhotos.length > 0 ? this.selectedPhotos.length.toString() + " Photos selected" : this.defaultTitle;
+            },
+            uploadProgress() {
+                return Math.ceil(this.uploadCount / this.uploadFiles.length * 100.0);
             }
-
         },
         watch: {
 
@@ -543,8 +608,16 @@
                     this.back = val.length > 0;
                     this.snackbar = (val.length == 1);
                 }
+            },
+
+            uploadCount(val) {
+                if (val == this.uploadFiles.length) {
+                    this.uploading = false;
+                    this.uploadDialog = false;
+                }
+
             }
-        },
+         },
 
         mounted() {
             this.checkNewFaces();
@@ -568,7 +641,26 @@
             this.previewHeight = targetheight;
         },
         methods: {
+            upload() {
+                this.uploadCount = 0;
+                this.uploading = true;
+                for (var i = 0; i < this.uploadFiles.length; i++ ) {
+                    let formData = new FormData();
+                    let file = this.uploadFiles[i];
+                    formData.append('files', file);
 
+                    axios.post(
+                        "/photos/upload",
+                        formData, { 
+                        headers: { 'Content-Type': 'multipart/form-data'}
+                    }).then(() => {
+                        this.uploadCount++;
+                    });
+
+                }
+                // this.uploadDialog = false;
+
+            },
             editSmartAlbum() {
                 this.$router.push({name:"search",  query: {album_id:this.selectedAlbum.id}});    
             },

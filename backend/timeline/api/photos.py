@@ -15,6 +15,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
+import datetime
+from timeline.util.gps import get_labeled_exif
 import flask
 import io
 from flask import Blueprint
@@ -30,6 +32,10 @@ from timeline.util.path_util import get_full_path, get_preview_path
 from timeline.extensions import db
 from timeline.util.path_util import get_full_path
 import os
+from flask import current_app
+from werkzeug.utils import secure_filename
+import tempfile
+
 
 blueprint = Blueprint("photos", __name__, url_prefix="/photos")
 logger = logging.getLogger(__name__)
@@ -150,4 +156,44 @@ def remove_photos():
 def delete_photo(id, physically):
     _remove_photo(id, physically)
     db.session.commit()
+    return flask.jsonify(True)
+
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg'}
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@blueprint.route('/upload', methods=['POST'])
+def upload():
+    logger.debug("Upload files")
+    photo_path = current_app.config['PHOTO_PATH']
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    files = request.files.getlist("files")
+    for file in files:
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)   
+            logger.debug("Upload %s", filename)
+
+            in_memory  = io.BytesIO()
+            file.save(in_memory)  
+            image = Image.open(in_memory)
+            exif_raw = image.getexif()
+            exif_data = get_labeled_exif(exif_raw)
+            dt = datetime.datetime.today()
+            if "DateTimeOriginal" in exif_data:
+                date_time = exif_data["DateTimeOriginal"]
+
+                try:
+                    # set photo date
+                    dt = datetime.datetime.strptime(str(date_time), "%Y:%m:%d %H:%M:%S")
+                except ValueError:
+                    logger.error("%s can not be parsed as Date for %s",
+                                str(date_time), filename)
+            
+            dest_filename = os.path.join(photo_path, upload_folder, str(dt.year), str(dt.month), filename)
+            os.makedirs(os.path.dirname(dest_filename), exist_ok=True)
+            fout = open(dest_filename, "wb")
+            fout.write(in_memory.getbuffer())
+            fout.close()
+
     return flask.jsonify(True)

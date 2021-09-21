@@ -176,7 +176,7 @@
                                             <span class="exif-detail" v-if="exif.FNumber">f/{{exif.FNumber}}</span>  
                                             <span class="exif-detail" v-if="exif.ExposureTime">{{exif.ExposureTime}}s</span>
                                             <span class="exif-detail" v-if="exif.FocalLength">{{exif.FocalLength}} mm</span>
-                                            <span v-if="exif.ISOSpeedRatings">ISO {{exif.ISOSpeedRatings}}</span>
+                                            <span class="exif-detail" v-if="exif.ISOSpeedRatings">ISO {{exif.ISOSpeedRatings}}</span>
                                         </v-list-item-subtitle>
                                         <v-list-item-subtitle v-if="exif.LensModel">
                                             {{exif.LensModel}}
@@ -187,7 +187,7 @@
 
                             </div>
 
-                            <div v-if="gps.display_address">
+                            <div v-if="gps && gps.display_address">
                                 <v-card-text >
                                     <div class="font-weight-bold">Location</div>
                                 </v-card-text>
