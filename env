@@ -5,6 +5,10 @@
 # This is where to look for your photos, nothing will be changed or modified here
 PHOTO_PATH=/Users/johndoe/photos
 
+# Where to upload
+# will be a folder below the PHOTO_PATH
+UPLOAD_FOLDER=uploaded
+
 # Here are previews created for providing downscaled version to be delivered by nginx
 PREVIEW_PATH=/Users/johndoe/timeline/data/preview
 
