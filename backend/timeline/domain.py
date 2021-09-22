@@ -236,10 +236,12 @@ class DateRange(db.Model, SerializerMixin):
 class Section(db.Model, SerializerMixin):
     __tablename__ = 'section'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     dirty = db.Column(db.Boolean)
     photos = db.relationship("Photo")
-    num_photos = db.Column(db.Integer)
+    # num_photos = db.Column(db.Integer)
+    oldest_date = db.Column(db.DateTime, unique = True)
+    newest_date = db.Column(db.DateTime, unique = True)
     serialize_rules = ('-photos',)
 
 # class Sec(db.Model, SerializerMixin):
@@ -263,7 +265,7 @@ class Status(db.Model, SerializerMixin):
         "Album", uselist=False, cascade="all, delete, delete-orphan", 
         single_parent=True)
     last_import_album_id = db.Column(db.Integer, db.ForeignKey('albums.id'))   
-
+    in_sectioning = db.Column(db.Boolean)
 
 class Exif(db.Model, SerializerMixin):
     __tablename__ = 'exif'

@@ -91,6 +91,7 @@ def create_photo(path, commit=True):
     db.session.add(photo)
     # sort_photo_into_date_range(photo, commit = False)
     add_to_last_import(photo)
+    insert_photo_into_section(photo)
 
     if commit:
         db.session.commit()
@@ -158,7 +159,7 @@ def _extract_exif_data(photo, image = None):
             logger.error("%s", img_path)
 
         # User either DateTimeOriginal or not available any other DateTime
-        if key == 'DateTimeOriginal' or (key.startswith("DateTime") and photo.created is None):
+        if key == 'DateTimeOriginal': # or (key.startswith("DateTime") and photo.created is None):
             try:
                 # set photo date
                 dt = datetime.strptime(str(value), "%Y:%m:%d %H:%M:%S")
@@ -173,6 +174,34 @@ def _extract_exif_data(photo, image = None):
         photo.created = datetime.today()
         photo.no_creation_date = True
         # they will be moved to the end later
+    
+
+def insert_photo_into_section(photo):
+
+    if Status.query.first().in_sectioning:
+        # will be done later otherwise we have to mess around with transactions blocking each other
+        return
+
+    section = Section.query.filter( photo.created >= Section.oldest_date ).order_by(Section.oldest_date.asc()).first()
+    if not section:
+        # try to look from the other direction: find the section where the date of the current photo is older than the ol
+        section = Section.query.filter( photo.created < Section.newest_date ).order_by(Section.newest_date.desc()).first()
+        if not section:
+            section = Section()
+            section.newest_date = datetime.today()
+            section.oldest_date = photo.created
+            db.session.add(section)
+        else:
+            if photo.created < section.oldest_date:
+                section.oldest_date = photo.created 
+    else:
+        # we have found a section where the phot is more recent than the oldest photo of the section
+        # now check if the photo is also more recent than the newest phot
+        if photo.created > section.newest_date:
+            section.newest_date = photo.created
+
+
+    section.photos.append(photo)
 
 
 def add_to_last_import(photo):
@@ -203,11 +232,14 @@ def add_to_last_import(photo):
 
 
 def _delete_photo(photo):
+    status = Status.query.first()
     db.session.delete(photo)
     # remove empty albums
     albums = Album.query.filter(Album.photos == None)
     for album in albums:
-        db.session.delete(album)
+        if album.id != status.last_import_album_id:
+            # do not remove the Last Import Album
+            db.session.delete(album)
     # same for persons
     for person in Person.query.filter(Person.faces == None):
         db.session.delete(person)
@@ -408,8 +440,11 @@ def compute_sections():
         return
     sort_old_photos()
 
+    status.in_sectioning = True
+    db.session.commit()
+
     batch_size = 200
-    current_section = 0
+    current_section = 1
 
     # Get all photos sorted descending, meaning the newest first
     photos = Photo.query.filter(Photo.ignore == False).order_by(
@@ -419,7 +454,7 @@ def compute_sections():
         oldest_photo = photos[-1]
         # Find all photos that are on the same day as the oldest photo
         oldest_photo_prev_day = date_to_datetime(oldest_photo.created.date() - timedelta(days = 1))
-        # now find all photos that a older as the oldest photo from batch but newer as the next day
+        # now find all photos that are older as the oldest photo from batch but newer as the next day
         same_day_photos = Photo.query.filter( and_(Photo.ignore == False, Photo.created < oldest_photo.created, Photo.created > oldest_photo_prev_day)).all()
 
         # these photos will be added to the same section, so that each setion always start with a new day
@@ -429,7 +464,7 @@ def compute_sections():
             logger.debug("Creating new Section")
             section = Section()
             db.session.add(section)
-            section.id = current_section
+            # section.id = current_section
 
         #Photo.query.filter( and_(Photo.ignore == False, Photo.created > oldest_photo.created, Photo.created < oldest_photo_prev_day)).update( {Photo.section: section}, synchronize_session=False)
 
@@ -437,13 +472,19 @@ def compute_sections():
             photo.section = section
         for photo in same_day_photos:
             photo.section = section
-    
+        section.newest_date = photos[0].created
+        if len(same_day_photos) > 0:
+            section.oldest_date = same_day_photos[-1].created    
+        else:
+            section.oldest_date = oldest_photo.created
         photos = Photo.query \
             .filter(and_(Photo.ignore == False, Photo.created <= oldest_photo_prev_day)) \
             .order_by(Photo.created.desc()).limit(batch_size).all()
         current_section += 1
     
-    Section.query.filter(Section.id >= current_section).delete()
+    # Section.query.filter(Section.id >= current_section).delete()
+    status.in_sectioning = False
+    status.sections_dirty = False 
     db.session.commit()
     logger.debug("Sectioning done")
 
