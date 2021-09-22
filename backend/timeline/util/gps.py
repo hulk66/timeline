@@ -152,9 +152,12 @@ def get_labeled_exif(exif):
         for tid in exif:
             tag = TAGS.get(tid, tid)
             data = exif[tid]
-            if isinstance(data, bytes):
-                data = data.decode()
-            labeled[tag] = data
+            try:
+                if isinstance(data, bytes):
+                    data = data.decode()
+                labeled[tag] = data
+            except UnicodeDecodeError:
+                logger.debug("Exif data can not be decoded")
 
         for (key, val) in exif.get_ifd(0x8769).items():
             label = TAGS.get(key)

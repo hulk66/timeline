@@ -77,6 +77,7 @@
                             <v-list-item-title>Search</v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
+<!--
                     <v-list-item to="/importing">
                         <v-list-item-action>
                             <v-icon>mdi-database-import</v-icon>
@@ -85,6 +86,7 @@
                             <v-list-item-title>Importing</v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
+-->
                     <v-list-item to="/album?album_id=1">
                         <v-list-item-action>
                             <v-icon>mdi-file-import</v-icon>
