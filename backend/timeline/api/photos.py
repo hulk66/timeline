@@ -189,7 +189,7 @@ def upload():
                 except ValueError:
                     logger.error("%s can not be parsed as Date for %s",
                                 str(date_time), filename)
-            
+            # logger.debug("Save file under %s/%s/%d/%d/%s", photo_path, upload_folder, dt.year, dt.month, filename)
             dest_filename = os.path.join(photo_path, upload_folder, str(dt.year), str(dt.month), filename)
             os.makedirs(os.path.dirname(dest_filename), exist_ok=True)
             fout = open(dest_filename, "wb")

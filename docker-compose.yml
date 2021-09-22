@@ -31,13 +31,13 @@ services:
       - ${RABBITMQ_DATA}:/var/lib/rabbitmq
 
   webapp:
-    image: hulk66/timeline_be:0.84
+    image: hulk66/timeline_be:0.85
     # build: backend
     restart: always
     ports: 
       - 9092:5000
     volumes:
-      - ${PHOTO_PATH}:/photos:ro
+      - ${PHOTO_PATH}:/photos
       - ${PREVIEW_PATH}:/preview
       - ${LOG_PATH}:/log
     environment:
@@ -52,12 +52,13 @@ services:
       FACE_DISTANCE_VERY_SAFE: ${FACE_DISTANCE_VERY_SAFE}
       FACE_DISTANCE_SAFE: ${FACE_DISTANCE_SAFE}
       FACE_DISTANCE_MAYBE: ${FACE_DISTANCE_MAYBE}
+      UPLOAD_FOLDER: ${UPLOAD_FOLDER}
     depends_on:
       - db
       - rabbitmq
 
   worker:
-    image: hulk66/timeline_be:0.84
+    image: hulk66/timeline_be:0.85
     # build: backend
     restart: always
     environment:
@@ -86,7 +87,7 @@ services:
       - rabbitmq
      
   frontend:
-    image: hulk66/timeline_fe:0.84
+    image: hulk66/timeline_fe:0.85
     # build: frontend
     restart: always
     ports:
@@ -105,7 +106,7 @@ services:
       - webapp
 
   watchdog:
-    image: hulk66/timeline_be:0.84
+    image: hulk66/timeline_be:0.85
     # build: backend
     restart: always
     environment:
