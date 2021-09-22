@@ -27,7 +27,7 @@
 
                     <v-list-item :to="{name:'photoWall'}">
                         <v-list-item-action>
-                            <v-icon>mdi-view-dashboard</v-icon>
+                            <v-icon color="primary">mdi-view-dashboard</v-icon>
                         </v-list-item-action>
                         <v-list-item-content>
                             <v-list-item-title>All</v-list-item-title>
@@ -37,7 +37,7 @@
                     <v-list-item to="/persons">
                         <v-list-item-action>
                             <v-badge :content="newFaces" dot :value="newFaces">
-                                <v-icon>mdi-face-man</v-icon>
+                                <v-icon color="primary">mdi-face-man</v-icon>
                             </v-badge>
                         </v-list-item-action>
                         <v-list-item-content>
@@ -47,7 +47,7 @@
 
                     <v-list-item to="/things">
                         <v-list-item-action>
-                            <v-icon>mdi-lightbulb</v-icon>
+                            <v-icon color="primary">mdi-lightbulb</v-icon>
                         </v-list-item-action>
                         <v-list-item-content>
                             <v-list-item-title>Things</v-list-item-title>
@@ -55,7 +55,7 @@
                     </v-list-item>
                     <v-list-item to="/places">
                         <v-list-item-action>
-                            <v-icon>mdi-map-marker</v-icon>
+                            <v-icon color="primary">mdi-map-marker</v-icon>
                         </v-list-item-action>
                         <v-list-item-content>
                             <v-list-item-title>Places</v-list-item-title>
@@ -63,7 +63,7 @@
                     </v-list-item>
                     <v-list-item to="/albumList">
                         <v-list-item-action>
-                            <v-icon>mdi-image-album</v-icon>
+                            <v-icon color="primary">mdi-image-album</v-icon>
                         </v-list-item-action>
                         <v-list-item-content>
                             <v-list-item-title>Albums</v-list-item-title>
@@ -71,7 +71,7 @@
                     </v-list-item>
                     <v-list-item to="/search">
                         <v-list-item-action>
-                            <v-icon>mdi-card-search</v-icon>
+                            <v-icon color="primary">mdi-card-search</v-icon>
                         </v-list-item-action>
                         <v-list-item-content>
                             <v-list-item-title>Search</v-list-item-title>
@@ -89,7 +89,7 @@
 -->
                     <v-list-item to="/album?album_id=1">
                         <v-list-item-action>
-                            <v-icon>mdi-file-import</v-icon>
+                            <v-icon color="primary">mdi-file-import</v-icon>
                         </v-list-item-action>
                         <v-list-item-content>
                             <v-list-item-title>Last Import</v-list-item-title>
@@ -102,8 +102,8 @@
         <v-app-bar
                 app
                 clipped-left >
-            <v-btn v-if="back" icon @click="goBack"><v-icon>mdi-close</v-icon></v-btn>
-            <v-app-bar-nav-icon  v-else @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+            <v-btn v-if="back" icon @click="goBack"><v-icon color="primary">mdi-close</v-icon></v-btn>
+            <v-app-bar-nav-icon  color="primary" v-else @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
             <v-toolbar-title>{{title}}</v-toolbar-title>
             
             <v-spacer></v-spacer>
@@ -446,8 +446,7 @@
             <v-card>
                 <v-card-title>Upload Photos</v-card-title>
                 <v-card-text>
-                    Please upload photos by either selecting with the file selector or dragging them 
-                    on the field below
+                    Please upload photos by selecting with the file selector (drag and drop will come later) 
                 </v-card-text>
 
                 <v-card-text v-if="uploading">
