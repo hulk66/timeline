@@ -25,7 +25,7 @@ from keras_vggface.utils import preprocess_input
 from PIL import Image
 from pymysql.err import InternalError
 from sklearn.preprocessing import normalize
-from timeline.domain import Face, Photo
+from timeline.domain import Face, Asset
 from timeline.extensions import celery, db
 from timeline.util.image_ops import read_transpose_scale_image_as_array
 from timeline.util.path_util import get_full_path
@@ -86,15 +86,15 @@ def _find_faces_in_image2(image):
     return face_result, image_list
 
 @celery.task(name="Face Detection", autoretry_for=(InternalError,), ignore_result=True)
-def find_faces2(photo_id, call_match_tasks = True):
-    photo = Photo.query.get(photo_id)
-    if not photo:
+def find_faces2(asset_id, call_match_tasks = True):
+    asset = Asset.query.get(asset_id)
+    if not asset:
         logger.error(
-            "Something is wrong. Can't find photo with ID %i", photo_id)
+            "Something is wrong. Can't find asset with ID %i", asset_id)
         return
 
-    logger.debug("Find Faces in %s", photo.path)
-    path = get_full_path(photo.path)
+    logger.debug("Find Faces in %s", asset.path)
+    path = get_full_path(asset.path)
     if not os.path.exists(path):
         logger.warning(
             "File for face detection does not exist. Maybe it has removed meanwhile? %s", path)
@@ -123,10 +123,10 @@ def find_faces2(photo_id, call_match_tasks = True):
             face.encoding = scores_nomalized[i]
             result.append(face)
             i += 1
-        photo.faces = result
+        asset.faces = result
         db.session.commit()
         if call_match_tasks:
-            for face in photo.faces:
+            for face in asset.faces:
 
                 # for all found faces we will check if we can match is already to some known face
                 match_unknown_face.apply_async((face.id,), queue="analyze")
@@ -138,7 +138,7 @@ def find_faces2(photo_id, call_match_tasks = True):
                 #detect_gender.apply_async((face.id,), queue="analyze")
                 
 
-    logger.debug("Found %d faces in %s", num_faces, photo.path)
+    logger.debug("Found %d faces in %s", num_faces, asset.path)
 
 def _find_faces_in_image(image):
     face_pos = face_detector.detect_faces(image)
@@ -174,8 +174,8 @@ def _find_faces_in_image(image):
 
 
 def _get_cropped_face(face, margin=0.3):
-    photo = face.photo
-    path = get_full_path(photo.path)
+    asset = face.asset
+    path = get_full_path(asset.path)
     image, scale_factor = read_transpose_scale_image_as_array(path)
     margin_w = face.w * margin
     margin_h = face.h * margin
@@ -241,15 +241,15 @@ def detect_facial_expression(face_id):
     db.session.commit()
 
 @celery.task(name="Face Detection old", autoretry_for=(InternalError,), ignore_result=True)
-def find_faces(photo_id, call_match_tasks):
-    photo = Photo.query.get(photo_id)
-    if not photo:
+def find_faces(asset_id, call_match_tasks):
+    asset = Asset.query.get(asset_id)
+    if not asset:
         logger.error(
-            "Something is wrong. Can't find photo with ID %i", photo_id)
+            "Something is wrong. Can't find asset with ID %i", asset_id)
         return
 
-    logger.debug("Find Faces in %s", photo.path)
-    path = get_full_path(photo.path)
+    logger.debug("Find Faces in %s", asset.path)
+    path = get_full_path(asset.path)
     if not os.path.exists(path):
         logger.warning(
             "File for face detection does not exist. Maybe it has removed meanwhile? %s", path)
@@ -279,11 +279,11 @@ def find_faces(photo_id, call_match_tasks):
                 face.encoding = scores_nomalized[i]
                 result.append(face)
             i += 1
-        photo.faces = result
-        logger.debug("Found %d faces in %s", num_faces, photo.path)
+        asset.faces = result
+        logger.debug("Found %d faces in %s", num_faces, asset.path)
         db.session.commit()
         if call_match_tasks:
-            for face in photo.faces:
+            for face in asset.faces:
                 # for all found faces we will check if we can match is already to some known face
                 match_unknown_face.apply_async((face.id,), queue="analyze")
                 # and if it is close to an already ignored face, then also ignore it

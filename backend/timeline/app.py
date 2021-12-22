@@ -17,7 +17,7 @@ GNU General Public License for more details.
 
 import flask
 from timeline.extensions import db, celery
-from timeline.api import views, photos, admin, inspect, albums
+from timeline.api import views, assets, admin, inspect, albums
 import logging
 import pymysql
 import numpy
@@ -69,7 +69,7 @@ def register_blueprints(app):
     """register all blueprints for application
     """
     app.register_blueprint(views.blueprint)
-    app.register_blueprint(photos.blueprint)
+    app.register_blueprint(assets.blueprint)
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(inspect.blueprint)
     app.register_blueprint(albums.blueprint)

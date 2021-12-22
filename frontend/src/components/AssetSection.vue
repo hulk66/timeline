@@ -28,7 +28,7 @@
         <!--
         <v-card-title>Section {{section.id}}</v-card-title>
         -->
-        <photo-segment  :ref="'segment' + index"
+        <asset-segment  :ref="'segment' + index"
                         v-for="(segment, index) in segments"
                         :seg-index="index"
                         :data="segment"
@@ -38,7 +38,7 @@
                         @select-photo="selectPhotoEvent"
                         @select-multi="selectMultiEvent"
                         @update-timeline="updateTimeline">
-        </photo-segment>
+        </asset-segment>
     </v-card>
 </template>
 
@@ -48,12 +48,12 @@
     import moment from "moment"
     import {isReallyVisible} from "./Util";
 
-    import PhotoSegment from "./PhotoSegment";
+    import AssetSegment from "./AssetSegment";
     export default {
-        name: "PhotoSection",
+        name: "AssetSection",
 
         components: {
-            PhotoSegment
+            AssetSegment
         },
 
         props: {
@@ -131,8 +131,8 @@
                 this.$emit("update-timeline", currentDate)
             },
 
-            clickPhoto(segment, photoIndex) {
-                this.$emit("click-photo", this.section, segment, photoIndex)
+            clickPhoto(segment, assetIndex) {
+                this.$emit("click-photo", this.section, segment, assetIndex)
             },
 
             selectPhotoEvent(segment, index, value) {
@@ -171,9 +171,9 @@
                 let el = this.nextSegment(segment, dir);
                 if (el) {
                     if (dir == 1)
-                        el.clickPhoto(0)
+                        el.clickphoto(0)
                     else
-                        el.clickLastPhoto()
+                        el.clickLastphoto()
 
                 }
                 return el;
@@ -197,13 +197,13 @@
 
             clickLastPhoto() {
                 let len = this.segments.length-1
-                let last_index = this.segments[len].photos.length-1;
+                let last_index = this.segments[len].Photos.length-1;
                 this.$refs['segment' + len][0].clickPhoto(last_index);
             },
 
             loadPhotos(sec) {
                 // eslint-disable-next-line no-console
-                // console.log("Loading photos for section " + sec.id);
+                // console.log("Loading Photos for section " + sec.id);
                 let params = {};
                 let config ={ params: params};
                 if (!isNaN(this.filterPersonId))
@@ -221,8 +221,8 @@
                     params["album_id"] = this.filterAlbumId;
 
 
-                axios.get( "/api/photo/by_section/" + sec.id, config).then((result) => {
-                    this.photos = result.data;
+                axios.get( "/api/asset/by_section/" + sec.id, config).then((result) => {
+                    this.assets = result.data;
                     this.segments = this.computeSegments()
                 })
 
@@ -246,28 +246,28 @@
                 }
             },
             computeSegments() {
-                if (! this.photos)
+                if (! this.assets)
                     return [];
                 let res = [];
                 let curElement= {};
                 let prevDate = null;
                 let nr = 0;
-                this.photos.forEach( photo => {
-                    let currentDate = moment(photo.created).startOf("day")
+                this.assets.forEach( asset => {
+                    let currentDate = moment(asset.created).startOf("day")
 
                     if (!prevDate || moment(currentDate).isBefore(prevDate)) {
                         prevDate = currentDate;
                         curElement = new Object()
                         curElement.date = currentDate.toDate();
-                        curElement.photos = [];
+                        curElement.assets = [];
                         curElement.nr = nr++;
                         res.push(curElement)
                     }
-                    // let ar = photo.width / photo.height;
-                    // photo.height = this.targetHeight;
-                    // photo.width = ar * this.targetHeight;
+                    // let ar = asset.width / asset.height;
+                    // asset.height = this.targetHeight;
+                    // asset.width = ar * this.targetHeight;
 
-                    curElement.photos.push(photo);
+                    curElement.assets.push(asset);
                 });
                 return res;
             },

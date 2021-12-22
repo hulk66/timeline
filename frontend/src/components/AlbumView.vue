@@ -31,26 +31,26 @@
             -->
         </div>
         <div class="flex-grow-1">
-            <photo-wall  
-                ref="photoWall"
-                :showPhotoCount="false"
+            <asset-wall  
+                ref="assetWall"
+                :showassetCount="false"
                 :selectionAllowed="true"
                 :albumId="albumId">
-            </photo-wall>
+            </asset-wall>
         </div>
     </div>
 </template>
 <script>
     import axios from 'axios';
 
-    import PhotoWall from './PhotoWall.vue';
+    import AssetWall from './AssetWall.vue';
 
     export default {
 
         name: "AlbumView",
 
         components: {
-            PhotoWall
+            AssetWall
         },
 
         props: {

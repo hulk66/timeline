@@ -48,7 +48,7 @@
                             @input="ratePhoto"
                             @click.native.stop
                             clearable
-                            :value="photo.stars">
+                            :value="asset.stars">
                         </v-rating>
                     </div>
                                         
@@ -63,13 +63,13 @@
 
     export default {
     
-        name: "PhotoBrick",
+        name: "AssetBrick",
 
         components: {
         },
 
         props: {
-            photo: Object,
+            asset: Object,
             index: Number,
         },
         data() {
@@ -87,11 +87,11 @@
 
         computed: {
             thumbSrc() {
-                return encodeURI("/photos/preview/400/high_res/" + this.photo.path);
+                return encodeURI("/assets/preview/400/high_res/" + this.asset.path);
             },
 
             lowRes() {
-                return encodeURI("/photos/preview/400/low_res/" + this.photo.path);
+                return encodeURI("/assets/preview/400/low_res/" + this.asset.path);
 
             },
             markedClass() {

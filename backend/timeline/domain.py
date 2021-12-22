@@ -58,7 +58,7 @@ class Face(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
 
     person_id = db.Column(db.Integer, db.ForeignKey('persons.id'))
-    photo_id = db.Column(db.Integer, db.ForeignKey('photos.id'))
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'))
     encoding = db.Column(NumpyType)
     confidence_level = db.Column(db.Integer)
     already_clustered = db.Column(db.Boolean)
@@ -74,7 +74,7 @@ class Face(db.Model, SerializerMixin):
     confidence = db.Column(db.Float)
 
     person = db.relationship("Person", back_populates="faces")
-    photo = db.relationship("Photo", back_populates="faces")
+    asset = db.relationship("Asset", back_populates="faces")
 
     emotion = db.Column(db.String(20))
     emotion_confidence = db.Column(db.Float)
@@ -82,12 +82,12 @@ class Face(db.Model, SerializerMixin):
     predicted_age = db.Column(db.Integer) 
     predicted_gender = db.Column(db.String(10))
        
-    serialize_rules = ('-encoding', '-photo')
+    serialize_rules = ('-encoding', '-asset')
 
 
-photo_album = db.Table('photo_album', db.Model.metadata,
-                       db.Column('photo_id', db.ForeignKey(
-                           'photos.id'), primary_key=True),
+asset_album = db.Table('asset_album', db.Model.metadata,
+                       db.Column('asset_id', db.ForeignKey(
+                           'assets.id'), primary_key=True),
                        db.Column('album_id', db.ForeignKey(
                            'albums.id'), primary_key=True)
                        )
@@ -97,8 +97,8 @@ class Album(db.Model, SerializerMixin):
     __tablename__ = 'albums'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    photos = db.relationship(
-        'Photo', secondary=photo_album, back_populates='albums')
+    assets = db.relationship(
+        'Asset', secondary=asset_album, back_populates='albums')
 
     smart = db.Column(db.Boolean)
     start_date = db.Column(db.DateTime)
@@ -113,7 +113,7 @@ class Album(db.Model, SerializerMixin):
     camera_make = db.Column(db.String(100))
     thing_id = db.Column(db.String(100))
 
-    serialize_rules = ('-photos',)
+    serialize_rules = ('-assets',)
 
 
 """ class SmartAlbumCriteria(db.Model, SerializerMixin):
@@ -160,9 +160,9 @@ class Album(db.Model, SerializerMixin):
  """
 
 
-photo_thing = db.Table('photo_thing', db.Model.metadata,
-                       db.Column('photo_id', db.ForeignKey(
-                           'photos.id'), primary_key=True),
+asset_thing = db.Table('asset_thing', db.Model.metadata,
+                       db.Column('asset_id', db.ForeignKey(
+                           'assets.id'), primary_key=True),
                        db.Column('thing_id', db.ForeignKey(
                            'things.id'), primary_key=True)
                        )
@@ -174,24 +174,24 @@ class Thing(db.Model, SerializerMixin):
     id = db.Column(db.String(50), primary_key=True)
     label_en = db.Column(db.String(100))  # ) , unique=True)
 
-    photos = db.relationship(
-        'Photo', secondary=photo_thing, back_populates='things')
+    assets = db.relationship(
+        'Asset', secondary=asset_thing, back_populates='things')
     parent = db.relationship("Thing", uselist=False,
                              cascade="all, delete, delete-orphan")
     parent_id = db.Column(db.String(50), db.ForeignKey('things.id'))
 
-    serialize_rules = ('-photos',)
+    serialize_rules = ('-assets',)
 
 
-class Photo(db.Model, SerializerMixin):
-    __tablename__ = 'photos'
+class Asset(db.Model, SerializerMixin):
+    __tablename__ = 'assets'
 
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(512), unique=True)
     filename = db.Column(db.String(100))
     directory = db.Column(db.String(512))
     ignore = db.Column(db.Boolean, index=True)
-    faces = db.relationship("Face", back_populates="photo",
+    faces = db.relationship("Face", back_populates="asset",
                             cascade="all, delete, delete-orphan")
     exif = db.relationship("Exif", cascade="all, delete, delete-orphan")
     added = db.Column(db.DateTime, index=True)
@@ -209,18 +209,18 @@ class Photo(db.Model, SerializerMixin):
     gps_id = db.Column(db.Integer, db.ForeignKey('gps.id'))
 
     things = db.relationship(
-        'Thing', secondary=photo_thing, back_populates='photos')
+        'Thing', secondary=asset_thing, back_populates='assets')
     albums = db.relationship(
-        'Album', secondary=photo_album, back_populates='photos')
+        'Album', secondary=asset_album, back_populates='assets')
 
     section_id = db.Column(db.Integer, db.ForeignKey('section.id'))
-    section = db.relationship("Section", back_populates="photos")
+    section = db.relationship("Section", back_populates="assets")
     no_creation_date = db.Column(db.Boolean)
 
     serialize_rules = ('-faces',)
 
     def __repr__(self):
-        return "<Photo(filename='%s', )>" % (
+        return "<asset(filename='%s', )>" % (
             self.filename)
 
     def rel_path(self):
@@ -238,11 +238,11 @@ class Section(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     dirty = db.Column(db.Boolean)
-    photos = db.relationship("Photo")
-    # num_photos = db.Column(db.Integer)
+    assets = db.relationship("Asset")
+    # num_assets = db.Column(db.Integer)
     oldest_date = db.Column(db.DateTime, unique = True)
     newest_date = db.Column(db.DateTime, unique = True)
-    serialize_rules = ('-photos',)
+    serialize_rules = ('-assets',)
 
 # class Sec(db.Model, SerializerMixin):
 #    __tablename__ = 'sec'
@@ -273,7 +273,7 @@ class Exif(db.Model, SerializerMixin):
     key = db.Column(db.String(100),primary_key=True)
     value = db.Column(db.String(100))
     # label = db.Column(db.String(50))
-    photo_id = db.Column(db.Integer, db.ForeignKey('photos.id'), primary_key=True)
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True)
 
     def __repr__(self):
         return "<Exif(Key='%s', Value='%s')>" % (

@@ -28,16 +28,16 @@
         <!-- v-intersect="{handler:onIntersect, options: {rootMargin:this.rootMargin, root:this.$parent.$el}}" -->
 
         <vue-justified-layout
-                :items="data.photos"
+                :items="data.assets"
                 v-slot="{item, index}"
                 :options="{
                     targetRowHeight: targetHeight,
                     containerWidth: contWidth,
                     boxSpacing: 5,
                     containerPadding:5}">
-                <photo-brick 
+                <asset-brick 
                     v-if="visible"
-                    :photo="item" 
+                    :asset="item" 
                     :index="index" 
                     :ref="'p' + index"
                     @set-rating="setRating"
@@ -45,7 +45,7 @@
                     @mark-photo="markPhoto"
                     @select-photo="selectPhotoEvent"
                     @select-multi="selectMultiEvent">
-                </photo-brick>
+                </asset-brick>
         </vue-justified-layout>
     </div>
 </template>
@@ -54,13 +54,13 @@
     import moment from "moment";
     import {isReallyVisible}  from "./Util";
     import { mapState } from 'vuex'
-    import PhotoBrick from "./PhotoBrick.vue"
+    import AssetBrick from "./AssetBrick.vue"
     export default {
 
-        name: "PhotoSegment",
+        name: "AssetSegment",
 
         components: {
-            PhotoBrick
+            AssetBrick
         },
 
         props: {
@@ -120,7 +120,7 @@
             indexOfFirstVisiblePhoto() {
                 let photoElement = null;
                 let index = 0;
-                for (let i=0; i<this.data.photos.length;i++) {
+                for (let i=0; i<this.data.assets.length;i++) {
                     photoElement = this.$refs['p' + i]
                     
                     // if (isReallyVisible(photoElement.getImgElement(), true, this.targetHeight)) {
@@ -132,7 +132,7 @@
                 return index;
             },
             getPhotoLength() {
-                return this.data.photos.length;
+                return this.data.assets.length;
             },
 
             markPhoto(index, value) {
@@ -157,10 +157,10 @@
             },
             
             setRating(index, value) {
-                let photo = this.data.photos[index];
+                let photo = this.data.assets[index];
                 // let self = this;
                 this.$store.dispatch("setRating", {photo: photo, stars: value}).then( result => {
-                    this.$set(this.data.photos, index, result);
+                    this.$set(this.data.assets, index, result);
                     this.$store.commit("setSelectedPhoto", result);
                 });
             },
@@ -183,21 +183,21 @@
                 this.contWidth = this.$refs.segmentCont.clientWidth;
             },
             thumbSrc(photo) {
-                return encodeURI("/photos/preview/" + this.targetHeight + "/" + photo.path);
+                return encodeURI("/assets/preview/" + this.targetHeight + "/" + photo.path);
             },
 
             clickPhoto(index) {
                 this.$emit("click-photo", this, index)
             },
             getFirstPhoto() {
-                return this.data.photos[0];
+                return this.data.assets[0];
             },
 
             getLastPhoto() {
-                return this.data.photos[this.data.photos.length-1];
+                return this.data.assets[this.data.assets.length-1];
             },
             clickLastPhoto() {
-                this.clickPhoto( this.data.photos.length-1);
+                this.clickPhoto( this.data.assets.length-1);
             }
 
 

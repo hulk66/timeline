@@ -17,32 +17,32 @@ GNU General Public License for more details.
 
 import logging
 
-from timeline.domain import Photo
+from timeline.domain import Asset
 from timeline.extensions import celery
-from timeline.tasks.crud_tasks import create_photo, create_preview
+from timeline.tasks.crud_tasks import create_asset, create_preview
 from pymysql.err import InternalError, OperationalError
 from celery import signature
 logger = logging.getLogger(__name__)
 
 
 # retry in some cases the database throws a lock error
-@celery.task(autoretry_for=(InternalError, OperationalError), name="Process Photo", ignore_result=True)
-def new_photo(path):
+@celery.task(autoretry_for=(InternalError, OperationalError), name="Process asset", ignore_result=True)
+def new_asset(path):
     if '@eaDir' in path or '@__thumb' in path or "@Recycle" in path:
         logger.debug(
             "Not taking %s into account as this is some QNAP or Synology related file", path)
     else:
-        # logger.debug("Start processing photo %s", path)
-        photo_id = create_photo(path)
-        if photo_id:
-            photo = Photo.query.get(photo_id)
-            create_preview(photo.path, 400,  True)
-            create_preview(photo.path, 2160, False)
+        # logger.debug("Start processing asset %s", path)
+        asset_id = create_asset(path)
+        if asset_id:
+            asset = Asset.query.get(asset_id)
+            create_preview(asset.path, 400,  True)
+            create_preview(asset.path, 2160, False)
             
-            celery.send_task("Check GPS", (photo_id,), queue="analyze")
-            celery.send_task("Face Detection", (photo_id,), queue="analyze")
-            celery.send_task("Object Detection", (photo_id,), queue="analyze")
-            celery.send_task("Quality Assessment", (photo_id,), queue="analyze")
+            celery.send_task("Check GPS", (asset_id,), queue="analyze")
+            celery.send_task("Face Detection", (asset_id,), queue="analyze")
+            celery.send_task("Object Detection", (asset_id,), queue="analyze")
+            celery.send_task("Quality Assessment", (asset_id,), queue="analyze")
 
-            # celery.send_task("timeline.tasks.iq_tasks.brisque_score", (photo_id,), queue="iq")
+            # celery.send_task("timeline.tasks.iq_tasks.brisque_score", (asset_id,), queue="iq")
 

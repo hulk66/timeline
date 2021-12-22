@@ -411,7 +411,7 @@
             },
             photoUrl(photo) {
                 if (photo)
-                    return encodeURI("/photos/full/" + photo.path);
+                    return encodeURI("/assets/full/" + photo.path);
             },
             faceUrl(id) {
                 return "/api/face/preview/80/" + id + ".png";

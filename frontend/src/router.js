@@ -16,7 +16,7 @@
  */
 import Vue from 'vue'
 import Router from 'vue-router'
-import PhotoWall from "./components/PhotoWall";
+import AssetWall from "./components/AssetWall";
 import PersonsView from "./components/PersonsView";
 import SimilarPersons from "./components/SimilarPersons";
 import ThingsView from "./components/ThingsView";
@@ -33,8 +33,8 @@ export default new Router({
 
     {
       path: '/wall',
-      name: 'photoWall',
-      component: PhotoWall,
+      name: 'assetWall',
+      component: AssetWall,
       props: castRouteParams
     },
 

@@ -2,11 +2,11 @@
 # This is for usage with docker, which is the preferred setzp
 # Adjust and rename/copy it to .env
 # -----
-# This is where to look for your photos, nothing will be changed or modified here
-PHOTO_PATH=/Users/johndoe/photos
+# This is where to look for your photos and videos, nothing will be changed or modified here
+ASSET_PATH=/Users/johndoe/photos
 
 # Where to upload
-# will be a folder below the PHOTO_PATH
+# will be a folder below the ASSET_PATH
 UPLOAD_FOLDER=uploaded
 
 # Here are previews created for providing downscaled version to be delivered by nginx

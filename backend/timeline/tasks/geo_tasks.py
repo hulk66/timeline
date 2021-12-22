@@ -21,7 +21,7 @@ import ssl
 import certifi
 import geopy.geocoders
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
-from timeline.domain import Photo
+from timeline.domain import Asset
 from timeline.extensions import celery, db
 
 logger = logging.getLogger(__name__)
@@ -39,30 +39,30 @@ def check_and_set(dest, name, src):
 
 
 @celery.task(name="Check GPS")
-def check_gps(photo_id):
-    photo = Photo.query.get(photo_id)
-    if not photo:
-        logger.warning("Can't check GPS data, photo may have been removed?")
+def check_gps(asset_id):
+    asset = Asset.query.get(asset_id)
+    if not asset:
+        logger.warning("Can't check GPS data, asset may have been removed?")
         return
 
-    if photo.gps_id:
-        logger.debug("Photo contains GPS data, scheduling reverse lookup: %s", photo.path)
-        resolve_address.apply_async((photo_id,), queue='analyze')
+    if asset.gps_id:
+        logger.debug("asset contains GPS data, scheduling reverse lookup: %s", asset.path)
+        resolve_address.apply_async((asset_id,), queue='analyze')
     else:
-        logger.debug("Photo contains no GPS data, nothing to do: %s", photo.path)
+        logger.debug("asset contains no GPS data, nothing to do: %s", asset.path)
 
 
 @celery.task(rate_limit="1/s", autoretry_for=(GeocoderTimedOut,GeocoderServiceError), name="Address Detection", ignore_result=True)
-def resolve_address(photo_id):
-    photo = Photo.query.get(photo_id)
-    if not photo:
-        logger.warning("Can not geo locate, photo may have been removed?")
+def resolve_address(asset_id):
+    asset = Asset.query.get(asset_id)
+    if not asset:
+        logger.warning("Can not geo locate, asset may have been removed?")
         return
 
-    logger.debug("Resolving GPS address for %s", photo.path)
-    location = geolocator.reverse((photo.gps.latitude, photo.gps.longitude), timeout=10)
-    photo.gps.display_address = location.address
+    logger.debug("Resolving GPS address for %s", asset.path)
+    location = geolocator.reverse((asset.gps.latitude, asset.gps.longitude), timeout=10)
+    asset.gps.display_address = location.address
     for part in ('city', 'country', 'country_code', 'road', 'state', 'postcode', 'county', 'village', 'municipality'):
-        check_and_set(photo.gps, part, location.raw['address'])
+        check_and_set(asset.gps, part, location.raw['address'])
     db.session.commit()
-    logger.debug("Address resolved for %s", photo.path)
+    logger.debug("Address resolved for %s", asset.path)

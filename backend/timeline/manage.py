@@ -44,7 +44,7 @@ def watchdog():
     click.echo("Starting Watchdog")
 
     polling = current_app.config.get("POLLING")
-    path = current_app.config.get("PHOTO_PATH")
+    path = current_app.config.get("ASSET_PATH")
     initial_scan = current_app.config.get("INITIAL_SCAN")
     if initial_scan:
         click.echo("Performing Initial Scan")
@@ -88,7 +88,7 @@ def init():
         status.next_import_is_new = True
         status.sections_dirty = False
         status.computing_sections = False
-        status.num_photos_created = False
+        status.num_assets_created = False
 
         album = Album()
         album.name = "Last Import"

@@ -41,7 +41,7 @@ export const person = {
     actions: {
 
         setRating(context, {photo, stars}) {
-            let url = `/api/photo/setRating/${photo.id}/${stars}`;
+            let url = `/api/asset/setRating/${photo.id}/${stars}`;
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -175,7 +175,7 @@ export const person = {
         },
         getExifForPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get("/api/photo/exif/" + photo.id).then((result) =>{
+                axios.get("/api/asset/exif/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
@@ -183,7 +183,7 @@ export const person = {
 
         getGpsForPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get("/api/photo/gps/" + photo.id).then((result) =>{
+                axios.get("/api/asset/gps/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
@@ -191,7 +191,7 @@ export const person = {
 
         getThingsForPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get("/api/photo/things/" + photo.id).then((result) =>{
+                axios.get("/api/asset/things/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))

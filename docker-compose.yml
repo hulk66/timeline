@@ -31,13 +31,13 @@ services:
       - ${RABBITMQ_DATA}:/var/lib/rabbitmq
 
   webapp:
-    image: hulk66/timeline_be:0.85
+    image: hulk66/timeline_be:0.86
     # build: backend
     restart: always
     ports: 
       - 9092:5000
     volumes:
-      - ${PHOTO_PATH}:/photos
+      - ${ASSET_PATH}:/photos
       - ${PREVIEW_PATH}:/preview
       - ${LOG_PATH}:/log
     environment:
@@ -58,7 +58,7 @@ services:
       - rabbitmq
 
   worker:
-    image: hulk66/timeline_be:0.85
+    image: hulk66/timeline_be:0.86
     # build: backend
     restart: always
     environment:
@@ -78,7 +78,7 @@ services:
       #INITIAL_SCAN: {INITIAL_SCAN}
       #POLLING: {POLLING}
     volumes:
-      - ${PHOTO_PATH}:/photos:ro
+      - ${ASSET_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
       - ${LOG_PATH}:/log
     depends_on:
@@ -87,13 +87,13 @@ services:
       - rabbitmq
      
   frontend:
-    image: hulk66/timeline_fe:0.85
+    image: hulk66/timeline_fe:0.86
     # build: frontend
     restart: always
     ports:
       - 9090:80
     volumes:
-      - ${PHOTO_PATH}:/photos:ro
+      - ${ASSET_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
     environment:
       BE_HOST: webapp
@@ -106,7 +106,7 @@ services:
       - webapp
 
   watchdog:
-    image: hulk66/timeline_be:0.85
+    image: hulk66/timeline_be:0.86
     # build: backend
     restart: always
     environment:
@@ -117,7 +117,7 @@ services:
       WAIT_AFTER_HOSTS: 2
       DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
     volumes:
-      - ${PHOTO_PATH}:/photos:ro
+      - ${ASSET_PATH}:/photos:ro
       - ${LOG_PATH}:/log
     depends_on:
       - webapp

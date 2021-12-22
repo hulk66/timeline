@@ -23,7 +23,7 @@ module.exports = {
         autoRewrite: true
       },
 
-      '/photos': {
+      '/assets': {
         target: 'http://localhost:5000',
         ws: false,
         changeOrigin: true,

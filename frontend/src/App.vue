@@ -25,7 +25,7 @@
             <v-list>
                 <v-list-item-group>
 
-                    <v-list-item :to="{name:'photoWall'}">
+                    <v-list-item :to="{name:'assetWall'}">
                         <v-list-item-action>
                             <v-icon color="primary">mdi-view-dashboard</v-icon>
                         </v-list-item-action>
@@ -120,13 +120,13 @@
                         <v-icon>mdi-cloud-upload</v-icon>
                     </v-btn>
                 </template>
-                <span>Upload Photos</span>
+                <span>Upload assets</span>
             </v-tooltip>
 
             <v-tooltip v-if="showRemoveButton" bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
-                        @click="deletePhotosDialog = true" 
+                        @click="deleteassetsDialog = true" 
                         icon
                         color="primary"
                         dark
@@ -135,7 +135,7 @@
                     <v-icon>mdi-delete</v-icon>
                 </v-btn>
             </template>
-            <span>Delete Photos</span>
+            <span>Delete assets</span>
             </v-tooltip>
 
             <v-tooltip v-if="showAlbumRemoveButton" bottom>
@@ -213,9 +213,9 @@
 
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title>Processed Photos</v-list-item-title>
+                            <v-list-item-title>Processed assets</v-list-item-title>
                         </v-list-item-content>
-                        <v-list-item-action>{{totalPhotos}}</v-list-item-action>
+                        <v-list-item-action>{{totalassets}}</v-list-item-action>
                     </v-list-item>
 
                     <v-list-item>
@@ -249,7 +249,7 @@
                                     </template>
                                     <v-card>
                                     <v-card-title class="headline">
-                                        Timeline - Photo Organizer
+                                        Timeline - asset Organizer
                                     </v-card-title>
                                     <v-card-text>
                                         <v-list dense>
@@ -297,7 +297,7 @@
                     -->
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title>Photos to read</v-list-item-title>
+                            <v-list-item-title>assets to read</v-list-item-title>
                         </v-list-item-content>
                         <v-list-item-action v-text="process_count"></v-list-item-action>
                     </v-list-item>
@@ -400,22 +400,22 @@
             </v-card>
         </v-dialog>
         <v-dialog
-            v-model="deletePhotosDialog"
+            v-model="deleteassetsDialog"
             max-width="400px">
             <v-card>
-                <v-card-title>Delete {{selectedPhotos.length}} Photos</v-card-title>
+                <v-card-title>Delete {{selectedPhotos.length}} assets</v-card-title>
                 <v-card-text>
                     <div>
                     Do you want to delete {{selectedPhotos.length}} from the Catalog?
                     </div>
                     <br/>
-                    The photos itself will not be physically removed from the filesystem.
+                    The assets itself will not be physically removed from the filesystem.
                     They will just be ignored within this application.
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="deletePhotosDialog = false">Cancel</v-btn>
-                    <v-btn color="warning" text @click="deletePhotos">Delete</v-btn>
+                    <v-btn color="primary" text @click="deleteassetsDialog = false">Cancel</v-btn>
+                    <v-btn color="warning" text @click="deleteassets">Delete</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -430,7 +430,7 @@
                     Do you want to delete the album {{selectedAlbum.name}} from the Catalog?
                     </div>
                     <br/>
-                    The photos in this album will not be affected / removed.
+                    The assets in this album will not be affected / removed.
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
@@ -444,9 +444,9 @@
             max-width = "600px">
 
             <v-card>
-                <v-card-title>Upload Photos</v-card-title>
+                <v-card-title>Upload assets</v-card-title>
                 <v-card-text>
-                    Please upload photos by selecting with the file selector (drag and drop will come later) 
+                    Please upload assets by selecting with the file selector (drag and drop will come later) 
                 </v-card-text>
 
                 <v-card-text v-if="uploading">
@@ -483,9 +483,9 @@
 
         <v-snackbar v-model="snackbar" :timeout="6000">
             Use the Left and Right Cursor Keys to navigate.<br/>
-            Use Space to add Photos to the selection. <br/>
-            Use 1-5 Keys to rate a Photo. <br/>
-            Use Shift-Click to select multiple Photos.
+            Use Space to add assets to the selection. <br/>
+            Use 1-5 Keys to rate a asset. <br/>
+            Use Shift-Click to select multiple assets.
             <template v-slot:action="{ attrs }">
                 <v-btn
                     color="primary"
@@ -530,14 +530,14 @@
                 about: false,
                 totalFaces: 0,
                 totalThings: 0,
-                totalPhotos: 0,
+                totalassets: 0,
                 targetHeight: 200,
                 albumDialog: false,
                 albums: [],
                 back: false,
                 goBackFunction: null,
-                defaultTitle: "Timeline Photo Organizer",
-                deletePhotosDialog: false,
+                defaultTitle: "Timeline asset Organizer",
+                deleteassetsDialog: false,
                 deleteAlbumDialog: false,
                 snackbar: false,
                 uploadDialog: false,
@@ -581,7 +581,7 @@
                 return this.selectedAlbum != null && this.selectedAlbum.smart;
             },
             title() {
-                return this.selectedPhotos.length > 0 ? this.selectedPhotos.length.toString() + " Photos selected" : this.defaultTitle;
+                return this.selectedPhotos.length > 0 ? this.selectedPhotos.length.toString() + " assets selected" : this.defaultTitle;
             },
             uploadProgress() {
                 return Math.ceil(this.uploadCount / this.uploadFiles.length * 100.0);
@@ -651,7 +651,7 @@
                     formData.append('files', file);
 
                     axios.post(
-                        "/photos/upload",
+                        "/assets/upload",
                         formData, { 
                         headers: { 'Content-Type': 'multipart/form-data'}
                     }).then(() => {
@@ -666,8 +666,8 @@
                 this.$router.push({name:"search",  query: {album_id:this.selectedAlbum.id}});    
             },
 
-            deletePhotos() {
-                axios.post("/photos/remove", {
+            deleteassets() {
+                axios.post("/assets/remove", {
                         physically: false,
                         pids: this.selectedPhotos.map(a => a.id)
                     }).then(() => {
@@ -677,7 +677,7 @@
                         console.log(error);
                     });
                 this.$store.commit("emptySelectedPhotos");
-                this.deletePhotosDialog = false;
+                this.deleteassetsDialog = false;
             },
 
             deleteAlbum() {
@@ -696,7 +696,7 @@
             },
             showAlbumDialog() {
                 this.albumDialog = true;
-                axios.get("/albums/all").then((result) => {
+                axios.get("/albums/allManualAlbums").then((result) => {
                         this.albums = result.data
                     }).catch((error) => {
                         // eslint-disable-next-line
@@ -719,7 +719,7 @@
                         console.log(error);
                     });
                 } else {
-                    axios.post("/albums/addPhotoToAlbum", {
+                    axios.post("/albums/addAssetToAlbum", {
                         albumId: albumId,
                         pids: this.selectedPhotos.map(a => a.id)
                     }).then(() => {
@@ -762,7 +762,7 @@
                     this.inStatusCheck = false,
                     this.totalFaces = result.data.totalFaces;
                     this.totalThings = result.data.totalThings;
-                    this.totalPhotos = result.data.totalPhotos;
+                    this.totalassets = result.data.totalassets;
                 })
 
             },

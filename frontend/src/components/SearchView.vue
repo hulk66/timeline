@@ -59,7 +59,7 @@
                 </v-container>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="$refs.photoWall.loadAllSections()">Search</v-btn>
+                    <v-btn color="primary" text @click="$refs.assetWall.loadAllSections()">Search</v-btn>
 
                 </v-card-actions>
                 <v-container fluid>
@@ -77,8 +77,8 @@
                 </v-card>
             </v-col>
             <v-col>
-                <photo-wall
-                    ref="photoWall"
+                <asset-wall
+                    ref="assetWall"
                     :city="city"
                     :country="country"
                     :camera="camera"
@@ -86,7 +86,7 @@
                     :from="from"
                     :to="to"
                     :rating="rating">
-                </photo-wall>
+                </asset-wall>
 
             </v-col>
         </v-row>
@@ -97,7 +97,7 @@
     import DatePicker from './DatePicker.vue';
     import { mapState } from 'vuex'
     import axios from "axios";
-    import PhotoWall from './PhotoWall.vue';
+    import assetWall from './AssetWall.vue';
 
     export default {
 
@@ -105,7 +105,7 @@
 
         components: {
             DatePicker,
-            PhotoWall
+            assetWall
         },
 
         props: {

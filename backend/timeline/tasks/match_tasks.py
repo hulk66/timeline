@@ -23,7 +23,7 @@ from pymysql.err import InternalError
 from scipy.spatial.distance import cdist
 from sklearn.cluster import DBSCAN
 from sqlalchemy import and_, or_
-from timeline.domain import Face, Person, Photo, Status
+from timeline.domain import Face, Person, Asset, Status
 from timeline.extensions import celery, db
 
 logger = logging.getLogger(__name__)
@@ -215,12 +215,12 @@ def find_unclassified_and_unclustered_faces(limit=None):
     #   have either no person assigned or
     #      if a person is assigned then then this assignment is only a maybe
 
-    q = Face.query.join(Photo).join(Person, isouter=True) \
+    q = Face.query.join(Asset).join(Person, isouter=True) \
         .filter(and_(Face.ignore == False,
                      Face.already_clustered == False,
-                     Face.photo_id == Photo.id,
+                     Face.asset_id == Asset.id,
                      or_(Face.person == None,
-                         Face.confidence_level <= Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))).order_by(Photo.created.desc())
+                         Face.confidence_level <= Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))).order_by(Asset.created.desc())
 
     if limit:
         q = q.limit(limit)
@@ -235,10 +235,10 @@ def find_all_non_manual_classified_or_unclassified_faces(limit=None):
     #   have either person assigned or
     #      if a person is assigned then this is a person which is is not confirmed by the user
 
-    q = Face.query.join(Photo).join(Person, isouter=True) \
+    q = Face.query.join(Asset).join(Person, isouter=True) \
         .filter(and_(
             Face.ignore == False,
-            Face.photo_id == Photo.id,
+            Face.asset_id == Asset.id,
             or_(Face.person == None,
                 Face.confidence_level == Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE,
                 and_(Face.person_id == Person.id, Person.confirmed == False))))

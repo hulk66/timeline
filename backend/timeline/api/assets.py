@@ -24,7 +24,7 @@ from flask import Blueprint
 from timeline.tasks.crud_tasks import create_preview
 from timeline.util.image_ops import exif_transpose
 import logging
-from timeline.domain import Photo, Status, Album, Person
+from timeline.domain import Asset, Status, Album, Person
 from flask import request
 from PIL import Image
 from pathlib import Path
@@ -37,7 +37,7 @@ from werkzeug.utils import secure_filename
 import tempfile
 
 
-blueprint = Blueprint("photos", __name__, url_prefix="/photos")
+blueprint = Blueprint("assets", __name__, url_prefix="/assets")
 logger = logging.getLogger(__name__)
 
 
@@ -61,67 +61,67 @@ def send_image(image, transpose=True, last_modified=None, fullscreen=False):
     return flask.send_file(img_io, mimetype=mimetype, last_modified=last_modified)
 
 
-def photo_by_path(path):
-    logger.debug("photo by path %s", path)
+def asset_by_path(path):
+    logger.debug("asset by path %s", path)
     # p = blueprint.url_prefix[1:] + "/" + path
-    return Photo.query.filter(Photo.path == path).first()
+    return Asset.query.filter(Asset.path == path).first()
 
 
 @blueprint.route('/full/<path:path>', methods=['GET'])
-def photo(path):
-    logger.debug("photo full")
-    photo = photo_by_path(path)
-    if photo is not None:
-        # p = get_full_path(photo.path, resolution)
-        p = get_preview_path(photo.path, "2160", "high_res")
+def asset(path):
+    logger.debug("asset full")
+    asset = asset_by_path(path)
+    if asset is not None:
+        # p = get_full_path(asset.path, resolution)
+        p = get_preview_path(asset.path, "2160", "high_res")
         image = Image.open(p)
-        return send_image(image, fullscreen=True, last_modified=photo.created)
+        return send_image(image, fullscreen=True, last_modified=asset.created)
     return flask.redirect('/404')
 
 
 @blueprint.route('/preview/<int:max_dim>/<resolution>/<path:path>', methods=['GET'])
-def photo_preview(max_dim, resolution, path):
-    logger.debug("photo preview: %s", path)
-    photo = photo_by_path(path)
-    if photo is None:
+def asset_preview(max_dim, resolution, path):
+    logger.debug("asset preview: %s", path)
+    asset = asset_by_path(path)
+    if asset is None:
         return flask.redirect('/404')
 
-    preview_path = Path(get_preview_path(photo.path, str(max_dim), resolution))
+    preview_path = Path(get_preview_path(asset.path, str(max_dim), resolution))
     if not preview_path.exists():
-        create_preview(photo.path, max_dim, True)
+        create_preview(asset.path, max_dim, True)
 
     return flask.send_file(preview_path.absolute())
 
 @blueprint.route('/preview_p/<int:max_dim>', methods=['GET'])
-def photo_preview_by_rp(max_dim):
-    logger.debug("photo preview")
+def asset_preview_by_rp(max_dim):
+    logger.debug("asset preview")
     path = request.args.get("path")
-    photo = photo_by_path(path)
-    if photo is None:
+    asset = asset_by_path(path)
+    if asset is None:
         return flask.redirect('/404')
 
-    preview_path = Path(get_preview_path(photo.path, str(max_dim)))
+    preview_path = Path(get_preview_path(asset.path, str(max_dim)))
     if not preview_path.exists():
-        create_preview(photo.path, max_dim)
+        create_preview(asset.path, max_dim)
 
     return flask.send_file(preview_path.absolute())
 
 
-def _remove_photo(id, physically):
-    photo = Photo.query.get(id)
-    logger.debug("Remove photo %s from catalog", photo.path)
-    photo.ignore = True
-    photo.albums = []
-    photo.exif = []
-    photo.section = None
-    photo.faces = []
-    photo.gps = None
-    photo.things = []
+def _remove_asset(id, physically):
+    asset = Asset.query.get(id)
+    logger.debug("Remove asset %s from catalog", asset.path)
+    asset.ignore = True
+    asset.albums = []
+    asset.exif = []
+    asset.section = None
+    asset.faces = []
+    asset.gps = None
+    asset.things = []
     status = Status.query.first()
     status.sections_dirty = True
 
     # remove empty albums
-    albums = Album.query.filter(Album.photos == None)
+    albums = Album.query.filter(Album.assets == None)
     for album in albums:
         db.session.delete(album)
     
@@ -131,9 +131,9 @@ def _remove_photo(id, physically):
 
 
     if physically:
-        path = get_full_path(photo.path)
+        path = get_full_path(asset.path)
         os.remove(path)
-        db.session.delete(photo)
+        db.session.delete(asset)
 
     # todo remove previews
     db.session.commit()
@@ -141,20 +141,20 @@ def _remove_photo(id, physically):
 
 # should actually be a DELETE request
 @blueprint.route('/remove', methods=['POST'])
-def remove_photos():
+def remove_assets():
 
     req_data = request.get_json()
     ids = req_data["pids"]
     physically = req_data["physically"]
     for id in ids:
-        _remove_photo(id, physically)
+        _remove_asset(id, physically)
     return flask.jsonify(True)
 
 
 @blueprint.route('/removeFromCatalog/<int:id>', methods=['GET'], defaults={'physically': False})
 @blueprint.route('/removePhysically/<int:id>', methods=['GET'], defaults={'physically': True})
-def delete_photo(id, physically):
-    _remove_photo(id, physically)
+def delete_asset(id, physically):
+    _remove_asset(id, physically)
     db.session.commit()
     return flask.jsonify(True)
 
@@ -166,7 +166,7 @@ def allowed_file(filename):
 @blueprint.route('/upload', methods=['POST'])
 def upload():
     logger.debug("Upload files")
-    photo_path = current_app.config['PHOTO_PATH']
+    asset_path = current_app.config['asset_PATH']
     upload_folder = current_app.config['UPLOAD_FOLDER']
     files = request.files.getlist("files")
     for file in files:
@@ -184,13 +184,13 @@ def upload():
                 date_time = exif_data["DateTimeOriginal"]
 
                 try:
-                    # set photo date
+                    # set asset date
                     dt = datetime.datetime.strptime(str(date_time), "%Y:%m:%d %H:%M:%S")
                 except ValueError:
                     logger.error("%s can not be parsed as Date for %s",
                                 str(date_time), filename)
-            # logger.debug("Save file under %s/%s/%d/%d/%s", photo_path, upload_folder, dt.year, dt.month, filename)
-            dest_filename = os.path.join(photo_path, upload_folder, str(dt.year), str(dt.month), filename)
+            # logger.debug("Save file under %s/%s/%d/%d/%s", asset_path, upload_folder, dt.year, dt.month, filename)
+            dest_filename = os.path.join(asset_path, upload_folder, str(dt.year), str(dt.month), filename)
             os.makedirs(os.path.dirname(dest_filename), exist_ok=True)
             fout = open(dest_filename, "wb")
             fout.write(in_memory.getbuffer())

@@ -103,9 +103,9 @@
         methods: {
             showParent(face, event) {
                 let self = this;
-                axios.get("/api/photo/by_face/" + face.id).then( result => {
-                    let photo = result.data;
-                    self.parentUrl = encodeURI("/photos/preview/200/" + photo.path);
+                axios.get("/api/asset/by_face/" + face.id).then( result => {
+                    let asset = result.data;
+                    self.parentUrl = encodeURI("/assets/preview/200/" + asset.path);
                     self.showDetail = true;
                 });
                 this.currentX = event.clientX - event.offsetX;

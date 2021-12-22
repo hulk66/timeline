@@ -24,10 +24,10 @@ import flask
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
-from timeline.api.photos import send_image
-from timeline.api.util import list_as_json, refine_query, photos_from_smart_album
-from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
-                             photo_thing, Exif, photo_album, Album)
+from timeline.api.assets import send_image
+from timeline.api.util import list_as_json, refine_query, assets_from_smart_album
+from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
+                             asset_thing, Exif, asset_album, Album)
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, 
                                         distance_safe,
@@ -108,7 +108,7 @@ def save_preview(id, dim, image):
 def face_preview(id, max_dim=300):
     face = Face.query.get(id)
     if face:
-        path = get_full_path(face.photo.path)
+        path = get_full_path(face.asset.path)
         image = read_and_transpose(path)
 
         result = crop_face(image, max_dim, face.x, face.y, face.w, face.h)
@@ -122,7 +122,7 @@ def face_preview(id, max_dim=300):
 def face(id):
     face = Face.query.get(id)
     if face is not None:
-        path = get_full_path(face.photo.path)
+        path = get_full_path(face.asset.path)
         image = read_and_transpose(path)
         result = image.crop((face.x, face.y, face.x + face.w, face.y + face.h))
         return send_image(result, False, face.created)
@@ -138,21 +138,21 @@ def face_by_person(id):
     return jsonify_items(faces)
 
 
-@blueprint.route('/photo/setRating/<int:photo_id>/<int:rating>', methods=['GET'])
-def set_rating(photo_id, rating):
+@blueprint.route('/asset/setRating/<int:asset_id>/<int:rating>', methods=['GET'])
+def set_rating(asset_id, rating):
     excludes=("-exif", "-gps", "-faces", "-things", "-section")
-    photo = Photo.query.get(photo_id)
-    photo.stars = rating
+    asset = Asset.query.get(asset_id)
+    asset.stars = rating
     db.session.commit()
-    return flask.jsonify(photo.to_dict(rules=excludes))
+    return flask.jsonify(asset.to_dict(rules=excludes))
 
-@blueprint.route('/photo/preview/<int:max_dim>/<int:id>.jpg', methods=['GET'])
-def photo_preview(id, max_dim):
-    photo = Photo.query.get(id)
-    if photo is None:
+@blueprint.route('/asset/preview/<int:max_dim>/<int:id>.jpg', methods=['GET'])
+def asset_preview(id, max_dim):
+    asset = Asset.query.get(id)
+    if asset is None:
         return flask.redirect('/404')
 
-    path = get_full_path(photo.path)
+    path = get_full_path(asset.path)
     image = read_and_transpose(path)
     size = resize_width(image, max_dim)
     image.thumbnail(size)
@@ -160,31 +160,31 @@ def photo_preview(id, max_dim):
     return send_image(image, False)
 
 
-@blueprint.route('/photo/gps/<int:id>', methods=['GET'])
+@blueprint.route('/asset/gps/<int:id>', methods=['GET'])
 def get_gps(id):
-    photo = Photo.query.get(id)
-    if photo and photo.gps:
-        return flask.jsonify(photo.gps.to_dict())
+    asset = Asset.query.get(id)
+    if asset and asset.gps:
+        return flask.jsonify(asset.gps.to_dict())
     return None
 
 
-@blueprint.route('/photo/things/<int:id>', methods=['GET'])
-def get_things_for_photo(id):
-    photo = Photo.query.get(id)
-    return jsonify_items(photo.things)
+@blueprint.route('/asset/things/<int:id>', methods=['GET'])
+def get_things_for_asset(id):
+    asset = Asset.query.get(id)
+    return jsonify_items(asset.things)
 
 
-@blueprint.route('/photo/all/<int:page>/<int:size>', methods=['GET'])
-def all_photos(page=0, size=30):
-    q = Photo.query.order_by(Photo.created.desc())
+@blueprint.route('/asset/all/<int:page>/<int:size>', methods=['GET'])
+def all_assets(page=0, size=30):
+    q = Asset.query.order_by(Asset.created.desc())
     return jsonify_pagination(q, page, size)
 
 
-@blueprint.route('/photo/data/<int:id>', methods=['GET'])
-def photo_data(id):
-    logger.debug("photo data")
-    photo = Photo.query.get(id)
-    return flask.jsonify(photo.to_dict())
+@blueprint.route('/asset/data/<int:id>', methods=['GET'])
+def asset_data(id):
+    logger.debug("asset data")
+    asset = Asset.query.get(id)
+    return flask.jsonify(asset.to_dict())
 
 
 @blueprint.route('/face/all', methods=['GET'])
@@ -194,21 +194,21 @@ def all_faces():
     return flask.jsonify(face_ids)
 
 
-@blueprint.route('/photo/exif/<int:id>', methods=['GET'])
-def exif_for_photo(id):
+@blueprint.route('/asset/exif/<int:id>', methods=['GET'])
+def exif_for_asset(id):
     logger.debug("Get exif %i", id)
     exif = {}
-    for e in Photo.query.get(id).exif:
+    for e in Asset.query.get(id).exif:
         if e.key in exif_filter:
             exif[e.key] = e.value
     return flask.jsonify(exif)
 
 
-@blueprint.route('/photo/by_face/<int:id>', methods=['GET'])
-def photo_by_face(id):
-    logger.debug("Photo for Face %i", id)
-    photo = Face.query.get(id).photo
-    return flask.jsonify(photo.to_dict())
+@blueprint.route('/asset/by_face/<int:id>', methods=['GET'])
+def asset_by_face(id):
+    logger.debug("asset for Face %i", id)
+    asset = Face.query.get(id).asset
+    return flask.jsonify(asset.to_dict())
 
 
 def amend_query(request, q):
@@ -238,9 +238,9 @@ def amend_query(request, q):
     if album_id:
         album = Album.query.get(album_id)
         if album.smart:
-            q = photos_from_smart_album(album, q)
+            q = assets_from_smart_album(album, q)
         else:
-            q = q.join(photo_album).filter(photo_album.c.album_id == album_id)
+            q = q.join(asset_album).filter(asset_album.c.album_id == album_id)
         logger.debug(q)
     return q
 
@@ -251,38 +251,38 @@ def all_sections():
     # compute_sections.delay()
 
     q = db.session.query(Section.id.label("id"),    
-        db.func.count(Photo.id).label("num_photos")).join(Photo, Photo.section_id == Section.id)
+        db.func.count(Asset.id).label("num_assets")).join(Asset, Asset.section_id == Section.id)
     q = amend_query(request, q)
 
     sections = q.group_by(Section.id).all()
-    sec_array = [{"id": n, "num_photos": m, "uuid":uuid.uuid1()} for n, m in sections]
+    sec_array = [{"id": n, "num_assets": m, "uuid":uuid.uuid1()} for n, m in sections]
     result = {}
     result['sections'] = sec_array
 
-    # find first photo of first section
+    # find first asset of first section
     # but check if we have sections at all (in the beginning no ...)
     most_recent_date = None
     oldest_date = None
-    total_photos = 0
+    total_assets = 0
     if len(sec_array) > 0:
         sec_start_id = sec_array[0]['id']
-        photo_recent = Photo.query.filter(
-            Photo.section_id == sec_start_id).order_by(Photo.created.desc()).first()
-        most_recent_date = photo_recent.created
+        asset_recent = Asset.query.filter(
+            Asset.section_id == sec_start_id).order_by(Asset.created.desc()).first()
+        most_recent_date = asset_recent.created
 
-        # and last/oldest photo of last section for the timeline
+        # and last/oldest asset of last section for the timeline
         sec_end_id = sec_array[-1]['id']
-        oldest_photo = Photo.query.filter(and_(
-            Photo.section_id == sec_end_id, Photo.created != None)).order_by(Photo.created.asc()).first()
-        oldest_date = oldest_photo.created
+        oldest_asset = Asset.query.filter(and_(
+            Asset.section_id == sec_end_id, Asset.created != None)).order_by(Asset.created.asc()).first()
+        oldest_date = oldest_asset.created
 
-        total = Photo.query.filter(Photo.ignore == False)
+        total = Asset.query.filter(Asset.ignore == False)
         total = amend_query(request, total)
-        total_photos = total.count()
+        total_assets = total.count()
 
     result["max_date"] = most_recent_date
     result["min_date"] = oldest_date
-    result["totalPhotos"] = total_photos
+    result["totalassets"] = total_assets
     return flask.jsonify(result)
 
 
@@ -290,32 +290,32 @@ def all_sections():
 def get_section_by_date(date_str):
     logger.debug("section/find_by_date")
     date = datetime.strptime(date_str, "%Y-%m-%d")
-    photo = Photo.query.filter(Photo.created < date).order_by(
-        Photo.created.desc()).first()
-    return flask.jsonify(photo.section.id)
+    asset = Asset.query.filter(Asset.created < date).order_by(
+        Asset.created.desc()).first()
+    return flask.jsonify(asset.section.id)
 
 
-@blueprint.route('/photo/importing', methods=['GET'])
+@blueprint.route('/asset/importing', methods=['GET'])
 def currently_importing():
-    logger.debug("Get Photos currently importing")
+    logger.debug("Get assets currently importing")
 
-    photos = Photo.query.filter(and_(Photo.section == None, Photo.ignore == False))
+    assets = Asset.query.filter(and_(Asset.section == None, Asset.ignore == False))
     return list_as_json(
-            photos, 
+            assets, 
             excludes=("-exif", "-gps", "-faces", 
             "-things", "-section", "-albums"))
 
 
-@blueprint.route('/photo/by_section/<int:id>', methods=['GET'])
-def photo_by_section(id):
+@blueprint.route('/asset/by_section/<int:id>', methods=['GET'])
+def asset_by_section(id):
     logger.debug("Get section %i", id)
 
-    q = Photo.query.filter(Photo.ignore == False)
+    q = Asset.query.filter(Asset.ignore == False)
 
     q = amend_query(request, q)
-    photos = q.filter(Photo.section_id == id).order_by(Photo.created.desc())
+    assets = q.filter(Asset.section_id == id).order_by(Asset.created.desc())
     return list_as_json(
-            photos, 
+            assets, 
             excludes=("-exif", "-gps", "-faces", 
             "-things", "-section", "-albums"))
 
@@ -500,40 +500,40 @@ def known_persons():
 def all_things():
     # things = Thing.query.order_by(Thing.label_en).all()
     things = Thing.query.filter(
-        Thing.photos != None).order_by(Thing.label_en).all()
+        Thing.assets != None).order_by(Thing.label_en).all()
     return jsonify_items(things)
 
 
-@blueprint.route('/things/preview_photo', methods=['GET'])
-def thing_preview_photo():
+@blueprint.route('/things/preview_asset', methods=['GET'])
+def thing_preview_asset():
     thing_id = request.args.get("thing_id")
     country = request.args.get("country")
     county = request.args.get("county")
     city = request.args.get("city")
     state = request.args.get("state")
-    photos = None
+    assets = None
     if thing_id:
         thing = Thing.query.get(thing_id)
-        photos = thing.photos
+        assets = thing.assets
 
     else:
         if country:
-            photos = Photo.query.join(GPS).filter(
+            assets = Asset.query.join(GPS).filter(
                 GPS.country == country).order_by(GPS.country).all()
         elif county:
-            photos = Photo.query.join(GPS).filter(
+            assets = Asset.query.join(GPS).filter(
                 GPS.county == county).order_by(GPS.county).all()
         elif city:
-            photos = Photo.query.join(GPS).filter(
+            assets = Asset.query.join(GPS).filter(
                 GPS.city == city).order_by(GPS.city).all()
         elif state:
-            photos = Photo.query.join(GPS).filter(
+            assets = Asset.query.join(GPS).filter(
                 GPS.state == state).order_by(GPS.state).all()
 
-    photos_index = random.randrange(0, len(photos))
-    photo = photos[photos_index]
+    assets_index = random.randrange(0, len(assets))
+    asset = assets[assets_index]
 
-    return flask.jsonify(photo.to_dict())
+    return flask.jsonify(asset.to_dict())
 
 
 @blueprint.route('/face/data/by_person/<int:person_id>', methods=['GET'])
@@ -552,23 +552,23 @@ def faces_by_person(person_id):
     return flask.jsonify(face.to_dict())
 
 
-@blueprint.route('/photo/by_person/<int:person_id>/<int:page>/<int:size>', methods=['GET'])
-def photos_by_person(person_id, page, size):
-    paginate = Photo.query.join(Face, and_(Face.photo_id == Photo.id, Face.person_id == person_id)).order_by(
-        Photo.created.desc())
+@blueprint.route('/asset/by_person/<int:person_id>/<int:page>/<int:size>', methods=['GET'])
+def assets_by_person(person_id, page, size):
+    paginate = Asset.query.join(Face, and_(Face.asset_id == Asset.id, Face.person_id == person_id)).order_by(
+        Asset.created.desc())
     return jsonify_pagination(paginate, page, size)
 
 
-@blueprint.route('/person/by_photo/<int:photo_id>', methods=['GET'])
-def get_persons_by_photo(photo_id):
+@blueprint.route('/person/by_asset/<int:asset_id>', methods=['GET'])
+def get_persons_by_asset(asset_id):
     persons = Person.query.join(Face, and_(
-        Person.ignore != True, Face.photo_id == photo_id, Person.id == Face.person_id))
+        Person.ignore != True, Face.asset_id == asset_id, Person.id == Face.person_id))
     return jsonify_items(persons)
 
 
-@blueprint.route('/face/by_photo/<int:photo_id>', methods=['GET'])
-def get_faces_by_photo(photo_id):
-    faces = Photo.query.get(photo_id).faces
+@blueprint.route('/face/by_asset/<int:asset_id>', methods=['GET'])
+def get_faces_by_asset(asset_id):
+    faces = Asset.query.get(asset_id).faces
     return jsonify_items(faces)
 
 
@@ -652,7 +652,7 @@ def de_tupelize(list_of_tupel):
     album_id = request.args.get("album_id")
 
     if person_id:
-        q = q.join(Face, and_(and_(Face.person_id == person_id, Face.photo_id == Photo.id)
+        q = q.join(Face, and_(and_(Face.person_id == person_id, Face.asset_id == asset.id)
     if country:
  """
 
@@ -703,8 +703,8 @@ def index():
 
 @blueprint.route('/time/scale', methods=['GET'])
 def get_time_scale():
-    qry = db.session.query(db.func.max(Photo.created).label("max"),
-                           db.func.min(Photo.created).label("min"))
+    qry = db.session.query(db.func.max(Asset.created).label("max"),
+                           db.func.min(Asset.created).label("min"))
     res = qry.one()
 
     result = {"min": res.min, "max": res.max}
@@ -732,9 +732,9 @@ def delete_empty_persons():
     return flask.jsonify(True)
 
 
-@blueprint.route('getTotalPhotoCount', methods=['GET'])
-def total_photos():
-    return flask.jsonify(Photo.query.count())
+@blueprint.route('getTotalassetCount', methods=['GET'])
+def total_assets():
+    return flask.jsonify(Asset.query.count())
 
 
 @blueprint.route('/matchAllUnknownFaces', methods=['GET'])

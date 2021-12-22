@@ -22,7 +22,7 @@ from flask import Blueprint
 import logging
 import flask
 
-from timeline.domain import Photo, Face
+from timeline.domain import Asset, Face
 from timeline.extensions import celery
 
 blueprint = Blueprint("inspect", __name__, url_prefix="/inspect")
@@ -134,14 +134,14 @@ def status():
     inspect = celery.control.inspect()
     active = inspect.active()
     numFaces = Face.query.count()
-    numThings = Photo.query.filter(Photo.things != None).count()
+    numThings = Asset.query.filter(Asset.things != None).count()
 
     result = {
         "process": get_queue_len("process"),
         "analyze": get_queue_len("analyze"),
         "totalFaces": numFaces,
         "totalThings": numThings,
-        "totalPhotos": Photo.query.count()
+        "totalassets": Asset.query.count()
 
     }
 
@@ -160,9 +160,9 @@ def status():
                 if job["args"]:
                     arg = job["args"][0]
                     if isinstance(arg, int):
-                        photo = Photo.query.get(arg)
-                        if photo:
-                            arg = photo.filename
+                        asset = Asset.query.get(arg)
+                        if asset:
+                            arg = asset.filename
                     else:
                         arg = os.path.basename(arg)
                     job_name = job["name"]

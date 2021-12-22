@@ -45,7 +45,7 @@
         },
         data() {
             return {
-                photo: null,
+                asset: null,
                 src: ""
             };
         },
@@ -69,9 +69,9 @@
                 if (this.thing) {
                     params['thing_id'] = this.thing.id
                     let config = { params: params};
-                    axios.get("/api/things/preview_photo", config).then (result => {
-                        self.photo = result.data
-                        self.src = "/api/photo/preview/200/" + self.photo.id + ".jpg";
+                    axios.get("/api/things/preview_asset", config).then (result => {
+                        self.asset = result.data
+                        self.src = "/api/asset/preview/200/" + self.asset.id + ".jpg";
                     });
                 } else {
 
@@ -80,9 +80,9 @@
                     params['country'] = this.country;
                     params['state'] = this.state;
                     let config = {params: params};
-                    axios.get("/api/things/preview_photo", config).then(result => {
-                        self.photo = result.data;
-                        self.src = "/api/photo/preview/200/" + self.photo.id + ".jpg";
+                    axios.get("/api/things/preview_asset", config).then(result => {
+                        self.asset = result.data;
+                        self.src = "/api/asset/preview/200/" + self.asset.id + ".jpg";
                     });
 
 

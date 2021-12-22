@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 <template>
-    <v-card :to="{name:'photoWall', query}">
+    <v-card :to="{name:'assetWall', query}">
         <v-img :src="src" aspect-ratio="1" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
                class="white--text align-end">
             <v-card-text>{{title}}</v-card-text>

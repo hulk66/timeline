@@ -22,7 +22,7 @@ import tensorflow as tf
 from idealo.handlers.model_builder import Nima
 from idealo.utils.utils import calc_mean_score
 from tensorflow.keras.applications.mobilenet import preprocess_input
-from timeline.domain import Photo
+from timeline.domain import Asset
 from timeline.extensions import celery, db
 from timeline.util.path_util import get_full_path
 
@@ -51,26 +51,26 @@ class ImageQualifier:
         preprocessed = preprocess_input(expended_img_arrary)
         return preprocessed
 
-    def predict(self, photo_id):
-        photo = Photo.query.get(photo_id)
-        logger.debug("Image Aesthetics qualification for %s", photo.path)
-        path = get_full_path(photo.path)
+    def predict(self, asset_id):
+        asset = Asset.query.get(asset_id)
+        logger.debug("Image Aesthetics qualification for %s", asset.path)
+        path = get_full_path(asset.path)
 
         preprocessed = self._preprocess(path)
         prediction_aesthetic = self.nima_aesthetics.nima_model(preprocessed)
-        photo.score_aesthetic = calc_mean_score(prediction_aesthetic)
+        asset.score_aesthetic = calc_mean_score(prediction_aesthetic)
 
         prediction_technical = self.nima_technical.nima_model(preprocessed)
-        photo.score_technical = calc_mean_score(prediction_technical)
+        asset.score_technical = calc_mean_score(prediction_technical)
         logger.debug("Image Aesthetics qualification for %s done (%f, %f)",
-                     photo.path, photo.score_aesthetic, photo.score_technical)
+                     asset.path, asset.score_aesthetic, asset.score_technical)
 
         db.session.commit()
 
 
 @celery.task(name="Quality Assessment", ignore_result=True)
-def predict_quality(photo_id):
-    qualifier.predict(photo_id)
+def predict_quality(asset_id):
+    qualifier.predict(asset_id)
 
 def init_iq():
     global qualifier

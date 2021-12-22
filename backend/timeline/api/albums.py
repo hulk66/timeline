@@ -15,11 +15,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-from timeline.api.util import photos_from_smart_album
+from timeline.api.util import assets_from_smart_album
 import flask
 from flask import Blueprint, request
 import logging
-from timeline.domain import Album, Photo
+from timeline.domain import Album, Asset
 from timeline.extensions import db
 from timeline.api.util import list_as_json
 from sqlalchemy import and_
@@ -35,32 +35,39 @@ def get_all_albums():
     return flask.jsonify([a.to_dict() for a in albums])
 
 
-def add_photos(album, photo_ids):
-    for id in photo_ids:
-        photo = Photo.query.get(id)
-        album.photos.append(photo)
+@blueprint.route('/allManualAlbums', methods=['GET'])
+def get_manual_albums():
+    logger.debug("get all manual albums")
+    albums = Album.query.filter( and_(Album.id > 1, Album.smart == False)).order_by(Album.name).all()
+    return flask.jsonify([a.to_dict() for a in albums])
+
+
+def add_assets(album, asset_ids):
+    for id in asset_ids:
+        asset = Asset.query.get(id)
+        album.assets.append(asset)
 
 @blueprint.route('/create', methods=['POST'])
 def create_new_album():
     req_data = request.get_json()
     album_name = req_data.get("albumName")
-    photo_ids = req_data["pids"]
+    asset_ids = req_data["pids"]
     album = Album()
     album.smart = False
     album.name = album_name
-    add_photos(album, photo_ids)
+    add_assets(album, asset_ids)
     db.session.add(album)
     db.session.commit()    
     return flask.jsonify(album.to_dict())
 
 
-@blueprint.route('/addPhotoToAlbum', methods=['POST'])
-def add_photos_to_album():
+@blueprint.route('/addAssetToAlbum', methods=['POST'])
+def add_assets_to_album():
     req_data = request.get_json()
     album_id = req_data.get("albumId")
-    photo_ids = req_data["pids"]
+    asset_ids = req_data["pids"]
     album = Album.query.get(album_id)
-    add_photos(album, photo_ids)
+    add_assets(album, asset_ids)
     db.session.commit()    
     return flask.jsonify(album.to_dict())
 
@@ -76,7 +83,7 @@ def rename(id, name):
 @blueprint.route('/remove/<int:id>', methods=['GET'])
 def delete(id):
     album = Album.query.get(id)
-    db.session.delete(album)
+    db.session.delete(album)    
     db.session.commit()
     return flask.jsonify(True)
 
@@ -88,18 +95,18 @@ def info(id):
     return flask.jsonify(None)
 
 
-@blueprint.route('/photos/<int:album_id>', defaults={'count': None}, methods=['GET'])
-@blueprint.route('/photos/<int:album_id>/<int:count>', methods=['GET'])
-def photos(album_id, count):
+@blueprint.route('/assets/<int:album_id>', defaults={'count': None}, methods=['GET'])
+@blueprint.route('/assets/<int:album_id>/<int:count>', methods=['GET'])
+def assets(album_id, count):
     album = Album.query.get(album_id)
     if album.smart:
-        photos = photos_from_smart_album(album)
+        assets = assets_from_smart_album(album)
     else:
-        photos = Photo.query.join(Photo.albums).filter(Album.id == album_id)
+        assets = Asset.query.join(Asset.albums).filter(Album.id == album_id)
 
     if count:
-        photos = photos.limit(count)
-    return list_as_json(photos, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))
+        assets = assets.limit(count)
+    return list_as_json(assets, excludes=("-exif", "-gps", "-faces", "-things", "-section", "-albums"))
 
 
 

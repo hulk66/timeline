@@ -19,7 +19,7 @@
         <v-card-title>Currently imported and sorted</v-card-title>
         <v-card-text>
         <vue-justified-layout
-                :items="photos"
+                :items="assets"
                 v-slot="{item}"
                 :options="{
                     targetRowHeight: 200,
@@ -45,13 +45,13 @@
         },
         data() {
             return {
-                photos: []
+                assets: []
             };
         },
 
         mounted() {
-            axios.get(`/api/photo/importing`).then((result) => {
-                this.photos = result.data;
+            axios.get(`/api/asset/importing`).then((result) => {
+                this.assets = result.data;
             });
         },
 
@@ -61,8 +61,8 @@
         },
 
         methods: {
-            thumbSrc(photo) {
-                return encodeURI("/photos/preview/400/high_res/" + photo.path);
+            thumbSrc(asset) {
+                return encodeURI("/assets/preview/400/high_res/" + asset.path);
             }
         }
     }

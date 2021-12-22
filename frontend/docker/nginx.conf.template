@@ -34,7 +34,7 @@ http {
 
 
 
-    location ~ "^/photos/full/(?<path>.+)$" {
+    location ~ "^/assets/full/(?<path>.+)$" {
         expires 30d;
         alias /preview/2160/high_res/$path;
         # auth_basic "Protected area";
@@ -42,7 +42,7 @@ http {
 
     }
 
-    location /photos/preview {
+    location /assets/preview {
         expires 30d;
         alias /preview;
         try_files $uri @generate_preview;
@@ -98,7 +98,7 @@ http {
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }
 
-    location /photos {
+    location /assets {
         proxy_pass http://${BE_HOST}:${BE_PORT}/photos;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;

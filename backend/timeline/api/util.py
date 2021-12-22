@@ -16,8 +16,8 @@ GNU General Public License for more details.
 '''
 
 import flask
-from timeline.domain import (GPS, Face, Person, Photo, Section, Status, Thing,
-                             photo_thing, Exif, photo_album, Album)
+from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
+                             asset_thing, Exif, asset_album, Album)
 from sqlalchemy import and_, or_
 
 
@@ -37,11 +37,11 @@ def refine_query(q, person_id = None, thing_id = None, city = None,
 
     if person_id:
         q = q.join(Face, and_(Face.person_id ==
-                              person_id, Face.photo_id == Photo.id,
+                              person_id, Face.asset_id == Asset.id,
                               Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
     if thing_id:
-        q = q.join(photo_thing, and_(photo_thing.c.photo_id ==
-                                     Photo.id, photo_thing.c.thing_id == thing_id))
+        q = q.join(asset_thing, and_(asset_thing.c.asset_id ==
+                                     Asset.id, asset_thing.c.thing_id == thing_id))
     if city:
         q = q.join(GPS).filter(GPS.city == city)
     if county:
@@ -54,17 +54,17 @@ def refine_query(q, person_id = None, thing_id = None, city = None,
         q = q.join(Exif).filter(and_(Exif.key == 'Make', Exif.value == camera))
     if rating:
         if rating > 0:
-            q = q.filter(Photo.stars >= rating)
+            q = q.filter(Asset.stars >= rating)
     if fromDate:
-        q = q.filter(Photo.created >= fromDate)
+        q = q.filter(Asset.created >= fromDate)
     if toDate:
-        q = q.filter(Photo.created < toDate)
+        q = q.filter(Asset.created < toDate)
     
     return q
 
-def photos_from_smart_album(album: Album, q = None):
+def assets_from_smart_album(album: Album, q = None):
     if not q:
-        q = Photo.query
+        q = Asset.query
     q = refine_query(q, person_id = album.person_id, thing_id = album.thing_id, 
                 country = album.country, county = album.county, state = album.state,
                 camera = album.camera_make, fromDate = album.start_date, toDate = album.end_date,

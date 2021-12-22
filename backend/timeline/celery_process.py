@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
-    # let's see the first photos after 5min and after this according to the plan (15min)
+    # let's see the first assets after 5min and after this according to the plan (15min)
     schedule_next_compute_sections(5)
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
 

@@ -66,8 +66,8 @@
 
             src(thing) {
                 let self = this;
-                axios.get("/api/things/preview_photo" + { thing_id: thing.id }).then (result => {
-                    self.photo = result.data
+                axios.get("/api/things/preview_asset" + { thing_id: thing.id }).then (result => {
+                    self.asset = result.data
                 });
             },
             loadThings() {

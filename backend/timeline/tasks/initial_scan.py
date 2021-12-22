@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery.task(name="Initial Scan", ignore_result=True)
-def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]):
+def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG", "*.mov", "*.MOV", "*.mp4", "*.MP4"]):
     logger.debug("Performing initial scan for directory %s", path)
     files = []
     for file_type in patterns:
@@ -32,6 +32,6 @@ def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]):
 
     logger.info("Found %i files", len(files))
     for file in files:
-        celery.send_task("Process Photo", (str(file),), queue="process")
-        # new_photo.apply_async((str(file),), queue="process")
+        celery.send_task("Process asset", (str(file),), queue="process")
+        # new_asset.apply_async((str(file),), queue="process")
     logger.debug("Initial Scan done")

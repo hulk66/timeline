@@ -20,14 +20,14 @@ import os
 
 from watchdog.events import PatternMatchingEventHandler
 
-from timeline.tasks.crud_tasks import delete_photo, modify_photo
-from timeline.tasks.process_tasks import new_photo
+from timeline.tasks.crud_tasks import delete_asset, modify_asset
+from timeline.tasks.process_tasks import new_asset
 
 logger = logging.getLogger(__name__)
 
 
 class EventHandler(PatternMatchingEventHandler):
-    patterns = ["*.jpg", "*.jpeg", "*.JPG", "*.JPEG"]
+    patterns = ["*.jpg", "*.jpeg", "*.JPG", "*.JPEG", "*.mov", "*.MOV", "*.mp4", "*.MP4"]
     ignore = ["*@eaDir*", "*@__thumb*", "*@Recycle*"]
 
     base_path = None
@@ -39,25 +39,25 @@ class EventHandler(PatternMatchingEventHandler):
     def on_created(self, event):
         abs_path = os.path.abspath(event.src_path)
         logger.debug("New File: %s", abs_path)
-        # new_photo.delay(event.src_path)
-        new_photo.apply_async( (event.src_path,), queue='process')
-        # new_photo(event.src_path)
+        # new_asset.delay(event.src_path)
+        new_asset.apply_async( (event.src_path,), queue='process')
+        # new_asset(event.src_path)
 
     def on_deleted(self, event):
         path = os.path.abspath(event.src_path)
         logger.debug("Deleted file: %s", path)
-        # delete_photo.delay(event.src_path)
-        delete_photo.apply_async( (event.src_path,), queue='process')
+        # delete_asset.delay(event.src_path)
+        delete_asset.apply_async( (event.src_path,), queue='process')
 
     #def on_modified(self, event):
     #    path = os.path.abspath(event.src_path)
     #    logger.debug("on_modified: %s", path)
-    #    # modify_photo.delay(event.src_path)
-    #    # modify_photo.apply_async( (event.src_path,), queue='process')
+    #    # modify_asset.delay(event.src_path)
+    #    # modify_asset.apply_async( (event.src_path,), queue='process')
 
     def on_moved(self, event):
         path = os.path.abspath(event.src_path)
         logger.debug("Move File: %s", path)
         # dest_path = os.path.abspath(event.dest_path)
-        # move_photo.delay(event.src_path, event.dest_path)
-        modify_photo.apply_async( (event.src_path, event.dest_path), queue='process')
+        # move_asset.delay(event.src_path, event.dest_path)
+        modify_asset.apply_async( (event.src_path, event.dest_path), queue='process')

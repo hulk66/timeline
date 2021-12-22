@@ -13,15 +13,18 @@ pymysql = "*"
 celery = "*"
 libsvm = "*"
 gunicorn = "*"
-tensorflow-hub = "*"
-tensorflow = "==2.4.2"
 scikit-learn = "*"
 python-dotenv = "*"
 geopy = "*"
-keras-applications = "*"
-keras-vggface = "*"
 opencv-python-headless = "*"
 face-recognition = "*"
+imagehash = "*"
+ffmpeg-python = "*"
+keras-applications = "*"
+keras-vggface = {git = "https://github.com/yaledhlab/vggface.git"}
+pyexiftool = "*"
+tensorflow = "~=2.5"
+tensorflow-hub = "*"
 
 [dev-packages]
 

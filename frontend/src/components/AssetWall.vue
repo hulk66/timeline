@@ -25,7 +25,7 @@
 
                             <div v-if="showPhotoCount" class="ma-2 text-h2">{{totalPhotos}} Photos</div>
 
-                            <photo-section
+                            <asset-section
                                     v-for="section in sections"
                                     :ref="'section' + section.id"
                                     :section="section"
@@ -47,7 +47,7 @@
                                     @select-photo="selectPhotoEvent"
                                     @select-multi="selectMultiEvent"
                                     @update-timeline="updateTimeline">
-                            </photo-section>
+                            </asset-section>
                         </v-sheet>
             </v-col>
                 <v-card class="noscroll scale" ref="timelineContainer" elevation="0"
@@ -89,7 +89,7 @@
     /* Todo: Unify curentSelettion, segment ... and selectedSegment, section .... This is complicated and not necessary */
 
     import axios from "axios";
-    import PhotoSection from "./PhotoSection";
+    import AssetSection from "./AssetSection";
     import ImageViewer from "./ImageViewer";
     import moment from "moment"
     import Tick from "./Tick";
@@ -97,10 +97,10 @@
 
     const logBase = (n, base) => Math.log(n) / Math.log(base);
     export default {
-        name: "PhotoWall",
+        name: "AssetWall",
 
         components: {
-            PhotoSection,
+            AssetSection,
             ImageViewer,
             Tick
         },
@@ -177,7 +177,7 @@
                     this.currentSection = this.getNextSection(0, 0);
                     this.currentSegment = this.currentSection.getFirstSegment();
                     this.currentIndex = 0;
-                    this.currentPhoto = this.currentSegment.data.photos[0];
+                    this.currentPhoto = this.currentSegment.data.assets[0];
                 }
 
             }*/
@@ -379,7 +379,7 @@
                         (sectionA.id == sectionB.id && segmentA.nr == segmentB.nr && indexA <= indexB);
             },
             selectPhotoEvent(section, segment, index, value) {
-                let p = segment.data.photos[index]
+                let p = segment.data.assets[index]
                 if (value) {
                     this.$store.commit("setSelectionBoundaries", {section:section.id, segment:segment.data.nr, index:index} );
                     if (this.selectMulti) {
@@ -388,7 +388,7 @@
                         let startSegment = startSection.getSegmentEl(lowerBoundary.segment);
                         let photoIndex = lowerBoundary.index;
                         while (this.isBefore(startSection.section, startSegment.data, photoIndex, section, segment.data, index)) {
-                            let p = startSegment.data.photos[photoIndex];
+                            let p = startSegment.data.assets[photoIndex];
                             this.$store.commit("addPhotoToSelection", p);
                             startSegment.selectPhoto(photoIndex, true);
                             let next = this.getNextSectionSegmentAndPhoto(startSection, startSegment, photoIndex, 1)
@@ -444,7 +444,7 @@
                 this.currentSection = this.$refs['section' + section.id][0];
                 this.currentSegment = segment;
                 this.currentIndex = photoIndex;
-                this.currentPhoto = segment.data.photos[photoIndex]
+                this.currentPhoto = segment.data.assets[photoIndex]
                 this.prevPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, -1);
                 this.nextPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, 1);
 
@@ -593,7 +593,7 @@
 
             selectPhoto() {
                 if (this.currentIndex != -1) {
-                    let p = this.currentSegment.data.photos[this.currentIndex];
+                    let p = this.currentSegment.data.assets[this.currentIndex];
                     let alreadySelected = this.selectedPhotos.some(photo => photo.id == p.id);
                     if (alreadySelected) {
                         this.$store.commit("removePhotoFromSelection", p);
@@ -613,7 +613,7 @@
                     this.currentSection = this.getNextSection(0, 0);
                     this.currentSegment = this.currentSection.getFirstSegment();
                     this.currentIndex = -1;
-                    this.currentPhoto = this.currentSegment.data.photos[0];
+                    this.currentPhoto = this.currentSegment.data.assets[0];
 
                 } else {
                     if (dir == 1) {
@@ -640,7 +640,7 @@
                         this.currentSegment = this.currentSection.getFirstSegment()
                     }
 
-                    if (this.currentIndex < 0 || this.currentIndex >= this.currentSegment.data.photos.length) {
+                    if (this.currentIndex < 0 || this.currentIndex >= this.currentSegment.data.assets.length) {
 
                         this.currentSegment = this.currentSection.nextSegment(this.currentSegment, dir);
 
@@ -659,7 +659,7 @@
                 if (this.currentSegment) {
                     this.scrollToMarkedPhoto(dir);
                     this.currentSegment.markPhoto(this.currentIndex, true);
-                    this.currentPhoto = this.currentSegment.data.photos[this.currentIndex];
+                    this.currentPhoto = this.currentSegment.data.assets[this.currentIndex];
                 } else
                     this.currentIndex = -1;
 
@@ -671,8 +671,8 @@
                 let nextSection = sectionElement;
                 let nextSegment = segment;
                 let nextIndex = index + dir;
-                if (nextIndex >= 0 && nextIndex < segment.data.photos.length) {
-                    nextPhoto = segment.data.photos[index-1];
+                if (nextIndex >= 0 && nextIndex < segment.data.assets.length) {
+                    nextPhoto = segment.data.assets[index-1];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
@@ -688,7 +688,7 @@
                         nextIndex = 0;
                     } else {
                         nextPhoto = nextSegment.getLastPhoto();
-                        nextIndex = nextSegment.data.photos.length;
+                        nextIndex = nextSegment.data.assets.length;
                     }
 
                 }
@@ -746,8 +746,8 @@
                 let nextPhoto = null;
                 let nextIndex = index + dir;
                     
-                if (nextIndex >= 0 && nextIndex < segment.data.photos.length) {
-                    nextPhoto = segment.data.photos[nextIndex];
+                if (nextIndex >= 0 && nextIndex < segment.data.assets.length) {
+                    nextPhoto = segment.data.assets[nextIndex];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
@@ -771,8 +771,8 @@
                 let nextPhoto = null;
                 let nextIndex = index;
                     
-                if (nextIndex >= 0 && nextIndex <= this.selectedSegment.data.photos.length) {
-                    nextPhoto = this.selectedSegment.data.photos[nextIndex-1];
+                if (nextIndex >= 0 && nextIndex <= this.selectedSegment.data.assets.length) {
+                    nextPhoto = this.selectedSegment.data.assets[nextIndex-1];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
@@ -806,9 +806,9 @@
                 }
 
 
-                if (this.selectedIndex >= 0 && this.selectedIndex  < this.selectedSegment.data.photos.length) {
-                    this.$store.commit("setSelectedPhoto",this.selectedSegment.data.photos[this.selectedIndex]);
-                    // this.selectedPhoto = this.selectedSegment.data.photos[this.selectedIndex];
+                if (this.selectedIndex >= 0 && this.selectedIndex  < this.selectedSegment.data.assets.length) {
+                    this.$store.commit("setSelectedPhoto",this.selectedSegment.data.assets[this.selectedIndex]);
+                    // this.selectedPhoto = this.selectedSegment.data.assets[this.selectedIndex];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section

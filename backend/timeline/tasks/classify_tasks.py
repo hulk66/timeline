@@ -23,7 +23,7 @@ import tensorflow as tf
 import tensorflow_hub as hub
 from PIL import Image
 from pymysql.err import OperationalError
-from timeline.domain import Photo, Thing
+from timeline.domain import Asset, Thing
 from timeline.extensions import celery, db
 from timeline.util.path_util import get_full_path
 
@@ -72,15 +72,15 @@ def run_detector(image_path):
     return result
 
 @celery.task(autoretry_for=(OperationalError,), name="Object Detection", ignore_result=True)
-def object_detection(photo_id):
-    photo = Photo.query.get(photo_id)
-    logger.debug("Object Detection for Photo %s", photo.path)
+def object_detection(asset_id):
+    asset = Asset.query.get(asset_id)
+    logger.debug("Object Detection for asset %s", asset.path)
 
-    if not photo:
-        logger.error("Something is wrong. Photo with id %i not found")
+    if not asset:
+        logger.error("Something is wrong. asset with id %i not found")
         return
 
-    path = get_full_path(photo.path)
+    path = get_full_path(asset.path)
     if not os.path.exists(path):
         logger.warning("Can't open file %s for object detection. May have been removed?", path)
         return
@@ -88,10 +88,10 @@ def object_detection(photo_id):
     detected_objects = run_detector(path)
     for clazz in detected_objects:
         thing = Thing.query.get(clazz)
-        photo.things.append(thing)
-    # photo.status = "analyzed"
+        asset.things.append(thing)
+    # asset.status = "analyzed"
     db.session.commit()
-    logger.debug("Analyze Photo %s ok. Found %i classes", photo.path, len(detected_objects))
+    logger.debug("Analyze asset %s ok. Found %i classes", asset.path, len(detected_objects))
 
 def load_and_resize_image(fname, max_dim=1280):
     _, filename = tempfile.mkstemp(suffix=".jpg")

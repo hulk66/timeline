@@ -81,13 +81,13 @@ def split_filename_and_path():
 @blueprint.route('/amend_exif', methods=['GET'], defaults={'overwrite': False})
 def recreate_exif_data(overwrite):
     logger.debug("Recreate Exif Data")
-    celery.send_task("Extract Exif Data for all Photos", args=(overwrite,), queue="process")   
+    celery.send_task("Extract Exif Data for all assets", args=(overwrite,), queue="process")   
     return flask.jsonify(True)
 
-@blueprint.route('/resync_photos', methods=['GET'])
-def resync_photos():
-    logger.debug("Resync Photos")
-    celery.send_task("Resync Photos",  queue="process")   
+@blueprint.route('/resync_assets', methods=['GET'])
+def resync_assets():
+    logger.debug("Resync assets")
+    celery.send_task("Resync assets",  queue="process")   
     return flask.jsonify(True)
 
 
@@ -118,9 +118,9 @@ def resync_photos():
 #     Face.query.delete()
 #     Person.query.delete()
 #     Exif.query.delete()
-#     for p in Photo.query.all():
+#     for p in asset.query.all():
 #         p.things = []
-#     Photo.query.delete()
+#     asset.query.delete()
 #     GPS.query.delete()
 #     Section.query.delete()
 #     status = Status.query.first()
@@ -128,7 +128,7 @@ def resync_photos():
 #     status.sections_dirty = False
 #     status.computing_sections = False
 #     db.session.commit()
-#     path = current_app.config.get("PHOTO_PATH")
+#     path = current_app.config.get("asset_PATH")
 #     inital_scan(path)
 #     return flask.jsonify(True)
 
