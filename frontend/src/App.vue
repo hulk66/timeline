@@ -120,7 +120,7 @@
                         <v-icon>mdi-cloud-upload</v-icon>
                     </v-btn>
                 </template>
-                <span>Upload assets</span>
+                <span>Upload Photos ( Videos to come )</span>
             </v-tooltip>
 
             <v-tooltip v-if="showRemoveButton" bottom>
@@ -135,7 +135,7 @@
                     <v-icon>mdi-delete</v-icon>
                 </v-btn>
             </template>
-            <span>Delete assets</span>
+            <span>Delete</span>
             </v-tooltip>
 
             <v-tooltip v-if="showAlbumRemoveButton" bottom>
@@ -213,7 +213,7 @@
 
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title>Processed assets</v-list-item-title>
+                            <v-list-item-title>Processed Assets</v-list-item-title>
                         </v-list-item-content>
                         <v-list-item-action>{{totalassets}}</v-list-item-action>
                     </v-list-item>
@@ -297,7 +297,7 @@
                     -->
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title>assets to read</v-list-item-title>
+                            <v-list-item-title>Assets to read</v-list-item-title>
                         </v-list-item-content>
                         <v-list-item-action v-text="process_count"></v-list-item-action>
                     </v-list-item>
