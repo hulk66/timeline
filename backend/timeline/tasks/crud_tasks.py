@@ -24,7 +24,7 @@ from pathlib import Path
 from celery import chain
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
-from sqlalchemy.util.compat import u
+
 from timeline.domain import Album, GPS, Exif, Person, Asset, Section, Status, DateRange
 from timeline.extensions import celery, db
 from timeline.util.gps import (get_exif_value, get_geotagging, get_gps_data,
@@ -357,7 +357,7 @@ def level_date_ranges(start_asset: Asset = None):
         return
         
     if not start_asset:
-        start_asset = Asset.query.order_by(asset.created.asc()).first()
+        start_asset = Asset.query.order_by(Asset.created.asc()).first()
 
     lower_date_range = DateRange.query.filter( start_asset.created >= DateRange.start_date).order_by(DateRange.start_date.desc()).first()
     if not lower_date_range:
@@ -366,7 +366,7 @@ def level_date_ranges(start_asset: Asset = None):
         db.session.add(lower_date_range)
 
     upper_date_range = find_upper_start_date(lower_date_range)
-    assets = Asset.query.filter( and_(upper_date_range.start_date > asset.created, asset.created >= lower_date_range.start_date ))
+    assets = Asset.query.filter( and_(upper_date_range.start_date > Asset.created, Asset.created >= lower_date_range.start_date ))
 
     if assets.count() < 300:
         # continue here 
@@ -403,11 +403,11 @@ def sort_old_assets():
         return
 
     oldest_asset = Asset.query.filter(
-        asset.ignore == False).order_by(asset.created.asc()).first()
+        Asset.ignore == False).order_by(Asset.created.asc()).first()
     if not oldest_asset:
         return
     min_date = oldest_asset.created - timedelta(days=1)
-    assets = Asset.query.filter(asset.no_creation_date == True)
+    assets = Asset.query.filter(Asset.no_creation_date == True)
 
     for asset in assets:
         # logger.debug("asset %i", asset.id)

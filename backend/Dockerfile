@@ -5,7 +5,7 @@ RUN wget -O ssd.tgz https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1?tf
     tar -xzf ssd.tgz -C /tmp/myapp/models/thing/ssd && \
     rm ssd.tgz 
 
-RUN apt update && apt -y install cmake
+RUN apt update && apt -y install cmake ffmpeg exiftool
 
 ADD https://github.com/rcmalli/keras-vggface/releases/download/v2.0/rcmalli_vggface_tf_notop_resnet50.h5 /root/.keras/models/vggface/
 

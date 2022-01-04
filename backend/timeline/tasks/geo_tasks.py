@@ -17,7 +17,7 @@ GNU General Public License for more details.
 
 import logging
 import ssl
-
+ 
 import certifi
 import geopy.geocoders
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError

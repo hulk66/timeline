@@ -1,8 +1,8 @@
+import os
 import unittest
 import ffmpeg
 from PIL import Image
 import exiftool
-import os
 
 class Test_VideoConversion(unittest.TestCase):
 

@@ -21,7 +21,7 @@ class TestImageAssessment(unittest.TestCase):
         with self.app.app_context():
             db.session.add(Status())
             db.session.commit()
-
+ 
     def test_quali(self):
         nima = Nima("MobileNet", weights=None)
         nima.build()

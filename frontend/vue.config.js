@@ -14,6 +14,7 @@ module.exports = {
 
 
   devServer: {
+    disableHostCheck: true,
     proxy: {
       
       '/albums': {

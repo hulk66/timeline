@@ -1,7 +1,6 @@
 data
 .env
 .idea
-.vscode/settings.json
 backend/models/facial
 backend/models/thing
 
