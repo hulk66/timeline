@@ -20,14 +20,14 @@ import os
 
 from watchdog.events import PatternMatchingEventHandler
 
-from timeline.tasks.crud_tasks import delete_asset, modify_asset
+from timeline.tasks.crud_tasks import delete_asset_by_path, modify_asset
 from timeline.tasks.process_tasks import new_asset
 
 logger = logging.getLogger(__name__)
 
 
 class EventHandler(PatternMatchingEventHandler):
-    patterns = ["*.jpg", "*.jpeg", "*.JPG", "*.JPEG", "*.mov", "*.MOV", "*.mp4", "*.MP4"]
+    patterns = ["*.jpg", "*.jpeg", "*.JPG", "*.JPEG", "*.mov", "*.MOV", "*.mp4", "*.MP4", "*.heic", "*.HEIC"]
     ignore = ["*@eaDir*", "*@__thumb*", "*@Recycle*"]
 
     base_path = None
@@ -47,7 +47,7 @@ class EventHandler(PatternMatchingEventHandler):
         path = os.path.abspath(event.src_path)
         logger.debug("Deleted file: %s", path)
         # delete_asset.delay(event.src_path)
-        delete_asset.apply_async( (event.src_path,), queue='process')
+        delete_asset_by_path.apply_async( (event.src_path,), queue='process')
 
     #def on_modified(self, event):
     #    path = os.path.abspath(event.src_path)

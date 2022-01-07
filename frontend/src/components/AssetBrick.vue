@@ -15,46 +15,79 @@
  * GNU General Public License for more details.
  */
 <template>
-        <v-img @click="clickPhoto"
+    <span @mouseover="hover = true" 
+            @mouseleave="hover = false">
+        <div @click="clickPhoto" v-if="isVideo && hover" class="video-container" >
+            <video autoplay loop height="100%" width="100%">
+                <source :src="videoSrc" type="video/mp4">
+            </video>
+            <div class="gradient full">
+            <v-checkbox class="top-left" 
+                v-if="selectionAllowed"
+                dark
+                v-model="selected"
+                @change="selectPhoto"
+                @click.shift="clickMultiple"
+                @click="clickSingle"
+                @click.native.stop> 
+            </v-checkbox> 
+                <v-rating 
+                class="bottom-left"
+                background-color="grey" 
+                color="white" 
+                small 
+                length="5"
+                dense 
+                @input="ratePhoto"
+                @click.native.stop
+                clearable
+                :value="asset.stars">
+            </v-rating>
+            </div>      
+        </div> 
+        <v-img v-else @click="clickPhoto" 
                 :src="thumbSrc"
                 :lazy-src="lowRes"
                 :class="markedClass"
                 transition="true"
-                @mouseover="hover = true" 
-                @mouseleave="hover = false"
+                contains
                 ref="img">
-                
-                <!--
-                                v-intersect="{handler:onIntersect}"
-                -->
-                <v-fade-transition>
-                    <div v-if="hover || selected || marked" class="gradient fill-height container">
-                        <v-checkbox class="top-left" 
-                            v-if="selectionAllowed"
-                            dark
-                            v-model="selected"
-                            @change="selectPhoto"
-                            @click.shift="clickMultiple"
-                            @click="clickSingle"
-                            @click.native.stop> 
-                        </v-checkbox>       
-                        <v-rating 
-                            class="bottom-left"
-                            background-color="grey" 
-                            color="white" 
-                            small 
-                            length="5"
-                            dense 
-                            @input="ratePhoto"
-                            @click.native.stop
-                            clearable
-                            :value="asset.stars">
-                        </v-rating>
-                    </div>
-                                        
-                </v-fade-transition>
-        </v-img>
- 
+
+            <div class="container fill-height">
+                <v-icon v-if="isVideo" class="top-right" color="white">
+                    mdi-play-circle-outline
+                </v-icon>
+
+            <v-fade-transition>
+                <div v-if="hover || selected || marked" class="gradient fill-height container">
+
+                    <v-checkbox class="top-left" 
+                        v-if="selectionAllowed"
+                        dark
+                        v-model="selected"
+                        @change="selectPhoto"
+                        @click.shift="clickMultiple"
+                        @click="clickSingle"
+                        @click.native.stop> 
+                    </v-checkbox>       
+                    <v-rating 
+                        class="bottom-left"
+                        background-color="grey" 
+                        color="white" 
+                        small 
+                        length="5"
+                        dense 
+                        @input="ratePhoto"
+                        @click.native.stop
+                        clearable
+                        :value="asset.stars">
+                    </v-rating>
+                </div>
+                                    
+            </v-fade-transition>
+            </div>
+    </v-img>
+    </span>
 </template>
 <script>
 
@@ -86,6 +119,10 @@
         },
 
         computed: {
+            videoSrc() {
+                return encodeURI("/assets/video/preview/" + this.asset.path + ".mp4");
+
+            },
             thumbSrc() {
                 return encodeURI("/assets/preview/400/high_res/" + this.asset.path);
             },
@@ -98,6 +135,10 @@
                 return this.marked ? "marked" : "";
             },
 
+            isVideo() {
+                return this.asset.asset_type == 'mov' || this.asset.asset_type =='mp4'
+            },
+
             ...mapState({
                 selectionAllowed: state => state.photo.selectionAllowed,
             }),
@@ -108,6 +149,7 @@
         },
 
         methods: {
+
 
             ratePhoto(v) {
                 this.$emit("set-rating", this.index, v);
@@ -154,6 +196,14 @@
 <style scoped>
     .container {
         position: relative;
+        padding: 0px;
+    }
+
+    .video-container {
+        position: relative;
+        padding: 0px;
+        width: 100%;
+        height: 100%;
     }
 
     .bottom-left {
@@ -168,11 +218,24 @@
         left: 16px;
     }
 
+    .top-right {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+    }
+
     .marked {
         border: 5px solid;
         border-color: var(--v-primary-base);
     }
+    .full {
+        position: absolute;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
 
+    }
     .gradient {
         background-image: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 52px), linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, transparent 52px);
     }

@@ -16,7 +16,6 @@ GNU General Public License for more details.
 '''
 
 import logging
-
 from timeline.domain import Asset
 from timeline.extensions import celery
 from timeline.tasks.crud_tasks import create_asset, create_preview
@@ -36,13 +35,12 @@ def new_asset(path):
         asset_id = create_asset(path)
         if asset_id:
             asset = Asset.query.get(asset_id)
-            create_preview(asset.path, 400,  True)
-            create_preview(asset.path, 2160, False)
-            
+            create_preview(asset_id)
             celery.send_task("Check GPS", (asset_id,), queue="analyze")
-            celery.send_task("Face Detection", (asset_id,), queue="analyze")
-            celery.send_task("Object Detection", (asset_id,), queue="analyze")
-            celery.send_task("Quality Assessment", (asset_id,), queue="analyze")
+            if asset.is_photo():
+                celery.send_task("Face Detection", (asset_id,), queue="analyze")
+                celery.send_task("Object Detection", (asset_id,), queue="analyze")
+                celery.send_task("Quality Assessment", (asset_id,), queue="analyze")
 
             # celery.send_task("timeline.tasks.iq_tasks.brisque_score", (asset_id,), queue="iq")
 

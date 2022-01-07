@@ -21,7 +21,9 @@ import zlib
 from sqlalchemy_serializer import SerializerMixin
 import sqlalchemy
 from timeline.extensions import db
-
+import enum
+import os
+from sqlalchemy.ext.hybrid import hybrid_property
 
 class NumpyType(sqlalchemy.types.TypeDecorator):
     cache_ok = True
@@ -183,12 +185,23 @@ class Thing(db.Model, SerializerMixin):
     serialize_rules = ('-assets',)
 
 
+class AssetType(enum.Enum):
+    jpg_photo = "jpg"
+    heic_photo = "heic"
+    mov_video = "mov"
+    mp4_video = "mp4"
+    avi_video = "avi"
+
+
 class Asset(db.Model, SerializerMixin):
     __tablename__ = 'assets'
 
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(512), unique=True)
+    # path_without_ext = db.Column(db.String(512), unique=True)
+            
     filename = db.Column(db.String(100))
+
     directory = db.Column(db.String(512))
     ignore = db.Column(db.Boolean, index=True)
     faces = db.relationship("Face", back_populates="asset",
@@ -219,12 +232,18 @@ class Asset(db.Model, SerializerMixin):
 
     serialize_rules = ('-faces',)
 
+    asset_type = db.Column(db.Enum(AssetType))
+
     def __repr__(self):
-        return "<asset(filename='%s', )>" % (
+        return "<Asset(filename='%s', )>" % (
             self.filename)
 
-    def rel_path(self):
-        return
+    def is_video(self):
+        return self.asset_type in (AssetType.mp4_video, AssetType.mov_video, AssetType.avi_video)
+
+    def is_photo(self):
+        return self.asset_type in (AssetType.heic_photo, AssetType.jpg_photo)
+
 
 class DateRange(db.Model, SerializerMixin):
     __tablename__ = 'date_range'

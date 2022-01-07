@@ -39,7 +39,6 @@ http {
         alias /preview/2160/high_res/$path;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
-
     }
 
     location /assets/preview {
@@ -51,6 +50,15 @@ http {
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
 
     }
+
+    location ~ "^/assets/video/full/(?<path>.+)$" {
+        expires 30d;
+        alias /preview/video/full/$path;
+
+    location /assets/video/preview {
+        expires 30d;
+        alias /preview/video/preview
+        try_files $uri @generate_preview;
 
     location @generate_preview {
         proxy_pass http://webapp:5000$request_uri;
@@ -99,7 +107,7 @@ http {
     }
 
     location /assets {
-        proxy_pass http://${BE_HOST}:${BE_PORT}/photos;
+        proxy_pass http://${BE_HOST}:${BE_PORT}/assets;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }

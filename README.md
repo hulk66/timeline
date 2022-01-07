@@ -13,13 +13,14 @@ but on you own Device (Server, NAS, PC)
 * If GPS information is present in the Exif Data it will do a reverse geo location look to resolve the address
 * When viewing an Photo in full screen you will see of of the detected information (Identified and non identified faces, things 
 a resolved address along with a little map and some important Exif data)
+* now also playing HEIC, MOV, and MP4 files
 
-### New (0.7)
+## New (0.7)
 * Selection of Photos via left and right cursor keys
 * Rating of Photos via the usual Rating stars either by clicking the rating while hovering over a photo or selecting a photo via cursor left/right and use the 0-5 keys (filtering for the so rated photos will follow)
 * Option to change the preview size to accommodate more or less on the photo wall
 
-### New (0.8)
+## New (0.8)
 * Selection of Multiple Photos at one by Shift-Click
 * Albums can be created (and deleted)
 * New Albums Overview 
@@ -36,6 +37,11 @@ a resolved address along with a little map and some important Exif data)
 ## New 0.85
 * Sectioning is now happening already while importing photos. With this new photos are visible immediately. The background sectioning still happens and is used to equally size the sections in terms of the contained photos
 * Uploading of Phots is now possible. Therefore a folder has to be specified which is created below PHOTO_PATH. Photos will be uploaded there and sorted by year and month
+
+## New 0.90
+* Now also reading and displaying (iPhone) HEIC files 
+* Addionally also reading and displaying MOV and MP4 files. Both types will be playable in the Browser. Similar to Google Photos a preview 
+of the video files will played back when hovering over a video
 
 
 ## Next to come

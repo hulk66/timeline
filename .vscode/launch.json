@@ -26,7 +26,7 @@
         },
 
         {
-            "name": "Worker - Fast",
+            "name": "Worker",
             "type": "python",
             "request": "launch",
             "module": "celery",
@@ -38,34 +38,13 @@
                 "worker",
                 "-P",
                 "prefork",
-                "--autoscale=3,1",
+                "--autoscale=1,1",
                 "-n",
                 "fast@%n",
                 "-Q",
                 "beat,process,analyze"
             ]
         },
-        {
-            "name": "Worker - Slow",
-            "type": "python",
-            "request": "launch",
-            "module": "celery",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend",
-            "args": [
-                "-A", 
-                "timeline.celery_analyze", 
-                "worker",
-                "-P",
-                "prefork",
-                "--concurrency=2",
-                "-n",
-                "slow@%n",
-                "-Q",
-                "analyze"
-            ]
-        },
-
         {
             "name": "Webapp",
             "type": "python",
@@ -92,14 +71,12 @@
         },
 
         {
-            "name": "Test Ext",
+            "name": "Python: Debug Current File",
+            "cwd": "${workspaceFolder}/backend",
             "type": "python",
             "request": "launch",
-            "cwd": "${workspaceFolder}/backend",
-            "module": "unittest",
-            "args": [
-                "tests.test_ext"
-            ]    
+            "program": "${file}",
+            "console": "integratedTerminal",
         }
 
     ]

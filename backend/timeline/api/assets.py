@@ -24,7 +24,7 @@ from flask import Blueprint
 from timeline.tasks.crud_tasks import create_preview
 from timeline.util.image_ops import exif_transpose
 import logging
-from timeline.domain import Asset, Status, Album, Person
+from timeline.domain import Asset, Status, Album, Person, AssetType
 from flask import request
 from PIL import Image
 from pathlib import Path
@@ -34,7 +34,6 @@ from timeline.util.path_util import get_full_path
 import os
 from flask import current_app
 from werkzeug.utils import secure_filename
-import tempfile
 
 
 blueprint = Blueprint("assets", __name__, url_prefix="/assets")
@@ -67,28 +66,55 @@ def asset_by_path(path):
     return Asset.query.filter(Asset.path == path).first()
 
 
+
 @blueprint.route('/full/<path:path>', methods=['GET'])
 def asset(path):
     logger.debug("asset full")
+    # path_without_ext, _ = os.path.splitext(path)
     asset = asset_by_path(path)
     if asset is not None:
-        # p = get_full_path(asset.path, resolution)
-        p = get_preview_path(asset.path, "2160", "high_res")
-        image = Image.open(p)
-        return send_image(image, fullscreen=True, last_modified=asset.created)
-    return flask.redirect('/404')
+        if asset.is_photo():
+            p = get_preview_path(asset.path, ".jpg", "2160", "high_res")
+            image = Image.open(p)
+            return send_image(image, fullscreen=True, last_modified=asset.created)
+        #elif asset.is_video():
+        #    p = get_preview_path(asset.path, ".mp4", "video", "full")
+        #    f = open(p, "rb")
+        #    return flask.send_file(f, mimetype="video/mp4")
+        else:
+            return flask.redirect('/404')
+
+@blueprint.route('/video/full/<path:path>', methods=['GET'])
+def video(path):
+    logger.debug("return video")
+    path,_ = os.path.splitext(path)
+    asset = asset_by_path(path)
+    p = get_preview_path(asset.path, ".mp4", "video", "full")
+    f = open(p, "rb")
+    return flask.send_file(f, mimetype="video/mp4")
+
+
+@blueprint.route('/video/preview/<path:path>', methods=['GET'])
+def video_preview(path):
+    logger.debug("return video")
+    path,_ = os.path.splitext(path)
+    asset = asset_by_path(path)
+    p = get_preview_path(asset.path, ".mp4", "video", "preview")
+    f = open(p, "rb")
+    return flask.send_file(f, mimetype="video/mp4")
 
 
 @blueprint.route('/preview/<int:max_dim>/<resolution>/<path:path>', methods=['GET'])
 def asset_preview(max_dim, resolution, path):
     logger.debug("asset preview: %s", path)
+    # path_without_ext, _ = os.path.splitext(path)
     asset = asset_by_path(path)
     if asset is None:
         return flask.redirect('/404')
 
-    preview_path = Path(get_preview_path(asset.path, str(max_dim), resolution))
+    preview_path = Path(get_preview_path(asset.path, ".jpg", str(max_dim), resolution))
     if not preview_path.exists():
-        create_preview(asset.path, max_dim, True)
+        create_preview(asset.id)
 
     return flask.send_file(preview_path.absolute())
 
@@ -102,7 +128,7 @@ def asset_preview_by_rp(max_dim):
 
     preview_path = Path(get_preview_path(asset.path, str(max_dim)))
     if not preview_path.exists():
-        create_preview(asset.path, max_dim)
+        create_preview(asset.id)
 
     return flask.send_file(preview_path.absolute())
 

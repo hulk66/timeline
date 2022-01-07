@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery.task(name="Initial Scan", ignore_result=True)
-def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG", "*.mov", "*.MOV", "*.mp4", "*.MP4"]):
+def inital_scan(path, patterns=["*.jpg", "*.jpeg", "*.JPG", "*.JPEG", "*.mov", "*.MOV", "*.mp4", "*.MP4", "*.heic", "*.HEIC"]):
     logger.debug("Performing initial scan for directory %s", path)
     files = []
     for file_type in patterns:

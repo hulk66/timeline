@@ -31,7 +31,7 @@ services:
       - ${RABBITMQ_DATA}:/var/lib/rabbitmq
 
   webapp:
-    image: hulk66/timeline_be:0.86
+    image: hulk66/timeline_be:0.90
     # build: backend
     restart: always
     ports: 
@@ -58,7 +58,7 @@ services:
       - rabbitmq
 
   worker:
-    image: hulk66/timeline_be:0.86
+    image: hulk66/timeline_be:0.90
     # build: backend
     restart: always
     environment:
@@ -87,7 +87,7 @@ services:
       - rabbitmq
      
   frontend:
-    image: hulk66/timeline_fe:0.86
+    image: hulk66/timeline_fe:0.90
     # build: frontend
     restart: always
     ports:
@@ -106,7 +106,7 @@ services:
       - webapp
 
   watchdog:
-    image: hulk66/timeline_be:0.86
+    image: hulk66/timeline_be:0.90
     # build: backend
     restart: always
     environment:

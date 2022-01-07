@@ -20,12 +20,13 @@ import os
 import os.path
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import IO
 
 from celery import chain
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
 
-from timeline.domain import Album, GPS, Exif, Person, Asset, Section, Status, DateRange
+from timeline.domain import Album, GPS, Exif, Person, Asset, Section, Status, DateRange, AssetType
 from timeline.extensions import celery, db
 from timeline.util.gps import (get_exif_value, get_geotagging, get_gps_data,
                                get_labeled_exif, get_lat_lon)
@@ -35,9 +36,16 @@ from timeline.util.path_util import (get_full_path, get_preview_path,
 from sqlalchemy import and_
 from celery import signature
 from celery import chain
+from pillow_heif import register_heif_opener
+import exiftool
+import ffmpeg
+import io
 
 logger = logging.getLogger(__name__)
+register_heif_opener()
 
+exiftool = exiftool.ExifTool()
+exiftool.start()
 
 def get_size(image):
     # return width and height considering a rotation
@@ -57,8 +65,9 @@ def get_size(image):
     return image.size
 
 
-def create_asset(path, commit=True):
+def create_asset(path:str, commit=True):
     logger.debug("Reading asset %s", path)
+    # path = path.lower()
     if not Path(path).exists():
         logger.warning("File does not exist: %s", path)
         return None
@@ -70,12 +79,7 @@ def create_asset(path, commit=True):
         logger.info("asset already exists %s. Skipping", img_path)
         return None
 
-    try:
-        image = Image.open(path)
-    except UnidentifiedImageError:
-        logger.error("Invalid Image Format for %s", path)
-        return None
-    except FileNotFoundError:
+    if not os.path.exists(path):
         logger.error("File not found: %s")
         return None
 
@@ -85,9 +89,58 @@ def create_asset(path, commit=True):
     asset.exif = []
     asset.path = img_path
     asset.directory, asset.filename = os.path.split(img_path)
+    _, ext = os.path.splitext(asset.filename)
+    ext = ext[1:].lower()
+    if ext in("jpg", "JPEG"): 
+        asset.asset_type = AssetType.jpg_photo
+    elif ext == "heic":
+        asset.asset_type = AssetType.heic_photo
+    elif ext == "mov":
+        asset.asset_type = AssetType.mov_video
+    elif ext == "mp4":
+        asset.asset_type = AssetType.mp4_video
+
+
+    if asset.is_photo():
+        try:
+            image = Image.open(path)
+        except UnidentifiedImageError:
+            logger.error("Invalid Image Format for %s", path)
+            return None
+        except FileNotFoundError:
+            logger.error("File not found: %s")
+            return None
+
+        # this does not seem to be correct, there has to be a more elegant way
+        if asset.asset_type == AssetType.heic_photo:
+            asset.width, asset.height = image.size
+        else:
+            # transpose if necessary    
+            asset.width, asset.height = get_size(image)  # image.size
+        _extract_exif_data(asset, image)
+    else:
+        md = exiftool.get_metadata(path)
+
+        asset.width = md.get("QuickTime:ImageWidth")
+        asset.height = md.get("QuickTime:ImageHeight")
+
+        if md.get('Composite:Rotation') == 90 or md.get('Composite:Rotation') == 270:
+            asset.width, asset.height = asset.height, asset.width
+
+        lat = md.get("QuickTime:GPSLatitude") 
+        long = md.get("QuickTime:GPSLongitude")
+        if lat and long:
+            gps = GPS()
+            asset.gps = gps
+            asset.gps.latitude, asset.gps.longitude = lat, long
+
+        dateStr = md.get("QuickTime:MediaCreateDate")
+        if dateStr:
+            dt = datetime.strptime(str(dateStr), "%Y:%m:%d %H:%M:%S")
+            asset.created = dt
+            asset.no_creation_date = False
+
     # asset.directory = os.path.
-    asset.width, asset.height = get_size(image)  # image.size
-    _extract_exif_data(asset, image)
     db.session.add(asset)
     # sort_asset_into_date_range(asset, commit = False)
     add_to_last_import(asset)
@@ -231,7 +284,7 @@ def add_to_last_import(asset):
 #            # all good, nothing to do
 
 
-def _delete_asset(asset):
+def delete_asset(asset:Asset):
     status = Status.query.first()
     db.session.delete(asset)
     # remove empty albums
@@ -244,15 +297,15 @@ def _delete_asset(asset):
     for person in Person.query.filter(Person.faces == None):
         db.session.delete(person)
 
-def delete_asset_by_path(path):
+def _delete_asset_by_path(path):
     for p in Asset.query.filter(Asset.path == path):
         _delete_asset(p)
 
 @celery.task(mame="Delete asset")
-def delete_asset(img_path, commit=True):
+def delete_asset_by_path(img_path, commit=True):
     logger.debug("Delete asset %s", img_path)
     path = get_rel_path(img_path)
-    delete_asset_by_path(path)
+    _delete_asset_by_path(path)
 
     Status.query.first().sections_dirty = True
     if commit:
@@ -569,22 +622,88 @@ def schedule_next_compute_sections(minutes=None):
               schedule_next_compute_sections.si().set(queue="beat"))
     c.apply_async(countdown=compute_sections_schedule*60)
 
+def _create_jpg_preview(asset:Asset, max_dim:int, low_res=True):
+    full_path = get_full_path(asset.path)
+    if asset.asset_type == AssetType.jpg_photo:
+        # not clear but it seems to be only necessary for jpg
+        image = read_and_transpose(full_path)
+    else:
+        # solves orientation in thumbnails
+        image = Image.open(full_path)
+        #out = io.BytesIO()
+        #image.save(out, format="JPEG")
+        #image = Image.open(out)
 
-@celery.task
-def create_preview(asset_path, max_dim, low_res=True):
-    logger.debug("Create Preview for %s in size %d, also in low resolution %s", asset_path, max_dim, low_res)
-    path = get_full_path(asset_path)
-    image = read_and_transpose(path)
-    image.thumbnail((max_dim, max_dim), Image.ANTIALIAS)
-    preview_path = get_preview_path(asset_path, str(max_dim), "high_res")
+    ar = image.width / image.height
+    width = max_dim * ar
+    image.thumbnail((width, max_dim), Image.ANTIALIAS)
+    preview_path = get_preview_path(asset.path, ".jpg", str(max_dim), "high_res")
+    #print(preview_path)
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     image.save(preview_path, optimize=True, progressive=True)
 
     if low_res:
-        preview_path_low_res = get_preview_path(asset_path, str(max_dim), "low_res")
+        preview_path_low_res = get_preview_path(asset.path, ".jpg", str(max_dim), "low_res")
         os.makedirs(os.path.dirname(preview_path_low_res), exist_ok=True)
-        image.thumbnail((max_dim/10, max_dim/10), Image.ANTIALIAS)
+        image.thumbnail((width/10, max_dim/10), Image.ANTIALIAS)
         image.save(preview_path_low_res, optimize=True, quality=20, progressive=False)
+
+def _create_video_preview(asset:Asset, max_dim:int) -> None:
+    path = get_full_path(asset.path)
+
+    if asset.asset_type == AssetType.mov_video: 
+        logger.debug("Convert mov to mp4 %s", asset.path)
+        # convet mov to mp4 to have it playable in the browser
+        preview_path = get_preview_path(asset.path, ".mp4", "video", "full")
+        os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+        ffmpeg.input(path).output(preview_path, loglevel="error", vcodec="libx264", acodec="aac", pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run()
+
+    # next generate a static jpg preview image
+    logger.debug("Create JPG preview %s", asset.path)
+    preview_path = get_preview_path(asset.path, ".jpg", str(max_dim), "high_res")
+    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, 
+        movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
+
+    # also generate a very low res resolution preview jpg for fast loading
+    preview_path = get_preview_path(asset.path, ".jpg", str(max_dim), "low_res")
+    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    ffmpeg.input(path).filter("scale", -2, max_dim/10).output(preview_path, map_metadata=0, 
+        movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
+
+    # finally generate a preview mp4 and strip the audio
+    logger.debug("Create mp4 preview for hovering %s", asset.path)
+    preview_path = get_preview_path(asset.path, ".mp4", "video", "preview")
+    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, loglevel="error",
+                                                                      vcodec="libx264",
+                                                                      movflags="+faststart +use_metadata_tags", 
+                                                                      pix_fmt="yuv420p", t=5).overwrite_output().global_args("-an").run()
+
+
+@celery.task
+def create_photo_preview(asset:Asset):
+    logger.debug("Create Photo Preview for %s", asset.path)
+    _create_jpg_preview(asset, 2160, False)
+    _create_jpg_preview(asset, 400, True)
+
+@celery.task
+def create_video_preview(asset:Asset):
+    logger.debug("Create Video Preview for %s", asset.path)
+    _create_video_preview(asset, 400)
+
+
+@celery.task
+def create_preview(asset_id:int):
+    asset = Asset.query.get(asset_id)
+    if asset.is_photo():
+        _create_jpg_preview(asset, 2160, False)
+        _create_jpg_preview(asset, 400, True)
+    elif asset.is_video():
+        _create_video_preview(asset, 400)
+    else:
+        logger.error("create_preview: Something went wrong. Should be a photo or a video")
+
 
 @celery.task(name="Recreate Previews")
 def recreate_previews(dimension=400, low_res=True):

@@ -21,7 +21,19 @@
             <v-col style="position: relative" fill-height>
                 <transition-group tag="div" class="img-slider" :name="transition">
                     <div :key="photo.id" :id="photo.id" class="img-cont"> 
-                        <img :src="photoUrl(photo)" >
+                        <img :src="photoUrl(photo)" v-if="photo.asset_type == 'jpg' || photo.asset_type =='heic'">
+                        <span v-else >
+                            <v-icon v-if="videoMode == 'pause' && mousemove" style="z-index: 20; position: absolute; top: 50%; left: 50%;"  x-large @click="playVideo(true)">
+                                mdi-play-circle
+                            </v-icon>
+                            <v-icon v-if="videoMode == 'play' && mousemove" style="z-index: 20; position: absolute; top: 50%; left: 50%;"  x-large @click="playVideo(false)">
+                                mdi-pause-circle
+                            </v-icon>
+                            
+                            <video ref="video" style="width:100%; height: 100%" @play="videoMode='play'" @pause="videoMode='pause'">
+                                <source :src="photoUrl(photo)" type="video/mp4">
+                            </video>
+                        </span>
                         <!-- these many fade blocks can probably all go into one, to be done later -->
                         <v-fade-transition>
                             <v-icon v-if="mousemove" style="position: absolute; top: 50%; left: 10px;"  large @click="left()">
@@ -154,7 +166,8 @@
                                         <v-list-item-subtitle v-html="time(photo.created)"></v-list-item-subtitle>
                                     </v-list-item-content>
                                 </v-list-item>
-                                <v-list-item two-line>
+                                <!-- repair this; information is also available for Videos but not as exif -->
+                                <v-list-item two-line v-if="isPhoto">
                                     <v-list-item-avatar>
                                         <v-icon>mdi-camera</v-icon>
                                     </v-list-item-avatar>
@@ -166,7 +179,7 @@
                                         </v-list-item-subtitle>
                                     </v-list-item-content>            
                                 </v-list-item>
-                                <v-list-item three-line>
+                                <v-list-item three-line v-if=isPhoto>
                                     <v-list-item-avatar>
                                         <v-icon>mdi-camera-iris</v-icon>
                                     </v-list-item-avatar>
@@ -278,6 +291,7 @@
                 timedFunction: Object,
                 showFullscreenBt: false,
                 // fullscreen: false
+                videoMode: 'pause'
             }
         },
 
@@ -300,6 +314,10 @@
                 else
                     return "fade-transition";
 
+            },
+
+            isPhoto() {
+                return this.photo.asset_type == 'jpg' || this.photo.asset_type == 'heic';
             }
         },
         watch: {
@@ -324,6 +342,14 @@
         },
 
         methods: {
+
+            playVideo(mode) {
+                if (mode)
+                    this.$refs.video.play();
+                else
+                    this.$refs.video.pause();
+
+            },
 
             /*
             This does not work yet
@@ -411,7 +437,10 @@
             },
             photoUrl(photo) {
                 if (photo)
-                    return encodeURI("/assets/full/" + photo.path);
+                    if (photo.asset_type == "mp4" || photo.asset_type == "mov")
+                        return encodeURI("/assets/video/full/" + photo.path + ".mp4");
+                    else
+                        return encodeURI("/assets/full/" + photo.path);
             },
             faceUrl(id) {
                 return "/api/face/preview/80/" + id + ".png";
@@ -425,6 +454,9 @@
                 this.$emit('right')
             },
             close() {
+
+                if (this.photo.asset_type == 'mov' || this.photo.asset_type =='mp4')
+                    this.$refs.video.pause();
                 this.$emit('close')
             },
            

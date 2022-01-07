@@ -77,7 +77,7 @@
         },
 
         mounted() {
-            // console.log("Segment root: ", this.$parent.$parent.$parent.$el)
+            console.log("Segment root: ", this.$parent.$parent.$parent.$el)
         },
 
         computed: {

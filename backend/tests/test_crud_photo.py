@@ -1,3 +1,5 @@
+import context
+
 from timeline.domain import Asset, Status, Face
 import unittest
 from timeline.app import create_app
@@ -24,6 +26,7 @@ class TestCrudAndFace(unittest.TestCase):
         with self.app.app_context():
             db.session.remove()
             db.drop_all()
+
 
     def test_create_asset(self):
         with self.app.app_context():
@@ -70,3 +73,7 @@ class TestCrudAndFace(unittest.TestCase):
             # should show Merkel and Macron
             # face_image1.show()
             # face_image2.show()
+
+
+if __name__ == '__main__':
+    unittest.main()
