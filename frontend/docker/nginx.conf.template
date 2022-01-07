@@ -54,11 +54,13 @@ http {
     location ~ "^/assets/video/full/(?<path>.+)$" {
         expires 30d;
         alias /preview/video/full/$path;
-
-    location /assets/video/preview {
+    }
+    
+    location ~ "^/assets/video/preview/(?<path>.+)$" {
         expires 30d;
-        alias /preview/video/preview
-        try_files $uri @generate_preview;
+        alias /preview/video/preview/$path;
+    }
+
 
     location @generate_preview {
         proxy_pass http://webapp:5000$request_uri;
