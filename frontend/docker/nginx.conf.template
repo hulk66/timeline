@@ -36,20 +36,21 @@ http {
 
     location ~ "^/assets/full/(?<path>.+)$" {
         expires 30d;
-        alias /preview/2160/high_res/$path;
+        alias /preview/2160/high_res/$path.jpg;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }
 
-    location /assets/preview {
+    location ~ "^/assets/preview/(?<path>.+)$" {
         expires 30d;
-        alias /preview;
-        try_files $uri @generate_preview;
-
-        # auth_basic "Protected area";
-        # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
-
+        alias /preview/$path.jpg;
     }
+
+    #location /assets/preview {
+    #    expires 30d;
+    #    alias /preview;
+    #    try_files $uri @generate_preview;
+    #}
 
     location ~ "^/assets/video/full/(?<path>.+)$" {
         expires 30d;
