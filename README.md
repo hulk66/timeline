@@ -40,8 +40,12 @@ a resolved address along with a little map and some important Exif data)
 
 ## New 0.90
 * Now also reading and displaying (iPhone) HEIC files 
-* Addionally also reading and displaying MOV and MP4 files. Both types will be playable in the Browser. Similar to Google Photos a preview 
-of the video files will played back when hovering over a video
+* Addionally also reading and displaying MOV and MP4 files. MOPV files will be converted to MP4, so both types will be playable in the Browser. Similar to Google Photos a preview of the video files will played back when hovering over a video
+
+<video>
+   <source src="assets/timeline_video.mp4" type="video/mp4">
+<video>
+
 
 
 ## Next to come
