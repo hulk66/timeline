@@ -99,7 +99,7 @@ def crop_face(image, max_dim, x, y, w, h):
 
 
 def save_preview(id, dim, image):
-    preview_path = get_preview_path(str(id) + ".png", "faces/" + str(dim))
+    preview_path = get_preview_path(str(id), ".png", "faces", str(dim))
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     image.save(preview_path)
 

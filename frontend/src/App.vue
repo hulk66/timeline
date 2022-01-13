@@ -536,7 +536,7 @@
                 albums: [],
                 back: false,
                 goBackFunction: null,
-                defaultTitle: "Timeline asset Organizer",
+                defaultTitle: "Timeline Photo and Video Organizer",
                 deleteassetsDialog: false,
                 deleteAlbumDialog: false,
                 snackbar: false,

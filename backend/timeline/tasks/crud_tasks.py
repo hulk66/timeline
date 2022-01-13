@@ -144,6 +144,12 @@ def create_asset(path:str, commit=True):
     db.session.add(asset)
     # sort_asset_into_date_range(asset, commit = False)
     add_to_last_import(asset)
+    if commit:
+        # perform already a commit, so that in case a parallel worker inserts something in
+        # the section and we get a duplicate error, the photo is already there
+        # and will be inserted in the next round
+        db.session.commit()
+
     insert_asset_into_section(asset)
 
     if commit:
@@ -248,7 +254,7 @@ def insert_asset_into_section(asset):
             if asset.created < section.oldest_date:
                 section.oldest_date = asset.created 
     else:
-        # we have found a section where the phot is more recent than the oldest asset of the section
+        # we have found a section where the photo is more recent than the oldest asset of the section
         # now check if the asset is also more recent than the newest phot
         if asset.created > section.newest_date:
             section.newest_date = asset.created
@@ -651,24 +657,27 @@ def _create_jpg_preview(asset:Asset, max_dim:int, low_res=True):
 def _create_video_preview(asset:Asset, max_dim:int) -> None:
     path = get_full_path(asset.path)
 
+    # For the conversion with ffmpeg limit everything to just 1 thread
+    # otherwise it will span multiple thread per conversion
+    # this wil slow down the system too much
     if asset.asset_type == AssetType.mov_video: 
         logger.debug("Convert mov to mp4 %s", asset.path)
         # convet mov to mp4 to have it playable in the browser
         preview_path = get_preview_path(asset.path, ".mp4", "video", "full")
         os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-        ffmpeg.input(path).output(preview_path, loglevel="error", vcodec="libx264", acodec="aac", pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run()
+        ffmpeg.input(path).output(preview_path, threads=1, loglevel="error", vcodec="libx264", acodec="aac", pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run()
 
     # next generate a static jpg preview image
-    logger.debug("Create JPG preview %s", asset.path)
-    preview_path = get_preview_path(asset.path, ".jpg", str(max_dim), "high_res")
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, 
-        movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
+    #logger.debug("Create JPG preview %s", asset.path)
+    #preview_path = get_preview_path(asset.path, ".jpg", str(max_dim), "high_res")
+    #os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    #ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1, 
+    #    movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
 
     # also generate a very low res resolution preview jpg for fast loading
     preview_path = get_preview_path(asset.path, ".jpg", str(max_dim), "low_res")
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).filter("scale", -2, max_dim/10).output(preview_path, map_metadata=0, 
+    ffmpeg.input(path).filter("scale", -2, max_dim/10).output(preview_path, map_metadata=0, threads=1, 
         movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
 
     # finally generate a preview mp4 and strip the audio
@@ -676,7 +685,7 @@ def _create_video_preview(asset:Asset, max_dim:int) -> None:
     preview_path = get_preview_path(asset.path, ".mp4", "video", "preview")
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, loglevel="error",
-                                                                      vcodec="libx264",
+                                                                      vcodec="libx264", threads=1, 
                                                                       movflags="+faststart +use_metadata_tags", 
                                                                       pix_fmt="yuv420p", t=5).overwrite_output().global_args("-an").run()
 

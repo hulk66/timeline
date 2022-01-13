@@ -15,35 +15,45 @@
  * GNU General Public License for more details.
  */
 <template>
-    <span @mouseover="hover = true" 
-            @mouseleave="hover = false">
-        <div @click="clickPhoto" v-if="isVideo && hover" class="video-container" >
-            <video autoplay loop height="100%" width="100%">
+    <span>
+        <div @click="clickPhoto" v-if="isVideo" class="video-container" 
+            @mouseover="play" 
+            @mouseleave="stop">
+            <video ref="video" loop muted height="100%" width="100%">
                 <source :src="videoSrc" type="video/mp4">
             </video>
-            <div class="gradient full">
-            <v-checkbox class="top-left" 
-                v-if="selectionAllowed"
-                dark
-                v-model="selected"
-                @change="selectPhoto"
-                @click.shift="clickMultiple"
-                @click="clickSingle"
-                @click.native.stop> 
-            </v-checkbox> 
-                <v-rating 
-                class="bottom-left"
-                background-color="grey" 
-                color="white" 
-                small 
-                length="5"
-                dense 
-                @input="ratePhoto"
-                @click.native.stop
-                clearable
-                :value="asset.stars">
-            </v-rating>
-            </div>      
+
+            <v-fade-transition>
+
+            <v-icon v-if="!hover" class="top-right" color="white">
+                mdi-play-circle-outline
+            </v-icon>
+
+
+                <div v-if="hover" class="gradient full">
+                <v-checkbox class="top-left" 
+                    v-if="selectionAllowed"
+                    dark
+                    v-model="selected"
+                    @change="selectPhoto"
+                    @click.shift="clickMultiple"
+                    @click="clickSingle"
+                    @click.native.stop> 
+                </v-checkbox> 
+                    <v-rating 
+                    class="bottom-left"
+                    background-color="grey" 
+                    color="white" 
+                    small 
+                    length="5"
+                    dense 
+                    @input="ratePhoto"
+                    @click.native.stop
+                    clearable
+                    :value="asset.stars">
+                </v-rating>
+                </div>     
+            </v-fade-transition> 
         </div> 
         <v-img v-else @click="clickPhoto" 
                 :src="thumbSrc"
@@ -51,6 +61,8 @@
                 :class="markedClass"
                 transition="true"
                 contains
+                @mouseover="hover = true" 
+                @mouseleave="hover = false"
                 ref="img">
 
             <div class="container fill-height">
@@ -150,6 +162,15 @@
 
         methods: {
 
+            play() {
+                this.hover = true;
+                this.$refs.video.play();
+            },
+
+            stop() {
+                this.hover = false;
+                this.$refs.video.pause();
+            },
 
             ratePhoto(v) {
                 this.$emit("set-rating", this.index, v);
