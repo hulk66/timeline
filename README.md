@@ -92,16 +92,16 @@ Photos can be selected and added to existing or new Albums
 The easiest way is to use Docker, resp. docker-compose 
 1. `wget https://raw.githubusercontent.com/hulk66/timeline/main/docker-compose.yml` 
 2. `wget https://raw.githubusercontent.com/hulk66/timeline/main/env`, modify the env file according to your needs and save it as `.env`. The following things have to be changed:
-   1. `PHOTO_PATH` - this points to the directory where you photos are located. Timeline will recursively scan all Photos (at the moment only JPG). This is read-only: Timeline will not change anything in here.
+   1. `ASSET_PATH` - this points to the directory where you photos are located. Timeline will recursively scan all Photos (at the moment only JPG). This is read-only: Timeline will not change anything in here.
    2. `PREVIEW_PATH`- For performance reasons this directory is used to generate all kinds of previews.
    3. `LOG_PATH`- This is where Timeline does the logging. Most important here is the `process_worker.log`.
    4. `DATABASE_DATA` - Here is where all data from mariaDB is saved
    5. `RABBITMQ_DATA`- Same for RabbitMQ which is used as the message broker
-   6. `WORKERS_PROCESS`- Number of workers to be used. This depends on the machine you are running Timeline on. For everything below 8GB RAM only 2 or 3 workers are recommend. If you have more RAM then also 4-6 might be ok
+   6. `WORKERS_PROCESS`- Number of workers to be used. This depends on the machine you are running Timeline on. For everything below 8GB RAM only 2 or 3 workers are recommended. If you have more RAM then also 4-6 might be ok
    7. `DB_SUPER_USER_PW` - is the password for to access the database (via adminer)
 
 
-   If used with Docker please specify all paths absolute   
+   If used with Docker please specify all paths absolute.   
 
    Important: **All directories have to exist**. They won't be created. 
 
