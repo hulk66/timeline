@@ -297,7 +297,7 @@
                     -->
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title>Assets to read</v-list-item-title>
+                            <v-list-item-title>Assets to process</v-list-item-title>
                         </v-list-item-content>
                         <v-list-item-action v-text="process_count"></v-list-item-action>
                     </v-list-item>
