@@ -21,7 +21,7 @@
             <v-col style="position: relative" fill-height>
                 <transition-group tag="div" class="img-slider" :name="transition">
                     <div :key="photo.id" :id="photo.id" class="img-cont"> 
-                        <img :src="photoUrl(photo)" v-if="photo.asset_type == 'jpg' || photo.asset_type =='heic'">
+                        <img :src="photoUrl(photo)" v-if="isPhoto">
                         <span v-else >
                             <v-icon v-if="videoMode == 'pause' && mousemove" style="z-index: 20; position: absolute; top: 50%; left: 50%;"  x-large @click="playVideo(true)">
                                 mdi-play-circle
@@ -31,7 +31,7 @@
                             </v-icon>
                             
                             <video ref="video" style="width:100%; height: 100%" @play="videoMode='play'" @pause="videoMode='pause'">
-                                <source :src="photoUrl(photo)" type="video/mp4">
+                                <source :src="videoSource" type="video/mp4" v-on:error="videoNotFound()">
                             </video>
                         </span>
                         <!-- these many fade blocks can probably all go into one, to be done later -->
@@ -291,7 +291,9 @@
                 timedFunction: Object,
                 showFullscreenBt: false,
                 // fullscreen: false
-                videoMode: 'pause'
+                videoMode: 'pause',
+                videoSource: ""
+
             }
         },
 
@@ -322,6 +324,9 @@
         },
         watch: {
             photo(p) {
+                if (p.asset_type == "mov" || p.asset_type == 'mp4')
+                    this.videoSource = encodeURI("/assets/video/full/" + p.path + ".mp4");
+
                 if (this.info)
                     this.loadData(p);
             },            
@@ -393,6 +398,10 @@
                 })
             },
 
+            videoNotFound() {
+                this.videoSource = "/404.mp4";
+                this.$refs.video.load();
+            },
             loadData(p) {
                 let self = this;
                 this.gps = null;

@@ -19,7 +19,7 @@ import datetime
 from timeline.util.gps import get_labeled_exif
 import flask
 import io
-from flask import Blueprint
+from flask import Blueprint, abort
 
 from timeline.tasks.crud_tasks import create_preview
 from timeline.util.image_ops import exif_transpose
@@ -84,15 +84,21 @@ def asset(path):
         else:
             return flask.redirect('/404')
 
+def send_video(p):
+    if os.path.exists(p):
+        f = open(p, "rb")
+        return flask.send_file(f, mimetype="video/mp4")
+    else:
+        abort(404)
+
+
 @blueprint.route('/video/full/<path:path>', methods=['GET'])
 def video(path):
     logger.debug("return video")
     path,_ = os.path.splitext(path)
     asset = asset_by_path(path)
     p = get_preview_path(asset.path, ".mp4", "video", "full")
-    f = open(p, "rb")
-    return flask.send_file(f, mimetype="video/mp4")
-
+    return send_video(p)
 
 @blueprint.route('/video/preview/<path:path>', methods=['GET'])
 def video_preview(path):
@@ -100,8 +106,7 @@ def video_preview(path):
     path,_ = os.path.splitext(path)
     asset = asset_by_path(path)
     p = get_preview_path(asset.path, ".mp4", "video", "preview")
-    f = open(p, "rb")
-    return flask.send_file(f, mimetype="video/mp4")
+    return send_video(p)
 
 
 @blueprint.route('/preview/<int:max_dim>/<resolution>/<path:path>', methods=['GET'])

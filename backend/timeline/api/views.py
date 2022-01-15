@@ -21,6 +21,7 @@ import random
 from datetime import datetime
 import uuid
 import flask
+import ffmpeg
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
@@ -148,15 +149,24 @@ def set_rating(asset_id, rating):
 
 @blueprint.route('/asset/preview/<int:max_dim>/<int:id>.jpg', methods=['GET'])
 def asset_preview(id, max_dim):
+    logger.debug("get preview for %i", id)
     asset = Asset.query.get(id)
     if asset is None:
         return flask.redirect('/404')
 
     path = get_full_path(asset.path)
-    image = read_and_transpose(path)
-    size = resize_width(image, max_dim)
-    image.thumbnail(size)
-
+    if asset.is_photo():
+        image = read_and_transpose(path)
+        size = resize_width(image, max_dim)
+        image.thumbnail(size)
+    else:
+        logger.debug("requested asset is a video")
+        preview_path = get_preview_path(asset.path, ".jpg", str(max_dim), "high_res")
+        if not os.path.exists(preview_path):
+            logger.debug("create a preview imaage for the video")
+            os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+            ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1, movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
+        image = Image.open(preview_path) 
     return send_image(image, False)
 
 

@@ -17,10 +17,10 @@
 <template>
     <span>
         <div @click="clickPhoto" v-if="isVideo" class="video-container" 
-            @mouseover="play" 
-            @mouseleave="stop">
-            <video ref="video" loop muted height="100%" width="100%">
-                <source :src="videoSrc" type="video/mp4">
+            @mouseover="play()" 
+            @mouseleave="stop()">
+            <video ref="video" loop muted height="100%" width="100%" >
+                <source :src="videoSource" type="video/mp4" v-on:error="notFound()">
             </video>
 
             <v-fade-transition>
@@ -122,19 +122,19 @@
                 hover: false,
                 // visible: false,
                 marked: false,
-                selected: false
+                selected: false,
+                videoSource: ""
             };
         },
 
 
         mounted() {
+            if (this.isVideo) {
+                this.videoSource = encodeURI("/assets/video/preview/" + this.asset.path + ".mp4");
+            }
         },
 
         computed: {
-            videoSrc() {
-                return encodeURI("/assets/video/preview/" + this.asset.path + ".mp4");
-
-            },
             thumbSrc() {
                 return encodeURI("/assets/preview/400/high_res/" + this.asset.path);
             },
@@ -161,6 +161,11 @@
         },
 
         methods: {
+
+            notFound() {
+                this.videoSource = '/404.mp4';
+                this.$refs.video.load();
+            },
 
             play() {
                 this.hover = true;

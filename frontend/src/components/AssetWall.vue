@@ -701,7 +701,7 @@
             },
             getNextSection(sectionIndex, dir) {
                 let next_section_id = sectionIndex + dir;
-                if (next_section_id < 0 || next_section_id > this.getLastSectionIndex())
+                if (next_section_id <= 0 || next_section_id > this.getLastSectionIndex())
                     return this.$refs['section' + sectionIndex][0]
 
                 let el = this.$refs['section' + next_section_id]
