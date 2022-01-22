@@ -39,7 +39,8 @@ from celery import chain
 from pillow_heif import register_heif_opener
 import exiftool
 import ffmpeg
-import io
+from celery.exceptions import SoftTimeLimitExceeded
+
 
 logger = logging.getLogger(__name__)
 register_heif_opener()
@@ -92,7 +93,7 @@ def create_asset(path: str, commit=True):
     asset.directory, asset.filename = os.path.split(img_path)
     _, ext = os.path.splitext(asset.filename)
     ext = ext[1:].lower()
-    if ext in ("jpg", "JPEG"):
+    if ext in ("jpg", "jpeg"):
         asset.asset_type = AssetType.jpg_photo
     elif ext == "heic":
         asset.asset_type = AssetType.heic_photo
@@ -252,8 +253,8 @@ def insert_asset_into_section(asset):
             Section.newest_date.desc()).first()
         if not section:
             section = Section()
-            section.newest_date = datetime.today()
-            section.oldest_date = asset.created
+            # section.newest_date = datetime.today()
+            # section.oldest_date = asset.created
             db.session.add(section)
         else:
             if asset.created < section.oldest_date:
@@ -349,7 +350,7 @@ def sort_asset_into_date_range_task(asset_id):
     asset = Asset.query.get(asset_id)
     if not asset:
         logger.error(
-            "Something is wrong. asset with id %i not found. Deleted already?")
+            "Something is wrong. asset with id %d not found. Deleted already?")
         return
     sort_asset_into_date_range(asset, commit=True)
 
@@ -507,7 +508,7 @@ def new_import():
     album.assets = []
 
 
-@celery.task(ignore_result=True)
+@celery.task(ignore_result=True, soft_time_limit=900)
 def compute_sections():
     logger.debug("Sectioning assets")
 
@@ -525,51 +526,148 @@ def compute_sections():
 
     batch_size = 200
     current_section = 1
-
     # Get all assets sorted descending, meaning the newest first
     assets = Asset.query.filter(Asset.ignore == False).order_by(
-        Asset.created.desc()).limit(batch_size).all()
-    while len(assets) > 0:
-        # get the date of the oldest asset of that batch
-        oldest_asset = assets[-1]
-        # Find all assets that are on the same day as the oldest asset
-        oldest_asset_prev_day = date_to_datetime(
-            oldest_asset.created.date() - timedelta(days=1))
-        # now find all assets that are older as the oldest asset from batch but newer as the next day
-        same_day_assets = Asset.query.filter(and_(
-            Asset.ignore == False, Asset.created < oldest_asset.created, Asset.created > oldest_asset_prev_day)).all()
-
-        # these assets will be added to the same section, so that each setion always start with a new day
-        logger.debug("Sectioning %i assets", len(
-            assets) + len(same_day_assets))
+        Asset.created.desc()).limit(batch_size)
+    while assets.count() > 0:
         section = Section.query.get(current_section)
         if not section:
             logger.debug("Creating new Section")
             section = Section()
+            section.id = current_section
             db.session.add(section)
-            # section.id = current_section
 
-        #Asset.query.filter( and_(asset.ignore == False, asset.created > oldest_asset.created, asset.created < oldest_asset_prev_day)).update( {asset.section: section}, synchronize_session=False)
+        oldest_asset = assets[-1]
 
         for asset in assets:
             asset.section = section
-        for asset in same_day_assets:
-            asset.section = section
-        section.newest_date = assets[0].created
-        if len(same_day_assets) > 0:
-            section.oldest_date = same_day_assets[-1].created
-        else:
-            section.oldest_date = oldest_asset.created
-        assets = Asset.query \
-            .filter(and_(Asset.ignore == False, Asset.created <= oldest_asset_prev_day)) \
-            .order_by(Asset.created.desc()).limit(batch_size).all()
-        current_section += 1
 
-    # Section.query.filter(Section.id >= current_section).delete()
+        logger.debug("Initial Sectioning %d", current_section)    
+        current_section += 1
+        assets = Asset.query \
+            .filter(and_(Asset.ignore == False, Asset.section != section, Asset.created <= oldest_asset.created)) \
+            .order_by(Asset.created.desc()).limit(batch_size)
+
+    # now we have section with batch_size photos in it. Next we have to make sure
+    # a section ends always with all photos of the last day in it
+
+    logger.debug("Finetuning sections")
+    sections = Section.query.order_by(Section.id.asc())
+    last_day_of_prev_section = None
+    previous_section = None
+    for section in sections:
+        logger.debug("Finetuning section %d", section.id)
+
+        # get all assets from current section that are taken on the same day as the last one of the previous section
+        if last_day_of_prev_section:
+            next_day = last_day_of_prev_section + timedelta(days=1)
+            same_day_assets = Asset.query.filter(and_(Asset.section == section, Asset.ignore == False, Asset.created >= last_day_of_prev_section, Asset.created < next_day)).all()
+            if len(same_day_assets) > 0:
+                logger.debug("Moving %d assets from section %d to section %d", len(same_day_assets), section.id, previous_section.id)
+                for asset in same_day_assets:
+                    asset.section = previous_section
+        previous_section = section
+        # get the oldest/last asset of the current section
+        last_asset_of_this_section = Asset.query.filter(Asset.section == section).order_by(Asset.created.asc()).first()
+        if last_asset_of_this_section:
+            last_day_of_prev_section = date_to_datetime(last_asset_of_this_section.created)
+
+    # Finally remove all empty sections and tidy up the numbering
+    current_section = 1
+    sections = Section.query.order_by(Section.id.asc()).all()
+    for section in sections:
+        assets = Asset.query.filter(Asset.section == section).all()
+        if len(assets) > 0:
+            if current_section != section.id:
+                new_section = Section()
+                new_section.id = current_section
+                db.session.add(new_section)
+                for asset in assets:
+                    asset.section = new_section
+                db.session.delete(section)            
+            current_section += 1
+        else:
+            logger.debug("no assets in section %i, removing it", section.id)
+            db.session.delete(section)
+
     status.in_sectioning = False
     status.sections_dirty = False
     db.session.commit()
-    logger.debug("Sectioning done")
+    logger.debug("Sectioning done - ok")
+
+
+
+
+@celery.task(ignore_result=True, soft_time_limit=900)
+def compute_sections_old2():
+    logger.debug("Sectioning assets")
+
+    status = Status.query.first()
+
+    if not status.sections_dirty and Asset.query.filter(Asset.section == None).count() == 0:
+        logger.debug("Sectioning assets - nothing to do")
+        status.next_import_is_new = True
+        db.session.commit()
+        return
+    sort_old_assets()
+
+    status.in_sectioning = True
+    db.session.commit()
+
+    try: 
+        batch_size = 200
+        current_section = 1
+
+        # Get all assets sorted descending, meaning the newest first
+        assets = Asset.query.filter(Asset.ignore == False).order_by(
+            Asset.created.desc()).limit(batch_size).all()
+        while len(assets) > 0:
+            # get the date of the oldest asset of that batch
+            oldest_asset = assets[-1]
+            # Find all assets that are on the same day as the oldest asset
+            oldest_asset_prev_day = date_to_datetime(
+                oldest_asset.created.date() - timedelta(days=1))
+            # now find all assets that are older as the oldest asset from batch but newer as the next day
+            same_day_assets = Asset.query.filter(and_(
+                Asset.ignore == False, Asset.created < oldest_asset.created, Asset.created > oldest_asset_prev_day)).all()
+
+            # these assets will be added to the same section, so that each setion always start with a new day
+            logger.debug("Sectioning %i assets", len(
+                assets) + len(same_day_assets))
+            section = Section.query.get(current_section)
+            if not section:
+                logger.debug("Creating new Section")
+                section = Section()
+                db.session.add(section)
+                # section.id = current_section
+
+            #Asset.query.filter( and_(asset.ignore == False, asset.created > oldest_asset.created, asset.created < oldest_asset_prev_day)).update( {asset.section: section}, synchronize_session=False)
+
+            for asset in assets:
+                asset.section = section
+            for asset in same_day_assets:
+                asset.section = section
+            section.newest_date = assets[0].created
+            if len(same_day_assets) > 0:
+                section.oldest_date = same_day_assets[-1].created
+            else:
+                section.oldest_date = oldest_asset.created
+            assets = Asset.query \
+                .filter(and_(Asset.ignore == False, Asset.created <= oldest_asset_prev_day)) \
+                .order_by(Asset.created.desc()).limit(batch_size).all()
+            current_section += 1
+
+        # Section.query.filter(Section.id >= current_section).delete()
+        status.in_sectioning = False
+        status.sections_dirty = False
+        logger.debug("Sectioning done - ok")
+    except SoftTimeLimitExceeded:
+        logger.error("Compute Sections did not come to an end within 900sec, cleaning up for now")
+        status.in_sectioning = False
+        status.sections_dirty = True
+        logger.debug("Sectioning done - not ok")
+    db.session.commit()
+
 
 
 def compute_sections_old():
@@ -780,7 +878,7 @@ def _resync_asset(asset_id):
     asset = Asset.query.get(asset_id)
     if not asset:
         logger.error(
-            "Something is wrong. asset with id %i not found. Deleted already?", asset_id)
+            "Something is wrong. asset with id %d not found. Deleted already?", asset_id)
         return
     path = get_full_path(asset.path)
     if not os.path.exists(path):

@@ -261,7 +261,7 @@ def all_sections():
     # compute_sections.delay()
 
     q = db.session.query(Section.id.label("id"),    
-        db.func.count(Asset.id).label("num_assets")).join(Asset, Asset.section_id == Section.id)
+        db.func.count(Asset.id).label("num_assets")).join(Asset, Asset.section_id == Section.id).order_by(Section.id.asc())
     q = amend_query(request, q)
 
     sections = q.group_by(Section.id).all()
