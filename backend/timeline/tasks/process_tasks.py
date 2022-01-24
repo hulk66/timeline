@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # retry in some cases the database throws a lock error
 @celery.task(autoretry_for=(InternalError, OperationalError), name="Process asset", ignore_result=True)
 def new_asset(path):
-    if '@eaDir' in path or '@__thumb' in path or "@Recycle" in path:
+    if '@eaDir' in path or '@__thumb' in path or "@Recycle" in path or "@Transcode":
         logger.debug(
             "Not taking %s into account as this is some QNAP or Synology related file", path)
     else:
