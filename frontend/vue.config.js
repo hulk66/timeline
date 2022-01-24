@@ -11,7 +11,14 @@ module.exports = {
   parallel: undefined,
   css: undefined,
 
-
+  configureWebpack:{
+    optimization: {
+      splitChunks: {
+        minSize: 10000,
+        maxSize: 250000,
+      }
+    }
+  },
 
   devServer: {
     disableHostCheck: true,
