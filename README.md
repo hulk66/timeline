@@ -7,7 +7,8 @@ but on you own Device (Server, NAS, PC)
 * It will display photos in a timeline based view, ordered by date (newest photos first) with fast endless scrolling functionality (no paging)
 * Timeline extracts exif data. A limited set is visible in the information panel 
 * It will detect faces on the photos using MTCNN (Tensorflow)
-* Once some faces are detected, they can be named. Other faces are matched against the known faces
+* Once some faces are detected, they can be named. 
+* Other faces are matched against the known faces. This works quite well for most faces except for infant and baby faces where it is not very good in separating them
 * In order to ease up the face classification it clusters similar faces for easy naming
 * It tries also to do some object detection in the photos using Tensorflow; currently using 
 * If GPS information is present in the Exif Data it will do a reverse geo location look to resolve the address

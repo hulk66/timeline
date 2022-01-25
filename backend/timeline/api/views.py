@@ -21,6 +21,7 @@ import random
 from datetime import datetime
 import uuid
 import flask
+from flask import current_app
 import ffmpeg
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
@@ -32,7 +33,8 @@ from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, 
                                         distance_safe,
-                                        find_all_classified_faces,
+                                        find_all_classified_faces, 
+                                        find_all_classified_known_faces,
                                         find_closest, group_faces,
                                         match_all_unknown_faces)
 from timeline.util.image_ops import read_and_transpose, resize_width
@@ -639,11 +641,17 @@ def get_unknown_faces(page, size):
 
 @blueprint.route('/face/nearestKnownFaces/<int:face_id>', methods=['GET'])
 def nearest_known_faces(face_id):
+    logger.debug("Get nearest known faces for %d", face_id)
     face = Face.query.get(face_id)
-    known_faces = find_all_classified_faces()
+    max_faces = int(current_app.config['FACE_CLUSTER_MAX_FACES'])
+
+    known_faces = find_all_classified_known_faces(max_faces) # find_all_classified_faces()
+    logger.debug("Get %d known faces to compare, now comparing", len(known_faces))
     result = {}
     if len(known_faces) > 0:
         id, distance = find_closest(face, known_faces)
+        logger.debug("Comparison done")
+
         nearest = Face.query.get(id).person
         result = {"person": nearest.to_dict(), "distance": distance.item()}
     return flask.jsonify(result)
