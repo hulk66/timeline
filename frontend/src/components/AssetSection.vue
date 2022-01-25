@@ -19,14 +19,16 @@
         Somehow this rootMargin doesn't work. 
         The Intersection handler is called exactly when a card enters or leave the visible space
         Would expect this to happen "500px" earlier but for some reason it's not working
+
     -->
+
     <v-card  
         ref="card"
-        v-intersect="{handler:onIntersect, options: {rootMargin:'1200px', root:this.$parent.$el}}" 
-        :min-height="initialHeight" 
+        v-intersect="{handler:onIntersect, options: {rootMargin:'1200px', root:this.$parent.$el}}"         
+        :min-height="initialHeight"
         elevation="0" > 
         <!--
-        <v-card-title>Section {{section.id}}</v-card-title>
+        <v-card-title>Section {{section.id}}, {{initialHeight}}</v-card-title>
         -->
         <asset-segment  :ref="'segment' + index"
                         v-for="(segment, index) in segments"
@@ -237,10 +239,10 @@
                     
                     this.visible = true;
                     // eslint-disable-next-line no-console
-                    // console.log("Section " + this.section.id + " visible");
+                    console.log("Section " + this.section.id + " visible");
                 } else {
                     // eslint-disable-next-line no-console
-                    // console.log("Section " + this.section.id + " invisible");
+                    console.log("Section " + this.section.id + " invisible");
                     this.photos = [];
                     this.visible = false;
                 }

@@ -15,7 +15,7 @@ from timeline.tasks.crud_tasks import compute_sections
 class TestComputeSections(unittest.TestCase):
 
     def setUp(self):
-        self.app = create_app(testing=True, env="../envs/env.ds")
+        self.app = create_app(testing=True, env="../envs/env.dev")
 
     def test_compute_sections(self):
         compute_sections()

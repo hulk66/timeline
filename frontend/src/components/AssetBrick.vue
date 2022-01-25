@@ -55,21 +55,26 @@
                 </div>     
             </v-fade-transition> 
         </div> 
+        <!--
+        <div v-else @click="clickPhoto"
+                        :class="markedClass"
+                @mouseover="hover = true" 
+                @mouseleave="hover = false">
+                <img :src="thumbSrc">
+        -->
         <v-img v-else @click="clickPhoto" 
                 :src="thumbSrc"
-                :lazy-src="lowRes"
                 :class="markedClass"
-                transition="true"
+                transition="false"
                 contains
                 @mouseover="hover = true" 
                 @mouseleave="hover = false"
                 ref="img">
-
             <div class="container fill-height">
                 <v-icon v-if="isVideo" class="top-right" color="white">
                     mdi-play-circle-outline
                 </v-icon>
-
+            
             <v-fade-transition>
                 <div v-if="hover || selected || marked" class="gradient fill-height container">
 
@@ -97,7 +102,11 @@
                 </div>
                                     
             </v-fade-transition>
+            
             </div>
+        <!--
+        </div>
+        -->
     </v-img>
     </span>
 </template>

@@ -840,7 +840,7 @@
             },
             */
             height(section) {
-                const unwrappedWidth = (3 / 2) * section.num_photos * this.previewHeight * (7 / 10);
+                const unwrappedWidth = (3 / 2) * section.num_assets * this.previewHeight * (7 / 10);
                 const rows = Math.ceil(unwrappedWidth / this.$refs.wall.clientWidth);
                 // const rows = Math.ceil(unwrappedWidth / this.$refs.wall.clientWidth);
                 const height = rows * this.previewHeight;

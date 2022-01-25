@@ -253,8 +253,8 @@ def insert_asset_into_section(asset):
             Section.newest_date.desc()).first()
         if not section:
             section = Section()
-            # section.newest_date = datetime.today()
-            # section.oldest_date = asset.created
+            section.newest_date = datetime.today()
+            section.oldest_date = asset.created
             db.session.add(section)
         else:
             if asset.created < section.oldest_date:
@@ -528,8 +528,8 @@ def compute_sections():
     current_section = 1
     # Get all assets sorted descending, meaning the newest first
     assets = Asset.query.filter(Asset.ignore == False).order_by(
-        Asset.created.desc()).limit(batch_size)
-    while assets.count() > 0:
+        Asset.created.desc()).limit(batch_size).all()
+    while len(assets) > 0:
         section = Section.query.get(current_section)
         if not section:
             logger.debug("Creating new Section")
@@ -542,15 +542,19 @@ def compute_sections():
         for asset in assets:
             asset.section = section
 
+        # check if there are other asset which have by accident the same creation date
+        same_date_assets = Asset.query.filter(and_(Asset.created == oldest_asset.created, Asset.id != oldest_asset.id))
+        for a in same_date_assets:
+            a.section = section
+
         logger.debug("Initial Sectioning %d", current_section)    
         current_section += 1
         assets = Asset.query \
-            .filter(and_(Asset.ignore == False, Asset.section != section, Asset.created <= oldest_asset.created)) \
-            .order_by(Asset.created.desc()).limit(batch_size)
+            .filter(and_(Asset.ignore == False, Asset.created < oldest_asset.created)) \
+            .order_by(Asset.created.desc()).limit(batch_size).all()
 
     # now we have section with batch_size photos in it. Next we have to make sure
     # a section ends always with all photos of the last day in it
-
     logger.debug("Finetuning sections")
     sections = Section.query.order_by(Section.id.asc())
     last_day_of_prev_section = None
@@ -576,7 +580,8 @@ def compute_sections():
     current_section = 1
     sections = Section.query.order_by(Section.id.asc()).all()
     for section in sections:
-        assets = Asset.query.filter(Asset.section == section).all()
+        # print(Asset.query.filter(Asset.section == section).order_by(Asset.created.desc()))
+        assets = Asset.query.filter(Asset.section == section).order_by(Asset.created.desc()).all()
         if len(assets) > 0:
             if current_section != section.id:
                 new_section = Section()
@@ -586,6 +591,10 @@ def compute_sections():
                     asset.section = new_section
                 db.session.delete(section)            
             current_section += 1
+            # get oldest and newest date
+            section.newest_date = assets[0].created
+            section.oldest_date = assets[-1].created
+            
         else:
             logger.debug("no assets in section %i, removing it", section.id)
             db.session.delete(section)
