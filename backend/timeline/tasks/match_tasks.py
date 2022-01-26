@@ -512,11 +512,12 @@ def find_all_classified_known_faces(limit=None):
             and_(
                 Face.person_id == Person.id, 
                 Person.confirmed == True,
-                Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
+                Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE)).with_entities(Face.id, Face.encoding)
     if limit:
         classified_faces = classified_faces.order_by(
             db.func.random()).limit(limit)
-    return classified_faces.with_entities(Face.id, Face.encoding).all()
+    logger.debug(classified_faces)
+    return classified_faces.all()
 
 
 # def find_manual_classified_faces():
