@@ -20,6 +20,8 @@ from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
 import flask
 
+from flask_caching import Cache
+
 class FlaskCelery(Celery):
 
     def __init__(self, *args, **kwargs):
@@ -54,3 +56,4 @@ class FlaskCelery(Celery):
 celery = FlaskCelery()
 celery.conf.worker_proc_alive_timeout = 240.0
 db = SQLAlchemy()
+cache = Cache()

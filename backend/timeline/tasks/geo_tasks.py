@@ -47,7 +47,7 @@ def check_gps(asset_id):
 
     if asset.gps_id:
         logger.debug("asset contains GPS data, scheduling reverse lookup: %s", asset.path)
-        resolve_address.apply_async((asset_id,), queue='analyze')
+        resolve_address.apply_async((asset_id,), queue='geo')
     else:
         logger.debug("asset contains no GPS data, nothing to do: %s", asset.path)
 

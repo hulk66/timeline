@@ -139,6 +139,8 @@ def status():
     result = {
         "process": get_queue_len("process"),
         "analyze": get_queue_len("analyze"),
+        "geo": get_queue_len("geo"),
+        "transcode": get_queue_len("transcode"),
         "totalFaces": numFaces,
         "totalThings": numThings,
         "totalassets": Asset.query.count()

@@ -26,6 +26,8 @@ pyexiftool = "*"
 tensorflow = "~=2.5"
 tensorflow-hub = "*"
 pillow-heif = "*"
+flask-caching = "*"
+redis = "*"
 
 [dev-packages]
 pylint = "*"

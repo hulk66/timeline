@@ -16,7 +16,7 @@ GNU General Public License for more details.
 '''
 
 import flask
-from timeline.extensions import db, celery
+from timeline.extensions import db, celery, cache
 from timeline.api import views, assets, admin, inspect, albums
 import logging
 import pymysql
@@ -24,7 +24,6 @@ import numpy
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 import sqlalchemy
-
 
 def create_app(testing=False, cli=False, env=None):
     """Application factory, used to create application"""
@@ -40,10 +39,8 @@ def create_app(testing=False, cli=False, env=None):
 
     # app.config['SQLALCHEMY_ECHO'] = True
     configure_extensions(app, cli)
-    # configure_apispec(app)
     register_blueprints(app)
-    # init_celery(app)
-
+    
     @app.route('/')
     def index():
         return flask.render_template("index.html")
@@ -63,6 +60,7 @@ def configure_extensions(app, cli):
     db.init_app(app)
     db.create_all(app=app)
     celery.init_app(app)
+    cache.init_app(app)
 
 
 def register_blueprints(app):
@@ -109,3 +107,5 @@ def create_db(app):
         engine.execute("CREATE DATABASE if not exists timeline CHARACTER SET utf8 COLLATE utf8_general_ci")
         engine.execute("CREATE USER IF NOT EXISTS timeline@'%%' IDENTIFIED BY 'timeline'")
         engine.execute("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON timeline.* TO timeline@'%%'")
+
+    

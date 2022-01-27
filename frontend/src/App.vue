@@ -313,13 +313,6 @@
                         <v-list-item-title>Object detection</v-list-item-title>
                         </v-list-item-content>
                         <v-list-item-action v-text="things_count"></v-list-item-action>
-
-                    </v-list-item>
-                    <v-list-item>
-                        <v-list-item-content>
-                        <v-list-item-title>Address Detection</v-list-item-title>
-                        </v-list-item-content>
-                        <v-list-item-action v-text="geo_count"></v-list-item-action>
                     </v-list-item>
                     <v-list-item>
                         <v-list-item-content>
@@ -328,6 +321,19 @@
                         <v-list-item-action v-text="iq_count"></v-list-item-action>
                     </v-list-item>
                     -->
+                    <v-list-item>
+                        <v-list-item-content>
+                        <v-list-item-title>Address Detection</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action v-text="geo_count"></v-list-item-action>
+                    </v-list-item>
+                    <v-list-item>
+                        <v-list-item-content>
+                        <v-list-item-title>Video Transcoding</v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action v-text="transcode_count"></v-list-item-action>
+                    </v-list-item>
+ 
                     </v-list-group>
 
                     <v-list-group @click.stop>
@@ -759,6 +765,8 @@
                     */
                     this.analyze_count = result.data.analyze;
                     this.process_count = result.data.process;
+                    this.geo_count = result.data.geo;
+                    this.transcode_count = result.data.transcode;
                     this.inStatusCheck = false,
                     this.totalFaces = result.data.totalFaces;
                     this.totalThings = result.data.totalThings;

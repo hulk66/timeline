@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 # retry in some cases the database throws a lock error
-@celery.task(autoretry_for=(InternalError, OperationalError), name="Process asset", ignore_result=True)
+@celery.task(autoretry_for=(InternalError, OperationalError), name="Process Asset", ignore_result=True)
 def new_asset(path):
     if '@eaDir' in path or '@__thumb' in path or "@Recycle" in path or "@Transcode" in path:
         logger.debug(
@@ -36,7 +36,7 @@ def new_asset(path):
         if asset_id:
             asset = Asset.query.get(asset_id)
             create_preview(asset_id)
-            celery.send_task("Check GPS", (asset_id,), queue="analyze")
+            celery.send_task("Check GPS", (asset_id,), queue="geo")
             if asset.is_photo():
                 celery.send_task("Face Detection", (asset_id,), queue="analyze")
                 celery.send_task("Object Detection", (asset_id,), queue="analyze")

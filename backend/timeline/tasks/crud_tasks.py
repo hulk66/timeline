@@ -858,8 +858,8 @@ def create_preview(asset_id: int):
         create_jpg_preview(asset, 2160, False)
         create_jpg_preview(asset, 400, True)
     elif asset.is_video():
-        create_preview_video.apply_async( (asset_id, 400), queue="process")
-        create_fullscreen_video.apply_async( (asset_id,), queue="process")
+        create_preview_video.apply_async( (asset_id, 400), queue="transcode")
+        create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
     else:
         logger.error(
             "create_preview: Something went wrong. Should be a photo or a video")

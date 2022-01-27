@@ -42,7 +42,7 @@
                 "-n",
                 "fast@%n",
                 "-Q",
-                "beat,process,analyze"
+                "beat,process,analyze,geo,transcode"
             ]
         },
         {
@@ -77,6 +77,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "justMyCode": false,
         }
 
     ]

@@ -24,11 +24,10 @@ from scipy.spatial.distance import cdist
 from sklearn.cluster import DBSCAN
 from sqlalchemy import and_, or_
 from timeline.domain import Face, Person, Asset, Status
-from timeline.extensions import celery, db
+from timeline.extensions import celery, db, cache
 
 logger = logging.getLogger(__name__)
 MAX_CLUSTER_SIZE = 50
-
 
 def assign_new_person(face, person):
     if not face or not person:
@@ -494,9 +493,18 @@ def match_ignored_faces(face_id):
 
 
 def find_all_ignored_faces():
-    faces = Face.query.filter(Face.ignore == True) \
-        .with_entities(Face.id, Face.encoding).all()
-    return faces
+    logger.debug("Find all ignored faces")
+    result = cache.get("ignored_faces")
+    if not result:
+        logger.debug("Nothing in cache")
+        result = Face.query.filter(Face.ignore == True) \
+                    .with_entities(Face.id, Face.encoding).all()
+        expire_seconds = int(len(result)/1000 * 60)
+        if expire_seconds > 0:
+            cache.set("ignored_faces", result, timeout = expire_seconds)
+    else:
+        logger.debug("Using cached result")
+    return result
 
 
 def find_all_classified_faces():
@@ -507,17 +515,34 @@ def find_all_classified_faces():
 
 
 def find_all_classified_known_faces(limit=None):
-    classified_faces = Face.query.join(Person) \
-        .filter(
-            and_(
-                Face.person_id == Person.id, 
-                Person.confirmed == True,
-                Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE)).with_entities(Face.id, Face.encoding)
-    if limit:
-        classified_faces = classified_faces.order_by(
-            db.func.random()).limit(limit)
-    logger.debug(classified_faces)
-    return classified_faces.all()
+    logger.debug("Find all classified known faces")
+    result = cache.get("all_classified_known_faces")
+    if not result:
+        logger.debug("Nothing in cache")
+        classified_faces = Face.query.join(Person) \
+            .filter(
+                and_(
+                    Face.person_id == Person.id, 
+                    Person.confirmed == True,
+                    Face.confidence_level > Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE)).with_entities(Face.id, Face.encoding)
+        if limit:
+            classified_faces = classified_faces.order_by(
+                db.func.random()).limit(limit)
+        logger.debug(classified_faces)
+        result = classified_faces.all()
+        # we are using explicit cache handling here as I want to
+        # let the cache expire based on the size of the result
+        # Especially in later stages with a couple thousand
+        # known faces this chaching is important whereas not so 
+        # much when there are just a couple of hundret
+        # Basically for every thousand face cache one minute
+
+        expire_seconds = int(len(result)/1000 * 60)
+        if expire_seconds > 0:
+            cache.set("all_classified_known_faces", result, timeout=expire_seconds)
+    else:
+        logger.debug("Using cached result")
+    return result
 
 
 # def find_manual_classified_faces():
