@@ -790,52 +790,6 @@ def create_jpg_preview(asset: Asset, max_dim: int, low_res=True):
                    quality=20, progressive=False)
 
 
-@celery.task(name="Convert Fullscreen Video")
-def create_fullscreen_video(asset_id) -> None:
-    asset = Asset.query.get(asset_id)
-    path = get_full_path(asset.path)
-
-    # For the conversion with ffmpeg limit everything to just 1 thread
-    # otherwise it will span multiple thread per conversion
-    # this wil slow down the system too much
-
-    # convert in any case (mp4 or mov); not all mp4 are playable in the browser
-    logger.debug("Convert to browser compatible mp4 %s", asset.path)
-    # convet mov to mp4 to have it playable in the browser
-    preview_path = get_preview_path(asset.path, ".mp4", "video", "full")
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).output(preview_path, threads=1, loglevel="error", vcodec="libx264", acodec="aac",
-                              pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run()
-
-
-@celery.task(name="Create Preview Video")
-def create_preview_video(asset_id, max_dim: int) -> None:
-    asset = Asset.query.get(asset_id)
-    path = get_full_path(asset.path)
-
-    # next generate a static jpg preview image
-    logger.debug("Create jpg preview %s", asset.path)
-    preview_path = get_preview_path(
-        asset.path, ".jpg", str(max_dim), "high_res")
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1,
-                                                           movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
-
-    # also generate a very low res resolution preview jpg for fast loading
-    preview_path = get_preview_path(
-        asset.path, ".jpg", str(max_dim), "low_res")
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).filter("scale", -2, max_dim/10).output(preview_path, map_metadata=0, threads=1,
-                                                              movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
-
-    # finally generate a preview mp4 and strip the audio
-    logger.debug("Create mp4 preview for hovering %s", asset.path)
-    preview_path = get_preview_path(asset.path, ".mp4", "video", "preview")
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, loglevel="error",
-                                                           vcodec="libx264", threads=1,
-                                                           movflags="+faststart +use_metadata_tags",
-                                                           pix_fmt="yuv420p", t=5).overwrite_output().global_args("-an").run()
 
 
 #@celery.task
@@ -858,8 +812,11 @@ def create_preview(asset_id: int):
         create_jpg_preview(asset, 2160, False)
         create_jpg_preview(asset, 400, True)
     elif asset.is_video():
-        create_preview_video.apply_async( (asset_id, 400), queue="transcode")
-        create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
+        celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode")
+        celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode")
+
+        # create_preview_video.apply_async( (asset_id, 400), queue="transcode")
+        # create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
     else:
         logger.error(
             "create_preview: Something went wrong. Should be a photo or a video")

@@ -92,7 +92,22 @@ services:
       - webapp
       - db
       - rabbitmq
-     
+
+  transcoder:
+    image: hulk66/timeline_be:0.91
+    # build: backend
+    restart: always
+    environment:
+      APP: "transcoder"
+    volumes:
+      - ${ASSET_PATH}:/photos:ro
+      - ${PREVIEW_PATH}:/preview
+      - ${LOG_PATH}:/log
+    depends_on:
+      - webapp
+      - db
+      - rabbitmq
+
   frontend:
     image: hulk66/timeline_fe:0.91
     # build: frontend

@@ -38,13 +38,34 @@
                 "worker",
                 "-P",
                 "prefork",
-                "--autoscale=4,1",
+                "--autoscale=3,1",
                 "-n",
-                "fast@%n",
+                "worker@%n",
                 "-Q",
-                "beat,process,analyze,geo,transcode"
+                "beat,process,analyze,geo"
             ]
         },
+        {
+            "name": "Worker - Video",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/backend",
+            "args": [
+                "-A", 
+                "timeline.celery_video", 
+                "worker",
+                "-P",
+                "prefork",
+                "--autoscale=1,0",
+                "-n",
+                "video@%n",
+                "-Q",
+                "transcode"
+            ]
+        },
+
         {
             "name": "Webapp",
             "type": "python",
