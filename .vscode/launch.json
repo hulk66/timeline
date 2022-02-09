@@ -73,13 +73,14 @@
             "cwd": "${workspaceFolder}/backend",
             "module": "flask",
             "env": {
-                "FLASK_APP": "timeline/app.py",
+                "FLASK_APP": "timeline.app",
                 "FLASK_ENV": "development",
-                "FLASK_DEBUG": "0"
+                "FLASK_DEBUG": "1"
+                
             },
             "args": [
                 "run",
-                "--no-debugger"
+                // "--no-debugger"
             ],
             "jinja": false
         },

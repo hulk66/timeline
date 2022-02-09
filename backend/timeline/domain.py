@@ -114,7 +114,7 @@ class Album(db.Model, SerializerMixin):
     municipality = db.Column(db.String(100))
     camera_make = db.Column(db.String(100))
     thing_id = db.Column(db.String(100))
-
+    
     serialize_rules = ('-assets',)
 
 
@@ -215,6 +215,9 @@ class Asset(db.Model, SerializerMixin):
     score_aesthetic = db.Column(db.Float)
     score_technical = db.Column(db.Float)
     # score_brisque = db.Column(db.Float)
+    video_preview_generated = db.Column(db.Boolean)
+    video_fullscreen_generated = db.Column(db.Boolean)
+
 
     gps = db.relationship(
         "GPS", uselist=False, cascade="all, delete, delete-orphan", 

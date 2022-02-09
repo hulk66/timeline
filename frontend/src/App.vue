@@ -532,6 +532,8 @@
                 */
                 analyze_count: 0,
                 process_count: 0,
+                transcode_count: 0,
+                geo_count: 0, 
                 inStatusCheck: false,
                 about: false,
                 totalFaces: 0,

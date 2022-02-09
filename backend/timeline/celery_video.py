@@ -57,6 +57,8 @@ def create_preview_video(asset_id, max_dim: int) -> None:
                                                            movflags="+faststart +use_metadata_tags",
                                                            pix_fmt="yuv420p", t=5).overwrite_output().global_args("-an").run()
 
+    asset.video_preview_generated = True
+    db.session.commit()
 
 @celery.task(name="Create Fullscreen Video")
 def create_fullscreen_video(asset_id) -> None:
@@ -74,3 +76,7 @@ def create_fullscreen_video(asset_id) -> None:
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     ffmpeg.input(path).output(preview_path, loglevel="error", vcodec="libx264", acodec="aac",
                               pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run()
+
+    asset.video_fullscreen_generated = True
+    db.session.commit()
+

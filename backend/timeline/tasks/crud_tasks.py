@@ -121,7 +121,8 @@ def create_asset(path: str, commit=True):
         _extract_exif_data(asset, image)
     else:
         md = exiftool.get_metadata(path)
-
+        asset.video_preview_generated = False
+        asset.video_fullscreen_generated = False
         asset.width = md.get("QuickTime:ImageWidth")
         asset.height = md.get("QuickTime:ImageHeight")
 

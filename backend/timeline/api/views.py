@@ -294,7 +294,7 @@ def all_sections():
 
     result["max_date"] = most_recent_date
     result["min_date"] = oldest_date
-    result["totalassets"] = total_assets
+    result["totalAssets"] = total_assets
     return flask.jsonify(result)
 
 

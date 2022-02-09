@@ -23,42 +23,43 @@ module.exports = {
   devServer: {
     disableHostCheck: true,
     proxy: {
-      
       '/albums': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/assets': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/admin': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/inspect': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         ws: false,
         changeOrigin: true,
-        autoRewrite: true
+        autoRewrite: true,
       }
     }
+    
+    
   },
 
   "transpileDependencies": [

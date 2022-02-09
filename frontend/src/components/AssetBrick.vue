@@ -15,53 +15,49 @@
  * GNU General Public License for more details.
  */
 <template>
-    <span>
-        <div @click="clickPhoto" v-if="isVideo" class="video-container" 
-            @mouseover="play()" 
-            @mouseleave="stop()">
-            <video ref="video" loop muted height="100%" width="100%" >
-                <source :src="videoSource" type="video/mp4" v-on:error="notFound()">
-            </video>
+    <div > 
+        <div v-if="isVideo" >
+            <div v-if="asset.video_preview_generated" 
+                @click="clickPhoto"  
+                @mouseover="play()" 
+                @mouseleave="stop()" >
+                <video ref="video" loop muted style="max-width:100%" >
+                    <source :src="videoSource" type="video/mp4" >
+                </video>
+                <v-fade-transition>
+                    <v-icon v-if="!hover" class="top-right" color="white">
+                        {{playIcon}}
+                    </v-icon>
 
-            <v-fade-transition>
-
-            <v-icon v-if="!hover" class="top-right" color="white">
-                mdi-play-circle-outline
-            </v-icon>
-
-
-                <div v-if="hover" class="gradient full">
-                <v-checkbox class="top-left" 
-                    v-if="selectionAllowed"
-                    dark
-                    v-model="selected"
-                    @change="selectPhoto"
-                    @click.shift="clickMultiple"
-                    @click="clickSingle"
-                    @click.native.stop> 
-                </v-checkbox> 
-                    <v-rating 
-                    class="bottom-left"
-                    background-color="grey" 
-                    color="white" 
-                    small 
-                    length="5"
-                    dense 
-                    @input="ratePhoto"
-                    @click.native.stop
-                    clearable
-                    :value="asset.stars">
-                </v-rating>
-                </div>     
-            </v-fade-transition> 
+                    <div v-if="hover" class="gradient full">
+                        <v-checkbox class="top-left" 
+                            v-if="selectionAllowed"
+                            dark
+                            v-model="selected"
+                            @change="selectPhoto"
+                            @click.shift="clickMultiple"
+                            @click="clickSingle"
+                            @click.native.stop> 
+                        </v-checkbox> 
+                            <v-rating 
+                            class="bottom-left"
+                            background-color="grey" 
+                            color="white" 
+                            small 
+                            length="5"
+                            dense 
+                            @input="ratePhoto"
+                            @click.native.stop
+                            clearable
+                            :value="asset.stars">
+                        </v-rating>
+                    </div>     
+                </v-fade-transition> 
+            </div>
+            <div v-else class="loadWrapper">
+                <div class="notFound"></div>
+            </div>
         </div> 
-        <!--
-        <div v-else @click="clickPhoto"
-                        :class="markedClass"
-                @mouseover="hover = true" 
-                @mouseleave="hover = false">
-                <img :src="thumbSrc">
-        -->
         <v-img v-else @click="clickPhoto" 
                 :src="thumbSrc"
                 :class="markedClass"
@@ -71,9 +67,6 @@
                 @mouseleave="hover = false"
                 ref="img">
             <div class="container fill-height">
-                <v-icon v-if="isVideo" class="top-right" color="white">
-                    mdi-play-circle-outline
-                </v-icon>
             
             <v-fade-transition>
                 <div v-if="hover || selected || marked" class="gradient fill-height container">
@@ -108,7 +101,7 @@
         </div>
         -->
     </v-img>
-    </span>
+    </div>
 </template>
 <script>
 
@@ -132,7 +125,7 @@
                 // visible: false,
                 marked: false,
                 selected: false,
-                videoSource: ""
+                videoSource: "",
             };
         },
 
@@ -144,6 +137,11 @@
         },
 
         computed: {
+
+            playIcon() {
+                return this.asset.video_fullscreen_generated ? "mdi-play-circle-outline" : "mdi-autorenew";
+            },
+
             thumbSrc() {
                 return encodeURI("/assets/preview/400/high_res/" + this.asset.path);
             },
@@ -152,6 +150,7 @@
                 return encodeURI("/assets/preview/400/low_res/" + this.asset.path);
 
             },
+
             markedClass() {
                 return this.marked ? "marked" : "";
             },
@@ -171,10 +170,6 @@
 
         methods: {
 
-            notFound() {
-                this.videoSource = '/404.mp4';
-                this.$refs.video.load();
-            },
 
             play() {
                 this.hover = true;
@@ -191,7 +186,8 @@
             },
 
             clickPhoto() {
-                this.$emit("click-photo", this.index);
+                if (!this.isVideo || this.asset.video_fullscreen_generated)
+                    this.$emit("click-photo", this.index);
             },
 
             clickSingle() {
@@ -245,7 +241,13 @@
         position: absolute;
         bottom: 8px;
         left: 16px;
-        }
+    }
+
+    .bottom-right {
+        position: absolute;
+        bottom: 8px;
+        right: 20px;
+    }
 
     .top-left {
         position: absolute;
@@ -275,4 +277,28 @@
         background-image: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 52px), linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, transparent 52px);
     }
     
+    .notFound {
+        position: absolute;
+        left: 0%;
+        height: 100%;
+        width: 50%;
+        background-image: linear-gradient(to left, rgba(251,251,251, .05), rgba(251,251,251, .3), rgba(251,251,251, .6), rgba(251,251,251, .3), rgba(251,251,251, .05));
+        background-image: -moz-linear-gradient(to left, rgba(251,251,251, .05), rgba(251,251,251, .3), rgba(251,251,251, .6), rgba(251,251,251, .3), rgba(251,251,251, .05));
+        background-image: -webkit-linear-gradient(to left, rgba(251,251,251, .05), rgba(251,251,251, .3), rgba(251,251,251, .6), rgba(251,251,251, .3), rgba(251,251,251, .05));
+        animation: loading 1s infinite;
+        z-index: 45;
+    }
+
+    .loadWrapper {
+        position: absolute;
+        top:0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        background-color: rgb(211,211,211);
+        background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSJ3aGl0ZSI+CiAgPHBhdGggZD0iTTAgNCBMMCAyOCBMMzIgMjggTDMyIDQgeiBNNCAyNCBMMTAgMTAgTDE1IDE4IEwxOCAxNCBMMjQgMjR6IE0yNSA3IEE0IDQgMCAwIDEgMjUgMTUgQTQgNCAwIDAgMSAyNSA3Ij48L3BhdGg+Cjwvc3ZnPg==") no-repeat center hsl(0, 0%, 80%);
+        z-index: 44;
+        overflow: hidden;
+        border-radius: 5px;
+    }
 </style>

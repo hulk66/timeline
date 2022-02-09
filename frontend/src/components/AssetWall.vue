@@ -23,7 +23,7 @@
                             @mousedown="clearNav()"
                             @keydown="keyboardActionWall($event)">
 
-                            <div v-if="showPhotoCount" class="ma-2 text-h2">{{totalPhotos}} Photos</div>
+                            <div v-if="showPhotoCount" class="ma-2 text-h2">{{totalAssets}} Photos/Videos</div>
 
                             <asset-section
                                     v-for="section in sections"
@@ -145,7 +145,7 @@
                 currDate: "",
                 scrubbing: false,
                 tickDates: [],
-                totalPhotos: 0,
+                totalAssets: 0,
                 prevPhoto: null,
                 nextPhoto: null,
                 imageViewerDirection: 0,
@@ -870,7 +870,7 @@
                     // this.sections = result.data.sections;
                     this.max_date = moment(result.data.max_date);
                     this.min_date = moment(result.data.min_date);
-                    this.totalPhotos = result.data.totalPhotos;
+                    this.totalAssets = result.data.totalAssets;
                     this.total_duration = moment.duration(this.max_date.diff(this.min_date));
                     // this.tickDates = this.getTickDates();
                     this.calcTickPositions();
