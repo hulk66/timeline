@@ -1,9 +1,10 @@
-FROM node:14.15.1 as build-stage
+FROM node:14.15 as build-stage
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY ./ .
 RUN npm run build
+RUN npm audit fix
 
 FROM nginx as production-stage
 RUN mkdir /app

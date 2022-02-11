@@ -15,6 +15,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
+from celery.signals import celeryd_after_setup, worker_process_init, worker_init
+
 from timeline.util.path_util import get_preview_path
 from timeline.util.path_util import get_full_path
 from timeline.domain import Asset
@@ -27,6 +29,23 @@ import ffmpeg
 flask_app = create_app()
 setup_logging("timeline", flask_app, 'video_worker.log')
 logger = logging.getLogger(__name__) 
+
+@worker_process_init.connect
+def init_worker(**kwargs):
+    """
+        When Celery fork's the parent process, the db engine & connection pool is included in that.
+        But, the db connections should not be shared across processes, so we tell the engine
+        to dispose of all existing connections, which will cause new ones to be opend in the child
+        processes as needed.
+        More info: https://docs.sqlalchemy.org/en/latest/core/pooling.html#using-connection-pools-with-multiprocessing
+    """
+    # The "with" here is for a flask app using Flask-SQLAlchemy.  If you don't
+    # have a flask app, just remove the "with" here and call .dispose()
+    # on your SQLAlchemy db engine.
+    logger.debug("Initialize Worker")
+    with flask_app.app_context():
+        db.engine.dispose()
+
 
 @celery.task(name="Create Preview Video")
 def create_preview_video(asset_id, max_dim: int) -> None:

@@ -17,6 +17,7 @@ elif [ $APP = 'worker' ]
       celery -A timeline.celery_process worker --autoscale=$WORKERS_PROCESS,1 -Q beat,process,analyze,geo
 elif [ $APP = 'transcoder' ]
   then 
+      ./wait
       celery -A timeline.celery_video worker --autoscale=1,0 -Q transcode
 
 elif [ $APP = 'watchdog' ]
