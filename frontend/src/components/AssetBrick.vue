@@ -54,8 +54,8 @@
                     </div>     
                 </v-fade-transition> 
             </div>
-            <div v-else class="loadWrapper">
-                <div class="notFound"></div>
+            <div v-else class="notFound">
+                <v-icon class="camera" x-large>mdi-video-outline</v-icon>
             </div>
         </div> 
         <v-img v-else @click="clickPhoto" 
@@ -278,6 +278,7 @@
     }
     
     .notFound {
+        /*
         position: absolute;
         left: 0%;
         height: 100%;
@@ -287,18 +288,30 @@
         background-image: -webkit-linear-gradient(to left, rgba(251,251,251, .05), rgba(251,251,251, .3), rgba(251,251,251, .6), rgba(251,251,251, .3), rgba(251,251,251, .05));
         animation: loading 1s infinite;
         z-index: 45;
+        */
+        position: absolute;
+        left: 0%;
+        height: 100%;
+        width: 100%;
+        background-size: 400% 400%;
+
+        background-image: repeating-linear-gradient(
+            -45deg,
+            hsl(215,30%,60%) 0%,  
+            rgb(240, 247, 240) 15%, 
+            hsl(215,30%,60%) 45%  
+        );
+        animation: diagonal alternate 10s infinite;
     }
 
-    .loadWrapper {
+    @keyframes diagonal {
+        0% {background-position: 0% 50%}
+        100% {background-position: 100% 50%}
+    }
+    .camera {
         position: absolute;
-        top:0px;
-        bottom: 0px;
-        left: 0px;
-        right: 0px;
-        background-color: rgb(211,211,211);
-        background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSJ3aGl0ZSI+CiAgPHBhdGggZD0iTTAgNCBMMCAyOCBMMzIgMjggTDMyIDQgeiBNNCAyNCBMMTAgMTAgTDE1IDE4IEwxOCAxNCBMMjQgMjR6IE0yNSA3IEE0IDQgMCAwIDEgMjUgMTUgQTQgNCAwIDAgMSAyNSA3Ij48L3BhdGg+Cjwvc3ZnPg==") no-repeat center hsl(0, 0%, 80%);
-        z-index: 44;
-        overflow: hidden;
-        border-radius: 5px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
 </style>
