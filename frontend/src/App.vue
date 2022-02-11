@@ -359,7 +359,7 @@
 
         </v-app-bar>
 
-        <v-main>
+        <v-main style="padding: 64px 0px 0px 56px;">
             <router-view  @set-goback="setGoBackFunction" :key="$route.fullPath">></router-view>
 
         <v-dialog

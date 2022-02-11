@@ -31,7 +31,7 @@
                             </v-icon>
                             
                             <video ref="video" style="width:100%; height: 100%" @play="videoMode='play'" @pause="videoMode='pause'">
-                                <source :src="videoSource" type="video/mp4" v-on:error="videoNotFound()">
+                                <source :src="videoSource" type="video/mp4" >
                             </video>
                         </span>
                         <!-- these many fade blocks can probably all go into one, to be done later -->
@@ -292,7 +292,6 @@
                 showFullscreenBt: false,
                 // fullscreen: false
                 videoMode: 'pause',
-                videoSource: ""
 
             }
         },
@@ -318,14 +317,17 @@
 
             },
 
+            videoSource() {
+                return this.isPhoto ? null : encodeURI("/assets/video/full/" + this.photo.path + ".mp4");
+
+            },
+
             isPhoto() {
                 return this.photo.asset_type == 'jpg' || this.photo.asset_type == 'heic';
             }
         },
         watch: {
             photo(p) {
-                if (p.asset_type == "mov" || p.asset_type == 'mp4')
-                    this.videoSource = encodeURI("/assets/video/full/" + p.path + ".mp4");
 
                 if (this.info)
                     this.loadData(p);

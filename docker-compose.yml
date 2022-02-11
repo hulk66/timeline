@@ -37,7 +37,7 @@ services:
       - ${RABBITMQ_DATA}:/var/lib/rabbitmq
 
   webapp:
-    image: hulk66/timeline_be:0.91
+    image: hulk66/timeline_be:0.92
     # build: backend
     restart: always
     ports: 
@@ -65,7 +65,7 @@ services:
       - rabbitmq
 
   worker:
-    image: hulk66/timeline_be:0.91
+    image: hulk66/timeline_be:0.92
     # build: backend
     restart: always
     environment:
@@ -94,11 +94,16 @@ services:
       - rabbitmq
 
   transcoder:
-    image: hulk66/timeline_be:0.91
+    image: hulk66/timeline_be:0.92
     # build: backend
     restart: always
     environment:
       APP: "transcoder"
+      WAIT_HOSTS: db:3306, rabbitmq:5672, webapp:5000 
+      WAIT_HOSTS_TIMEOUT: 180
+      WAIT_SLEEP_INTERVAL: 3     
+      WAIT_AFTER_HOSTS: 2
+      DB_SUPER_USER_PW: ${DB_SUPER_USER_PW}
     volumes:
       - ${ASSET_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
@@ -109,7 +114,7 @@ services:
       - rabbitmq
 
   frontend:
-    image: hulk66/timeline_fe:0.91
+    image: hulk66/timeline_fe:0.92
     # build: frontend
     restart: always
     ports:
@@ -128,7 +133,7 @@ services:
       - webapp
 
   watchdog:
-    image: hulk66/timeline_be:0.91
+    image: hulk66/timeline_be:0.92
     # build: backend
     restart: always
     environment:

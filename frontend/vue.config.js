@@ -1,24 +1,6 @@
-const path = require('path');
-
 module.exports = {
-  // use this to build
-  // assetsDir: '../static',
-  // outputDir: '../backend/timeline/templates',
-  // ---
+ 
   publicPath: '',
-  runtimeCompiler: undefined,
-  productionSourceMap: undefined,
-  parallel: undefined,
-  css: undefined,
-
-  configureWebpack:{
-    optimization: {
-      splitChunks: {
-        minSize: 10000,
-        maxSize: 250000,
-      }
-    }
-  },
 
   devServer: {
     disableHostCheck: true,
@@ -62,7 +44,7 @@ module.exports = {
     
   },
 
-  "transpileDependencies": [
-    "vuetify"
+  transpileDependencies: [
+    'vuetify'
   ]
 }
