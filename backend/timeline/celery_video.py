@@ -29,6 +29,8 @@ import ffmpeg
 flask_app = create_app()
 setup_logging("timeline", flask_app, 'video_worker.log')
 logger = logging.getLogger(__name__) 
+#nice_ffmpeg = ["nice", "-n", "20", "ffmpeg"]
+nice_ffmpeg = "ffmpeg"
 
 @worker_process_init.connect
 def init_worker(**kwargs):
@@ -58,14 +60,14 @@ def create_preview_video(asset_id, max_dim: int) -> None:
         asset.path, ".jpg", str(max_dim), "high_res")
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1,
-                                                           movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
+                                                           movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
 
     # also generate a very low res resolution preview jpg for fast loading
     preview_path = get_preview_path(
         asset.path, ".jpg", str(max_dim), "low_res")
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     ffmpeg.input(path).filter("scale", -2, max_dim/10).output(preview_path, map_metadata=0, threads=1,
-                                                              movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
+                                                              movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
 
     # finally generate a preview mp4 and strip the audio
     logger.debug("Create mp4 preview for hovering %s", asset.path)
@@ -74,7 +76,7 @@ def create_preview_video(asset_id, max_dim: int) -> None:
     ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, loglevel="error",
                                                            vcodec="libx264",
                                                            movflags="+faststart +use_metadata_tags",
-                                                           pix_fmt="yuv420p", t=5).overwrite_output().global_args("-an").run()
+                                                           pix_fmt="yuv420p", t=5).overwrite_output().global_args("-an").run(cmd=nice_ffmpeg)
 
     asset.video_preview_generated = True
     db.session.commit()
@@ -94,7 +96,7 @@ def create_fullscreen_video(asset_id) -> None:
     preview_path = get_preview_path(asset.path, ".mp4", "video", "full")
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     ffmpeg.input(path).output(preview_path, loglevel="error", vcodec="libx264", acodec="aac",
-                              pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run()
+                              pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run(cmd=nice_ffmpeg)
 
     asset.video_fullscreen_generated = True
     db.session.commit()

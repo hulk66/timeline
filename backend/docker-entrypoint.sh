@@ -14,16 +14,16 @@ elif [ $APP = 'worker' ]
       # celery -A timeline.celery_main purge -f -Q beat 
       celery -A timeline.celery_process amqp queue.purge beat
       celery -A timeline.celery_process amqp queue.delete beat
-      celery -A timeline.celery_process worker --autoscale=$WORKERS_PROCESS,1 -Q beat,process,analyze,geo
+      nice celery -A timeline.celery_process worker --autoscale=$WORKERS_PROCESS,0 -Q beat,process,analyze,geo
 elif [ $APP = 'transcoder' ]
   then 
       ./wait
-      celery -A timeline.celery_video worker --autoscale=1,0 -Q transcode
+      nice -n 20 celery -A timeline.celery_video worker --autoscale=1,0 -Q transcode
 
 elif [ $APP = 'watchdog' ]
   then
       ./wait
-      python -m timeline.manage watchdog
+      nice python -m timeline.manage watchdog
 else
     celery -A timeline.celery_main:app flower
 fi
