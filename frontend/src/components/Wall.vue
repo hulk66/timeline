@@ -79,7 +79,7 @@
                             v-if="photoFullscreen"
                             :prevPhoto="prevPhoto.asset"
                             :direction="imageViewerDirection"
-                            @close="photoFullscreen = false"
+                            @close="closeViewer"
                             @set-rating="setRating"
                             @left="navigate(-1)"
                             @right="navigate(1)">
@@ -97,7 +97,7 @@
     import Tick from "./Tick"; 
     import { mapState } from 'vuex'
 
-    const logBase = (n, base) => Math.log(n) / Math.log(base);
+    // const logBase = (n, base) => Math.log(n) / Math.log(base);
     
     export default {
         name: "Wall",
@@ -150,7 +150,6 @@
                 imageViewerDirection: 0,
                 selectMulti: false,
                 ticks: [],
-                assetMarked: false
             };
         },
 
@@ -188,7 +187,11 @@
         },
 
         methods: {
-
+            
+            closeViewer() {
+                this.photoFullscreen = false;
+                this.currentPhoto = null;
+            },
             calcTickPositions() {
                 this.tickDates = this.getTickDates();
                 for (let index=0; index<this.tickDates.length-1; index++) {
@@ -295,7 +298,7 @@
                 // console.log(event);
             },
 
-            
+            /*
             pos_percent_log(d) {
                 let duration = moment.duration(this.max_date.diff(d));
                 let durationAsDays = duration.asDays();
@@ -304,7 +307,7 @@
                 let lv = logBase(durationAsDays, this.total_duration.asDays());
                 return lv * 100;
             },
-
+            */
             pos_percent(d) {
                 let duration = moment.duration(this.max_date.diff(d));
                 let durationAsDays = duration.asDays();
@@ -423,38 +426,34 @@
                     event.preventDefault();
                 } else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
-                    this.setRating(value, this.currentSegment, this.currentIndex);
+                    this.setRating(value, 
+                        this.currentPhoto.currentSegment.segment, 
+                        this.currentPhoto.index);
                 }
             },
 
+
             keyboardActionDialog(event) {
                 // are these values somewhere defined as constants?
-                /*
-                if (event.code == "ArrowLeft")
-                    this.advancePhoto(-1);
-                else if (event.code == "ArrowRight")
-                    this.advancePhoto(1);
-                else if (event.code.startsWith("Digit")) {
-                    let value = parseInt(event.key);
-                    this.setRating(value, this.selectedSegment, this.selectedIndex);
-                }
-                */
                 if (event.code == "ArrowLeft")
                     this.navigate(-1);
                 else if (event.code == "ArrowRight")
                     this.navigate(1);
                 else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
-                    this.setRating(value, this.currentSegment, this.currentIndex);
-                }
+                    this.setRating(value, 
+                        this.currentPhoto.currentSegment.segment, 
+                        this.currentPhoto.index);
+                } else if (event.code == "Space")
+                    this.currentPhoto = null;
+
 
             },
 
             clearNav() {
-                this.assetMarked = false;
                 this.markAsset(this.currentPhoto, false);
                 this.$store.commit("markMode", false);
-
+                this.currentPhoto = null;
             },
 
             findFirstVisibleAsset() {
@@ -507,15 +506,16 @@
             },
 
             selectPhoto() {
-                if (this.currentIndex != -1) {
-                    let p = this.currentSegment.segment.assets[this.currentIndex];
+                if (this.currentPhoto) {
+
+                    let p = this.currentPhoto.asset;
                     let alreadySelected = this.selectedPhotos.some(photo => photo.id == p.id);
                     if (alreadySelected) {
                         this.$store.commit("removePhotoFromSelection", p);
-                        this.currentSegment.selectPhoto(this.currentIndex, false);
+                        this.currentPhoto.segmentElement.selectPhoto(this.currentPhoto.index, false);
                     } else {
                         this.$store.commit("addPhotoToSelection", p);
-                        this.currentSegment.selectPhoto(this.currentIndex, true);
+                        this.currentPhoto.segmentElement.selectPhoto(this.currentPhoto.index, true);
                     }
 
                 }
@@ -528,8 +528,7 @@
 
             navigate(dir) {
                 this.imageViewerDirection = dir;
-                if (!this.assetMarked) {
-                    this.assetMarked = true;
+                if (!this.currentPhoto) {
                     this.currentPhoto = this.findFirstVisibleAsset();
                     this.prevPhoto = this.getNextSectionSegmentAsset(this.currentPhoto, -1);
                     this.nextPhoto = this.getNextSectionSegmentAsset(this.currentPhoto, 1);

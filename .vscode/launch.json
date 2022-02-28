@@ -123,8 +123,11 @@
               "request": "launch",
               "type": "chrome",
               "url": "http://localhost:8080",
-              "webRoot": "${workspaceFolder}/frontend"
-
+              "webRoot": "${workspaceFolder}/frontend/src",
+              "breakOnLoad": true,
+              "sourceMapPathOverrides": {
+              "webpack:///src/*": "${webRoot}/*"
+           }
           },
     ]
 }
