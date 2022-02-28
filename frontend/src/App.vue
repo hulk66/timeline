@@ -25,7 +25,7 @@
             <v-list>
                 <v-list-item-group>
 
-                    <v-list-item :to="{name:'assetWall'}">
+                    <v-list-item to="/wall">
                         <v-list-item-action>
                             <v-icon color="primary">mdi-view-dashboard</v-icon>
                         </v-list-item-action>
