@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -510,6 +510,7 @@
 <script>
     import axios from "axios";
     import { mapState } from 'vuex'
+    // import moment from "moment";
 
     export default {
         props: {
@@ -629,6 +630,10 @@
          },
 
         mounted() {
+            /*
+            const locale = window.navigator.userLanguage || window.navigator.language;
+            moment.locale(locale);
+            */
             this.checkNewFaces();
             setInterval( this.getStatusJobs, 10000 ); // 10 seconds
             setInterval( this.checkNewFaces, 1000*60*5 ); // 5 Minutes

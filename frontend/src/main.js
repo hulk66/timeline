@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -22,10 +22,14 @@ import router from './router'
 import VueJustifiedLayout from 'vue-justified-layout'
 import VueLayers from 'vuelayers'
 import 'vuelayers/lib/style.css' // needs css-loader
+// import VueVirtualScroller from 'vue-virtual-scroller'
+// import VirtualList from "vue-virtual-scroll-list"
 
 Vue.use(VueLayers)
 Vue.use(VueJustifiedLayout);
+// Vue.use(VueVirtualScroller)
 Vue.config.productionTip = false;
+// Vue.use(VirtualList)
 
 new Vue({
   vuetify,

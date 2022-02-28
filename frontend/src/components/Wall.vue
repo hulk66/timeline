@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -14,53 +14,59 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+ 
 <template>
-    <v-container fluid class="fill-height">
-        <v-row now-gutters class="fill-height">
-            <v-col class="noscroll" ref="wall" >
-                    <v-sheet class="scroller ma-2" tabindex="0" 
-                            ref="scroller" 
-                            @mousedown="clearNav()"
-                            @keydown="keyboardActionWall($event)">
-
-                            <div v-if="showPhotoCount" class="ma-2 text-h2">{{totalAssets}} Photos/Videos</div>
-
-                            <asset-section
-                                    v-for="section in sections"
-                                    :ref="'section' + section.id"
-                                    :section="section"
-                                    :target-height="previewHeight"
-                                    :key="section.uuid"
-                                    :initial-height="height(section)"
-                                    :filter-person-id="personId"
-                                    :filter-thing-id="thingId"
-                                    :filter-album-id="albumId"
-                                    :city="city"
-                                    :county="county"
-                                    :country="country"
-                                    :state="state"
-                                    :from="from"
-                                    :to="to"
-                                    :camera="camera"
-                                    :rating="rating"
-                                    @click-photo="clickPhoto"
-                                    @select-photo="selectPhotoEvent"
-                                    @select-multi="selectMultiEvent"
-                                    @update-timeline="updateTimeline">
-                            </asset-section>
-                        </v-sheet>
+    <v-container ref="wall" fluid class="fill-height">
+        <v-row class="fill-height">
+            <v-col class="noscroll ma-2">
+                <v-sheet class="scroller" 
+                    tabindex="0"
+                    @mousedown="clearNav()"
+                    @keydown="keyboardActionWall($event)">
+                
+                <div class="mt-2 text-h3">{{totalAssets}} Photos/Videos</div>
+                    <asset-section v-for="section in sections"  
+                        :ref="'section' + section.id"
+                        :target-height="previewHeight"
+                        :section="section"
+                        :key="section.id"
+                        :initialHeight="height(section)"
+                        :filter-person-id="personId"
+                        :filter-thing-id="thingId"
+                        :filter-album-id="albumId"
+                        :city="city"
+                        :county="county"
+                        :country="country"
+                        :state="state"
+                        :from="from"
+                        :to="to"
+                        :camera="camera"
+                        :rating="rating"
+                        @click-photo="clickPhoto"
+                        @select-photo="selectPhotoEvent"
+                        @select-multi="selectMultiEvent"
+                        @update-timeline="updateTimeline">
+                    </asset-section>
+                    
+                </v-sheet>
             </v-col>
-                <v-card class="noscroll scale" ref="timelineContainer" elevation="0"
-                        v-on:mousemove="calcPosition($event)"
-                        v-on:mouseenter="scrub(true)"
-                        v-on:mouseleave="scrub(false)"
-                        v-on:click="jumpToDate()">
-                    <div v-for="(d, index) in tickDates" :key="index" :style="{top:pos_percent(d) + '%',position:'absolute'}" >
-                        <tick v-if="showTick[index]" :moment="d" :h="tickHeight[index]"></tick>
+            
+            <div class="noscroll timelineContainer ma-2" 
+                ref="timelineContainer"
+                v-on:mousemove="calcPosition($event)"
+                v-on:mouseenter="scrubbing = true"
+                v-on:mouseleave="scrubbing = false"
+                v-on:click="jumpToDate()">
+                <div v-for="(tick, index) in ticks" :key="index" 
+                    :style="{top:tick.pos + 'px',height:tick.height + 'px', position:'absolute', width:'30px'}" >
+                    <div style="position: relative">
+                        <tick :moment="tick.date" :h="tick.height"></tick>
                     </div>
-                    <div id="tick" :style="cssProps"></div>
-                    <div v-if="scrubbing" id="currentDate" :style="cssProps">{{currDate}}</div>
-                </v-card>
+                </div>
+                <div id="tick" :style="cssProps"></div>
+                <div v-if="scrubbing" id="currentDate" :style="cssProps">{{currDate}}</div>
+            </div>
+        
         </v-row>
         
         <v-dialog
@@ -68,36 +74,33 @@
             fullscreen hide-overlay
             @keydown="keyboardActionDialog($event)"
             ref="viewerDialog">
-            <image-viewer :photo="currentPhoto" ref="viewer"
-                            :nextPhoto="nextPhoto"
-                            :prevPhoto="prevPhoto"
+            <image-viewer :photo="currentPhoto.asset" ref="viewer"
+                            :nextPhoto="nextPhoto.asset"
+                            v-if="photoFullscreen"
+                            :prevPhoto="prevPhoto.asset"
                             :direction="imageViewerDirection"
                             @close="photoFullscreen = false"
                             @set-rating="setRating"
                             @left="navigate(-1)"
-                            @right="navigate(1)"
-                            >
-
+                            @right="navigate(1)">
             </image-viewer>
         </v-dialog>
-
+        
     </v-container>
-</template>
+ </template>
 
 <script>
-
-    /* Todo: Unify curentSelettion, segment ... and selectedSegment, section .... This is complicated and not necessary */
-
     import axios from "axios";
     import AssetSection from "./AssetSection";
     import ImageViewer from "./ImageViewer";
     import moment from "moment"
-    import Tick from "./Tick";
+    import Tick from "./Tick"; 
     import { mapState } from 'vuex'
 
     const logBase = (n, base) => Math.log(n) / Math.log(base);
+    
     export default {
-        name: "AssetWall",
+        name: "Wall",
 
         components: {
             AssetSection,
@@ -126,13 +129,9 @@
                 default: true
             }
         },
-        data() {
+        data() { 
             return {
                 photoFullscreen: false,
-                // for navigation and selection
-                currentSegment: null,
-                currentSection: null,
-                currentIndex: -1,
                 currentPhoto: null,
                 // ---
                 sections: [],
@@ -150,55 +149,26 @@
                 nextPhoto: null,
                 imageViewerDirection: 0,
                 selectMulti: false,
-                showTick: [],
-                tickHeight: []
+                ticks: [],
+                assetMarked: false
             };
         },
 
         mounted() {
-            // this.viewportWidth = this.$refs.wall.clientWidth;
             if (!this.sections || this.sections.length == 0)
-                this.loadAllSections();
-            
-            
-            this.$nextTick(function() {
-                this.$refs.scroller.$el.focus();
-            });
-            
+                this.loadAllSections();            
             this.$emit("set-goback", null);
             this.$store.commit("setSelectionAllowed", this.selectionAllowed);
             this.lastTickYPos = Number.MAX_VALUE;
         },
 
         watch: {
-            /*
-            sections(val) {
-                if (val.length > 0) {
-                    this.currentSection = this.getNextSection(0, 0);
-                    this.currentSegment = this.currentSection.getFirstSegment();
-                    this.currentIndex = 0;
-                    this.currentPhoto = this.currentSegment.data.assets[0];
-                }
-
-            }*/
-            tick_visible() {
-                this.lastTickYPos = this.currentTickYPos;
-            }
         },
 
         computed: {
 
             ...mapState({
-                /*
-                markMode: state => state.person.markMode,
-                */
                 previewHeight: state => state.person.previewHeight,
-                /*
-                selectedSegment: state => state.photo.selectedSegment,
-                selectedSection: state => state.photo.selectedSection,
-                selectedIndex: state => state.photo.selectedIndex,
-                selectedPhoto: state => state.photo.selectedPhoto,
-                */
                 selectedPhotos: state => state.photo.selectedPhotos
                 
             }),
@@ -209,10 +179,6 @@
                     '--tick-color': this.$vuetify.theme.secondary
                 }
             },
-
-            tick_visible() {
-                return this.currentTickYPos > this.lastTickYPos > 20; 
-            }
         },
 
          // eslint-disable-next-line no-unused-vars
@@ -220,59 +186,34 @@
             this.$store.commit("emptySelectedPhotos");
             next();
         },
+
         methods: {
 
-            // eslint-disable-next-line no-unused-vars
-            /*
-            onIntersect(entries, observer) {
-                let element = entries[0];
-                console.log(element.isIntersecting)
-            },     
-            */
             calcTickPositions() {
                 this.tickDates = this.getTickDates();
-                let currentTickYPos = 0;
-                let lastTickYPos = Number.MIN_SAFE_INTEGER;
-                
                 for (let index=0; index<this.tickDates.length-1; index++) {
-                    let top = this.tickDates[index];
-                    let bottom = this.tickDates[index+1];
+                    const top = this.tickDates[index];
+                    const bottom = this.tickDates[index+1];
 
-                    let start_pos = this.pos_percent(top);
-                    let end_pos = this.pos_percent(bottom);
+                    const start_pos = this.pos_percent(top);
+                    const end_pos = this.pos_percent(bottom);
 
-                    let nextTickYPos = start_pos/100 * this.$refs.timelineContainer.$el.clientHeight;
-                    if (nextTickYPos - lastTickYPos > 30) {
-                        lastTickYPos = currentTickYPos;
-                        this.showTick[index] = true;
-                    } else {
-                        this.showTick[index] = false;
-                    }
-                    currentTickYPos = nextTickYPos;
-                    
-                    let h = (end_pos -  start_pos)/100 * this.$refs.timelineContainer.$el.clientHeight;
-                    this.tickHeight[index] = h;
+                    const startTickYPos = start_pos/100 * this.$refs.timelineContainer.clientHeight;
+                    const endTickYPos = end_pos/100 * this.$refs.timelineContainer.clientHeight;
+                    const height = endTickYPos - startTickYPos
+
+                    if (height > 30) {
+                        const tick = {
+                            pos: startTickYPos,
+                            height: height,
+                            date: this.tickDates[index]
+                        };
+                        this.ticks.push(tick);
+                    } 
                 }
             },
-            /*
-            tick_height(tick_index) {
 
-                if (tick_index+1>this.tickDates.length)
-                    return 0;
-
-                let top = this.tickDates[tick_index];
-                let bottom = this.tickDates[tick_index+1];
-
-                let start_pos = this.pos_percent(top);
-                let end_pos = this.pos_percent(bottom);
-                this.currentTickYPos = start_pos/100 * this.$refs.timelineContainer.$el.clientHeight;
-                let h = (end_pos -  start_pos)/100 * this.$refs.timelineContainer.$el.clientHeight;
-                return h;
-            },
-            */
             getTickDates() {
-                // let start = moment(this.max_date);
-                // let end = moment(this.min_date);
                 let result = [];
 
                 if (this.max_date || this.min_date) {
@@ -295,7 +236,7 @@
                 let m = moment(currentDate);
                 this.currDate = m.format("MMM-YYYY");
                 let p = this.pos_percent(m)/100;
-                this.currentTick = p * this.$refs.timelineContainer.$el.clientHeight;
+                this.currentTick = p * this.$refs.timelineContainer.clientHeight;
             },
 
             findSectionForDate(date) {
@@ -311,17 +252,16 @@
                 axios.get("/api/section/find_by_date/" + selectedDate.format("YYYY-MM-DD") ).then((result) => {
                     let sectionId = result.data;
                     let sectionRef = self.$refs['section' + sectionId][0];
-                    let sectionEl = sectionRef.$el;
-                    if (sectionEl) {
-                        sectionEl.scrollIntoView();
-                    }
+                    // let sectionEl = sectionRef.$el;
+                    // console.log(sectionEl);
+                    sectionRef.scrollTo(selectedDate)
 
                 });
 
             },
 
             getDateByPosition(y) {
-                let pos = y / this.$refs.timelineContainer.$el.clientHeight;
+                let pos = y / this.$refs.timelineContainer.clientHeight;
                 let total_days = this.total_duration.asDays();
                 // let positionsOfDay = Math.pow(total_days, pos);
                 // let positionsOfDay = Math.cos( (this.total_duration.asDays() - durationAsDays) / this.total_duration.asDays()  * Math.PI/2)
@@ -343,11 +283,12 @@
 
                 let target = event.target;
                 this.currentTick = event.offsetY;
-
-                while (target != this.$refs.timelineContainer.$el) {
+                // console.log(target);
+                while (target != this.$refs.timelineContainer) {
                     this.currentTick += target.offsetTop;
                     target = target.offsetParent;
                 }
+            
                 let selectedDate = this.getDateByPosition(this.currentTick);
                 this.currDate = selectedDate.format("MMM-YYYY")
                 /* eslint-disable no-console */
@@ -379,16 +320,16 @@
                         (sectionA.id == sectionB.id && segmentA.nr == segmentB.nr && indexA <= indexB);
             },
             selectPhotoEvent(section, segment, index, value) {
-                let p = segment.data.assets[index]
+                let p = segment.segment.assets[index]
                 if (value) {
-                    this.$store.commit("setSelectionBoundaries", {section:section.id, segment:segment.data.nr, index:index} );
+                    this.$store.commit("setSelectionBoundaries", {section:section.id, segment:segment.segment.nr, index:index} );
                     if (this.selectMulti) {
                         let lowerBoundary = this.$store.state.photo.lowerSelectionBound;
                         let startSection = this.$refs['section' + lowerBoundary.section][0];
                         let startSegment = startSection.getSegmentEl(lowerBoundary.segment);
                         let photoIndex = lowerBoundary.index;
-                        while (this.isBefore(startSection.section, startSegment.data, photoIndex, section, segment.data, index)) {
-                            let p = startSegment.data.assets[photoIndex];
+                        while (this.isBefore(startSection.section, startSegment.segment, photoIndex, section, segment.segment, index)) {
+                            let p = startSegment.segment.assets[photoIndex];
                             this.$store.commit("addPhotoToSelection", p);
                             startSegment.selectPhoto(photoIndex, true);
                             let next = this.getNextSectionSegmentAndPhoto(startSection, startSegment, photoIndex, 1)
@@ -422,7 +363,7 @@
                     let endSection = this.$refs['section' + upperBoundary.section][0]
                     let endSegment = endSection.getSegmentEl(upperBoundary.segment);
                     let endIndex = upperBoundary.index;
-                    while (this.isBefore(startSection.section, startSegment.data, photoIndex, endSection.section, endSegment.data, endIndex)) {
+                    while (this.isBefore(startSection.section, startSegment.segment, photoIndex, endSection.section, endSegment.segment, endIndex)) {
                         startSegment.selectPhoto(photoIndex, false);
                         let next = this.getNextSectionSegmentAndPhoto(startSection, startSegment, photoIndex, 1)
                         startSection = next.section;
@@ -441,12 +382,15 @@
             clickPhoto(section, segment, photoIndex) {
                 this.photoFullscreen = true;
                 this.imageViewerDirection = 0;
-                this.currentSection = this.$refs['section' + section.id][0];
-                this.currentSegment = segment;
-                this.currentIndex = photoIndex;
-                this.currentPhoto = segment.data.assets[photoIndex]
-                this.prevPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, -1);
-                this.nextPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, 1);
+                this.currentPhoto = {
+                    sectionElement: this.$refs['section' + section.id][0],
+                    segmentElement: segment,
+                    index: photoIndex,
+                    asset: segment.segment.assets[photoIndex]
+                }
+
+                this.prevPhoto = this.getNextSectionSegmentAsset(this.currentPhoto, -1);
+                this.nextPhoto = this.getNextSectionSegmentAsset(this.currentPhoto,  1);
 
             },
 
@@ -505,26 +449,18 @@
                 }
 
             },
+
             clearNav() {
-                if (this.currentSegment) {
-                    this.currentSegment.markPhoto(this.currentIndex, false);
-                    this.currentIndex = -1;
-                }
+                this.assetMarked = false;
+                this.markAsset(this.currentPhoto, false);
                 this.$store.commit("markMode", false);
 
             },
 
-            findFirstVisibleSegment() {
+            findFirstVisibleAsset() {
 
                 let sectionElement = null;
-                /*
-                for (let i=0; i<this.sections.length; i++) {
-                    sectionElement = this.$refs['section' + i][0];
-                    if (sectionElement && sectionElement.isVisible())
-                        break;
-                }
-                */
-               
+                let result = null;
                 this.sections.some(section => {
                     sectionElement = this.$refs['section' + section.id][0];
                     if (sectionElement.isVisible())
@@ -533,20 +469,30 @@
                 });
                 
                 if (sectionElement) {
+
                     // now we have the first visible section
                     // let's find the fist visible segment
-                    this.currentSection = sectionElement;
-                    this.currentSegment = this.currentSection.findFirstVisibleSegment();
-                    this.currentIndex = this.currentSegment.indexOfFirstVisiblePhoto();
+
+                    const segmentElement = sectionElement.findFirstVisibleSegment();
+                    const index = segmentElement.indexOfFirstVisiblePhoto();
+                    const asset = segmentElement.segment.assets[index];
+                    result =  {
+                        sectionElement: sectionElement,
+                        segmentElement: segmentElement,
+                        index: index,
+                        asset: asset
+                    };
                 }
+                return result;
                 
             },
-            scrollToMarkedPhoto(dir) {
-                if (this.currentSegment && this.currentSegment.isVisible() && 
-                    this.currentIndex >= 0 && this.currentSegment.photoIsVisible(this.currentIndex)) 
+            scrollToMarkedPhoto() {
+                
+                if (this.currentPhoto.segmentElement.isVisible() && 
+                    this.currentPhoto.segmentElement.photoIsVisible(this.currentPhoto.index)) 
                     // we are still in the same area, so no change here
                     return;
-                this.currentSegment.scrollToPhoto(this.currentIndex, dir)
+                this.currentPhoto.segmentElement.scrollToPhoto(this.currentPhoto.index)
             },
 
             currentSectionChildIndex() {
@@ -560,40 +506,9 @@
                 return index;
             },
 
-            nextNonEmptySection(dir) {
-                // let start = this.currentSection.section.id + dir;
-                /*
-                let el = this.$refs['section' + start];
-                while (!el || (el && !el[0])) {
-                    start += dir;
-                    el = this.$refs['section' + start];
-                }
-                */
-                let newSection = this.getNextSection(this.currentSection.section.id, dir)
-                if (newSection.section.id != this.currentSection.section.id) {
-                    // otherwise we are either at the beginning or the end, in any case nothing to do
-                    this.currentSection = newSection;
-                    if (dir == 1) {
-                        this.currentSegment = this.currentSection.getFirstSegment();
-                        this.currentIndex = 0;
-                    } else {
-                        this.currentSegment = this.currentSection.getLastSegment();
-                        this.currentIndex = this.currentSegment.getPhotoLength()-1;
-                    }
-                } else {
-                    if (dir == 1) {
-                        this.currentSegment = this.currentSection.getLastSegment();
-                        this.currentIndex = this.currentSegment.getPhotoLength()-1;
-                    } else {
-                        this.currentSegment = this.currentSection.getFirstSegment();
-                        this.currentIndex = 0;
-                    }
-                }
-            },
-
             selectPhoto() {
                 if (this.currentIndex != -1) {
-                    let p = this.currentSegment.data.assets[this.currentIndex];
+                    let p = this.currentSegment.segment.assets[this.currentIndex];
                     let alreadySelected = this.selectedPhotos.some(photo => photo.id == p.id);
                     if (alreadySelected) {
                         this.$store.commit("removePhotoFromSelection", p);
@@ -606,73 +521,43 @@
                 }
             },
 
-            navigate(dir) {
-                // this.$store.commit("markMode", true);
-                this.imageViewerDirection = dir;
-                if (!this.currentSection || !this.currentSegment || !this.currentPhoto) {
-                    this.currentSection = this.getNextSection(0, 0);
-                    this.currentSegment = this.currentSection.getFirstSegment();
-                    this.currentIndex = -1;
-                    this.currentPhoto = this.currentSegment.data.assets[0];
+            markAsset(asset, value) {
+                if (asset)
+                    asset.segmentElement.markPhoto(asset.index, value);
+            },
 
+            navigate(dir) {
+                this.imageViewerDirection = dir;
+                if (!this.assetMarked) {
+                    this.assetMarked = true;
+                    this.currentPhoto = this.findFirstVisibleAsset();
+                    this.prevPhoto = this.getNextSectionSegmentAsset(this.currentPhoto, -1);
+                    this.nextPhoto = this.getNextSectionSegmentAsset(this.currentPhoto, 1);
                 } else {
-                    if (dir == 1) {
+                    this.markAsset(this.currentPhoto, false);
+
+                    if (dir == 1) { 
                         this.prevPhoto = this.currentPhoto; 
                         this.currentPhoto = this.nextPhoto;
-                        this.nextPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, dir*2);
+                        this.nextPhoto = this.getNextSectionSegmentAsset(this.currentPhoto, 1);
                     } else {
                         this.nextPhoto = this.currentPhoto;
                         this.currentPhoto = this.prevPhoto;
-                        this.prevPhoto = this.getNextPhotoNewAA(this.currentSection, this.currentSegment, this.currentIndex, dir*2);
-                    }
+                        this.prevPhoto = this.getNextSectionSegmentAsset(this.currentPhoto, -1);
+                    } 
+
                 }
-                if (this.currentIndex == -1) {
-                    this.findFirstVisibleSegment();
-                    this.currentSegment.markPhoto(this.currentIndex, true);
-                } else {
-
-                    if (this.currentSegment && this.currentIndex >= 0)
-                        this.currentSegment.markPhoto(this.currentIndex, false);
-
-                    this.currentIndex += dir;
-                    if (! this.currentSegment) {
-                        this.currentSection = this.$refs.section0[0]
-                        this.currentSegment = this.currentSection.getFirstSegment()
-                    }
-
-                    if (this.currentIndex < 0 || this.currentIndex >= this.currentSegment.data.assets.length) {
-
-                        this.currentSegment = this.currentSection.nextSegment(this.currentSegment, dir);
-
-                        if (this.currentSegment) {
-                            if (dir == 1)
-                                this.currentIndex = 0;
-                            else 
-                                this.currentIndex = this.currentSegment.getPhotoLength()-1;
-                        } else {
-                            // next or previous photo is not in the current section, so go one section ahead or back
-                            this.nextNonEmptySection(dir);
-
-                        }
-                    }
-                }
-                if (this.currentSegment) {
-                    this.scrollToMarkedPhoto(dir);
-                    this.currentSegment.markPhoto(this.currentIndex, true);
-                    this.currentPhoto = this.currentSegment.data.assets[this.currentIndex];
-                } else
-                    this.currentIndex = -1;
+                this.markAsset(this.currentPhoto, true);
+                this.scrollToMarkedPhoto();
 
             },
-
-            
             getNextSectionSegmentAndPhoto(sectionElement, segment, index, dir) {
                 let nextPhoto = null;
                 let nextSection = sectionElement;
                 let nextSegment = segment;
                 let nextIndex = index + dir;
-                if (nextIndex >= 0 && nextIndex < segment.data.assets.length) {
-                    nextPhoto = segment.data.assets[index-1];
+                if (nextIndex >= 0 && nextIndex < segment.segment.assets.length) {
+                    nextPhoto = segment.segment.assets[index-1];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
@@ -680,7 +565,7 @@
                     // let nextSegment = el.advanceSegment(segment, dir)
                     nextSegment = sectionElement.nextSegment(segment, dir)
                     if (! nextSegment) {
-                        nextSection = this.getNextSection(sectionElement.section.id, dir);
+                        nextSection = this.getNextSection(sectionElement.section, dir);
                         nextSegment = this.getNextSegment(nextSection, dir);
                     }
                     if (dir == 1) {
@@ -688,161 +573,129 @@
                         nextIndex = 0;
                     } else {
                         nextPhoto = nextSegment.getLastPhoto();
-                        nextIndex = nextSegment.data.assets.length;
+                        nextIndex = nextSegment.segment.assets.length;
                     }
 
                 }
                 return {section:nextSection, segment:nextSegment, index:nextIndex, photo: nextPhoto };
             },
             
-            getLastSectionIndex() {
-                let lastSection = this.sections[this.sections.length-1]
-                return lastSection.id
+            getLastSection() {
+                return this.sections[this.sections.length-1]
             },
-            getNextSection(sectionIndex, dir) {
-                let next_section_id = sectionIndex + dir;
-                if (next_section_id <= 0 || next_section_id > this.getLastSectionIndex())
-                    return this.$refs['section' + sectionIndex][0]
+
+            getLastSectionElement() {
+                return this.$refs['section' + this.sections.length][0];
+            },
+            
+            getFirstSectionElement() {
+                return this.$refs.section1[0];
+            },
+
+            isLastSectionElement(sectionElement) {
+                return sectionElement == this.getLastSectionElement();
+            },
+
+            isFirstSectionElement(sectionElement) {
+                return sectionElement == this.getFirstSectionElement();
+            },
+
+            getNextSection(sectionElement, dir) {
+                let next_section_id = sectionElement.section.id + dir;
+                if (next_section_id <= 0)
+                    return this.$refs['section1'][0]
+
+                if (next_section_id > this.sections.length)
+                    return this.getLastSectionElement();
 
                 let el = this.$refs['section' + next_section_id]
                 while (!el || (el && !el[0])) {
                     next_section_id += dir;
                     el = this.$refs['section' + next_section_id]
                 }
-                return el[0];
+                let nextSection = el[0];
+                nextSection.assertAssetsLoad();
+                return nextSection;
             },
 
-            getNextSegment(section, dir) {
+            getNextSegment(sectionElement, dir) {
                 let nextSegment = null;
-                if (dir == 1)
-                    nextSegment = section.getFirstSegment()
+
+                if (dir == 1) 
+                    nextSegment = sectionElement.getFirstSegment();
                 else
-                    nextSegment = section.getLastSegment();
+                    nextSegment = sectionElement.getLastSegment();
+
+                /*
+                if (dir == 1) {
+                    if (!this.isLastSectionElement(sectionElement))
+                        nextSegment = sectionElement.getFirstSegment()
+                    else
+                        nextSegment = sectionElement.getLastSegment()
+                } else {
+                    if (!this.isFirstSectionElement(sectionElement))
+                        nextSegment = sectionElement.getLastSegment();
+                    else
+                        nextSegment = sectionElement.getFirstSegment()
+
+                }*/
                 return nextSegment;
             },
-            
-            findNextSegment(section, dir) {
-                let nextSection = this.getNextSection(section, dir);
+            /*
+            findNextSegment(sectionElement, dir) {
+                let nextSection = this.getNextSection(sectionElement, dir);
                 let nextSegment = this.getNextSegment(nextSection, dir);
                 return nextSegment;
             },
-            /*
-            getNextSegment(dir) {
-                let nextSegment = null;
-                let next_section_id = this.selectedSection.id + dir;
-                let el = this.$refs['section' + next_section_id]
-                while (el && !el[0]) {
-                    next_section_id += dir;
-                    el = this.$refs['section' + next_section_id]
-                }
-                if (dir == 1)
-                    nextSegment = el[0].getFirstSegment()
-                else
-                    nextSegment = el[0].getLastSegment();
-                return nextSegment;
-            },
             */
-            getNextPhotoNewAA(sectionElement, segment, index, dir) {
-                let nextPhoto = null;
-                let nextIndex = index + dir;
-                    
-                if (nextIndex >= 0 && nextIndex < segment.data.assets.length) {
-                    nextPhoto = segment.data.assets[nextIndex];
+            getNextSectionSegmentAsset(currentAsset, dir) {
+                let nextPhoto = currentAsset.asset;
+                let nextIndex = currentAsset.index + dir;
+                let nextSegmentElement = currentAsset.segmentElement;
+                let nextSectionElement = currentAsset.sectionElement;
+
+                if (nextIndex >= 0 && nextIndex < nextSegmentElement.segment.assets.length) {
+                    nextPhoto = nextSegmentElement.segment.assets[nextIndex];
                 } else {
                     // Photo is in next segment or next section
                     // first go for next segment in same section
-                    //  let nextSegment = this.getNextSegment(section, dir)
-                    let nextSegment = sectionElement.nextSegment(segment, dir);
-                    if (!nextSegment) {
-                        nextSegment = this.findNextSegment(sectionElement.section.id, dir)
-                    } 
-                    if (nextSegment)
-                        if (dir == 1)
-                            nextPhoto = nextSegment.getFirstPhoto();
-                        else
-                            nextPhoto = nextSegment.getLastPhoto();
 
+                    nextSegmentElement = nextSectionElement.nextSegment(nextSegmentElement, dir);
+                    if (!nextSegmentElement) {
+                        // Asset is in next section
+                        nextSectionElement = this.getNextSection(nextSectionElement, dir);
+                        nextSegmentElement = this.getNextSegment(nextSectionElement, dir);
+                    } 
+
+                    if (dir == 1) {
+                        if (nextSegmentElement != currentAsset.segmentElement) {
+                            nextPhoto = nextSegmentElement.getFirstPhoto();
+                            nextIndex = 0;
+                        } else {
+                            nextIndex = currentAsset.index 
+                        }
+                    } else {
+                        if (nextSegmentElement != currentAsset.segmentElement) {
+
+                            nextPhoto = nextSegmentElement.getLastPhoto();
+                            nextIndex = nextSegmentElement.segment.assets.length-1; 
+                        } else {
+                            nextIndex = currentAsset.index 
+                        }
+                    }
+            
                 }
-                return nextPhoto;
+                return { 
+                    asset: nextPhoto,
+                    index: nextIndex,
+                    segmentElement: nextSegmentElement,
+                    sectionElement: nextSectionElement
+                }
             
             },
-            /*
-            getNextPhoto(index, dir) {
-                let nextPhoto = null;
-                let nextIndex = index;
-                    
-                if (nextIndex >= 0 && nextIndex <= this.selectedSegment.data.assets.length) {
-                    nextPhoto = this.selectedSegment.data.assets[nextIndex-1];
-                } else {
-                    // Photo is in next segment or next section
-                    // first go for next segment in same section
-                    let el = this.$refs['section' + this.selectedSection.id][0];
-                    let nextSegment = el.advanceSegment(this.selectedSegment, dir)
-                    if (! nextSegment) {
-                       nextSegment = this.findNextSegment(this.selectedSegment, dir);
-                    }
-                    if (nextSegment)
-                        if (dir == 1)
-                            nextPhoto = nextSegment.getFirstPhoto();
-                        else
-                            nextPhoto = nextSegment.getLastPhoto();
-
-                }
-                return nextPhoto;
-            },
-            */
-            /*
-            advancePhoto: function (dir) {
-                this.$store.commit("navigate", dir);
-                // this.selectedIndex += dir;
-                this.imageViewerDirection = dir;
-
-                if (dir == 1) {
-                    this.prevPhoto = this.selectedPhoto; 
-                    this.nextPhoto = this.getNextPhoto(this.selectedIndex, dir);
-                } else {
-                    this.prevPhoto = this.getNextPhoto(this.selectedIndex, dir);
-                    this.nextPhoto = this.selectedPhoto;
-                }
-
-
-                if (this.selectedIndex >= 0 && this.selectedIndex  < this.selectedSegment.data.assets.length) {
-                    this.$store.commit("setSelectedPhoto",this.selectedSegment.data.assets[this.selectedIndex]);
-                    // this.selectedPhoto = this.selectedSegment.data.assets[this.selectedIndex];
-                } else {
-                    // Photo is in next segment or next section
-                    // first go for next segment in same section
-                    let el = this.$refs['section' + this.selectedSection.id][0];
-                    this.$store.commit("setSelectedSegment", el.advanceSegment(this.selectedSegment, dir));
-                    // this.selectedSegment = el.advanceSegment(this.selectedSegment, dir)
-                    if (! this.selectedSegment) {
-                        // next or previous photo is not in the current section, so go one section ahead or back
-                        let next_section_id = this.selectedSection.id + dir;
-                        if (next_section_id >= 0 && next_section_id < this.sections.length) {
-                            // find vue component holding the next/prev section
-                            el = this.$refs['section' + next_section_id][0];
-                            if (dir == 1)
-                                el.clickFirstPhoto();
-                            else
-                                el.clickLastPhoto();
-                        } else {
-                            // we are at the beginning
-                            // reset everything
-                            this.$store.commit("setSelectedIndex", 0);
-                            this.$store.commit("setSelectedSegment", el.getFirstSegment());
-                        }
-
-
-                    }
-
-                }
-                
-            },
-            */
             height(section) {
                 const unwrappedWidth = (3 / 2) * section.num_assets * this.previewHeight * (7 / 10);
                 const rows = Math.ceil(unwrappedWidth / this.$refs.wall.clientWidth);
-                // const rows = Math.ceil(unwrappedWidth / this.$refs.wall.clientWidth);
                 const height = rows * this.previewHeight;
                 return height;
             },
@@ -923,7 +776,7 @@
         position: relative;
     }
 
-    .scale {
+    .timelineContainer {
         width: 30px;
     }
 

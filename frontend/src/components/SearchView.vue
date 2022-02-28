@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -59,7 +59,7 @@
                 </v-container>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="$refs.assetWall.loadAllSections()">Search</v-btn>
+                    <v-btn color="primary" text @click="$refs.wall.loadAllSections()">Search</v-btn>
 
                 </v-card-actions>
                 <v-container fluid>
@@ -77,8 +77,8 @@
                 </v-card>
             </v-col>
             <v-col>
-                <asset-wall
-                    ref="assetWall"
+                <wall
+                    ref="wall"
                     :city="city"
                     :country="country"
                     :camera="camera"
@@ -86,7 +86,7 @@
                     :from="from"
                     :to="to"
                     :rating="rating">
-                </asset-wall>
+                </wall>
 
             </v-col>
         </v-row>
@@ -97,7 +97,7 @@
     import DatePicker from './DatePicker.vue';
     import { mapState } from 'vuex'
     import axios from "axios";
-    import assetWall from './AssetWall.vue';
+    import Wall from './Wall.vue';
 
     export default {
 
@@ -105,7 +105,7 @@
 
         components: {
             DatePicker,
-            assetWall
+            Wall
         },
 
         props: {

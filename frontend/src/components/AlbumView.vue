@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -31,26 +31,26 @@
             -->
         </div>
         <div class="flex-grow-1">
-            <asset-wall  
+            <wall  
                 ref="assetWall"
                 :showassetCount="false"
                 :selectionAllowed="true"
                 :albumId="albumId">
-            </asset-wall>
+            </wall>
         </div>
     </div>
 </template>
 <script>
     import axios from 'axios';
 
-    import AssetWall from './AssetWall.vue';
+    import Wall from './Wall.vue';
 
     export default {
 
         name: "AlbumView",
 
         components: {
-            AssetWall
+            Wall
         },
 
         props: {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -15,33 +15,28 @@
  * GNU General Public License for more details.
  */
 <template>
-    <!-- 
-        Somehow this rootMargin doesn't work. 
-        The Intersection handler is called exactly when a card enters or leave the visible space
-        Would expect this to happen "500px" earlier but for some reason it's not working
-
-    -->
-
-    <v-card  
-        ref="card"
-        v-intersect="{handler:onIntersect, options: {rootMargin:'1200px', root:this.$parent.$el}}"         
-        :min-height="initialHeight"
-        elevation="0" > 
+    <v-card ref="section" :min-height="initialHeight" flat
+        v-intersect="{handler:onIntersect, options: {rootMargin:'100%'}}">
         <!--
-        <v-card-title>Section {{section.id}}, {{initialHeight}}</v-card-title>
+        <v-card-title>{{section.id}}</v-card-title>
         -->
-        <asset-segment  :ref="'segment' + index"
-                        v-for="(segment, index) in segments"
-                        :seg-index="index"
-                        :data="segment"
-                        :key="index"
-                        :target-height="targetHeight"
-                        @click-photo="clickPhoto"
-                        @select-photo="selectPhotoEvent"
-                        @select-multi="selectMultiEvent"
-                        @update-timeline="updateTimeline">
-        </asset-segment>
+        <div class="d-flex flex-wrap justify-space-between">
+            <segment 
+                :scrollTo="segment == scrollToSegment"
+                :ref="'segment' + index"
+                v-for="(segment, index) in segments"
+                :seg-index="index"
+                :segment="segment"
+                :key="index"
+                :target-height="targetHeight"
+                @click-photo="clickPhoto"
+                @select-photo="selectPhotoEvent"
+                @select-multi="selectMultiEvent"
+                @update-timeline="updateTimeline">
+            </segment>            
+        </div>  
     </v-card>
+
 </template>
 
 <script>
@@ -50,12 +45,12 @@
     import moment from "moment"
     import {isReallyVisible} from "./Util";
 
-    import AssetSegment from "./AssetSegment";
+    import Segment from "./Segment";
     export default {
         name: "AssetSection",
 
         components: {
-            AssetSegment
+            Segment,
         },
 
         props: {
@@ -73,12 +68,13 @@
             to: String,
             rating: Number,
             camera: String,
-            filterAlbumId: Number
+            filterAlbumId: Number,
         },
         data() {
             return {
                 segments: [],
                 visible: false,
+                scrollToSegment: null
             };
         },
 
@@ -88,9 +84,6 @@
             }
         },
         mounted() {
-            //this.createObserver();
-            // console.log("Section root: ", this.$parent.$el);
-
         },
 
         watch: {
@@ -99,6 +92,12 @@
 
         methods: {
 
+            scrollTo(selectedDate) {            
+                this.scrollToDate = selectedDate 
+                this.$el.scrollIntoView();
+            },
+
+
             getSegment(index) {
                 return this.segments[index];
             },
@@ -106,19 +105,7 @@
             getSegmentEl(index) {
                 return this.$refs['segment' + index][0];
             },
-            /*
-            createObserver() {
-                let observer;
-                let root = this.$parent.$el;
-                let options = {
-                    root: root,
-                    rootMargin: "200px",
-                };
 
-                observer = new IntersectionObserver(this.onIntersect, options);
-                observer.observe(this.$refs.card.$el);
-            },
-            */
             findFirstVisibleSegment() {
                 let segementElement = null;
                 for (let i=0; i<this.segments.length; i++) {
@@ -161,26 +148,13 @@
             
             nextSegment(segment, dir) {
 
-                let segment_nr = segment.data.nr + dir;
+                let segment_nr = segment.segment.nr + dir;
                 if (segment_nr >= 0 && segment_nr < this.segments.length) {
                     let el = this.$refs['segment' + segment_nr][0]
                     return el;
                 }
                 return null;
             },
-            /*
-            advanceSegment(segment, dir) {
-                let el = this.nextSegment(segment, dir);
-                if (el) {
-                    if (dir == 1)
-                        el.clickphoto(0)
-                    else
-                        el.clickLastphoto()
-
-                }
-                return el;
-            },
-            */
             
             clickFirstPhoto() {
                 this.$refs.segment0[0].clickPhoto(0);
@@ -203,7 +177,7 @@
                 this.$refs['segment' + len][0].clickPhoto(last_index);
             },
 
-            loadPhotos(sec) {
+            loadAssets() {
                 // eslint-disable-next-line no-console
                 // console.log("Loading Photos for section " + sec.id);
                 let params = {};
@@ -223,30 +197,46 @@
                     params["album_id"] = this.filterAlbumId;
 
 
-                axios.get( "/api/asset/by_section/" + sec.id, config).then((result) => {
+                axios.get( "/api/asset/by_section/" + this.section.id, config).then((result) => {
                     this.assets = result.data;
-                    this.segments = this.computeSegments()
+                    this.segments = this.computeSegments();
+                    if (this.scrollToDate) {
+                        this.scrollToSegment = this.findSegment(this.scrollToDate);
+
+                        /*                
+                        if (segment) {
+                            const index = segment.nr;
+                            const segmentElement = this.getSegmentEl(index) 
+                            segmentElement.scrollIntoView();
+                        }
+                        */
+                        this.scrollToDate = null;
+                    } 
+
                 })
 
             },
-            // eslint-disable-next-line no-unused-vars
-            onIntersect(entries, observer) {
-                let element = entries[0];
 
-                if (element.isIntersecting) {
-                    if (!this.photos || this.photos.length == 0)
-                        this.loadPhotos(this.section);
-                    
+            assertAssetsLoad() {
+                if (this.segments.length == 0)
+                    this.loadAssets()
+            },
+            // eslint-disable-next-line no-unused-vars
+            onIntersect(entries, observer, isIntersecting) {
+                if (isIntersecting) {
+                    this.loadAssets();
                     this.visible = true;
                     // eslint-disable-next-line no-console
-                    console.log("Section " + this.section.id + " visible");
+                    // console.log("Section " + this.section.id + " visible");
                 } else {
                     // eslint-disable-next-line no-console
-                    console.log("Section " + this.section.id + " invisible");
-                    this.photos = [];
+                    // console.log("Section " + this.section.id + " invisible");
+                    this.segments = [];
                     this.visible = false;
                 }
+
             },
+
             computeSegments() {
                 if (! this.assets)
                     return [];
@@ -272,6 +262,16 @@
                     curElement.assets.push(asset);
                 });
                 return res;
+            },
+            findSegment(date) {
+                // can by optimized by divide and conquer approach
+                for (let i=0; i<this.segments.length-1; i++) {
+                    const current = this.segments[i];
+                    const older = this.segments[i+1];
+                    if (moment(date).isBetween(older.date, current.date))
+                        return current;
+                }
+                return null;
             },
 
         }

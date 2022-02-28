@@ -45,6 +45,10 @@ a resolved address along with a little map and some important Exif data)
 
 https://user-images.githubusercontent.com/71876828/149617848-ed456d59-cc71-4eb3-881e-2ee91bb81c21.mp4
 
+## New 0.95
+* Frontend reworked in order to use the space more effectively. Again trying to mimic Google Photos for the layout a bit more
+* Separated a dedicated worker for video conversion. Otherwise ffmpeg will eat all CPU resources. Now, there is only one video conversion task happening at a time
+
 ## Next to come
 * Bug fixing
 * Better face assignment for faces where the confidence level is a MAYBE

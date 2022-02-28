@@ -1,7 +1,11 @@
 module.exports = {
  
   publicPath: '',
-
+    
+  configureWebpack: {
+    devtool: "source-map"
+  },
+  
   devServer: {
     disableHostCheck: true,
     proxy: {
@@ -43,7 +47,6 @@ module.exports = {
     
     
   },
-
   transpileDependencies: [
     'vuetify'
   ]

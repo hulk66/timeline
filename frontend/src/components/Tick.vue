@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -16,7 +16,7 @@
  */
 <template>
     <div>
-        <div v-text="date" class="caption"></div>
+        <div v-text="date" class="caption" style="position: absolute; top: -10px"></div>
         <div v-for="t in ticks"
              :style="{
                 position:'absolute',
@@ -24,7 +24,8 @@
                 'width':'10px',
                 'height':'2px',
                 'left':'20px',
-                'background-color':'#a5a5a5'}"
+                'background-color':'#a5a5a5',
+                }"
              :key="t"></div>
     </div>
 </template>
@@ -48,16 +49,15 @@
         },
         computed: {
 
-
             date() {
                 let result = "";
                 if (this.moment.date() === 1 && this.moment.month() === 0)
                     result =  this.moment.format("YYYY")
-                /*
+                
                 else
                     result = this.moment.format("MMM-YY")
-                */
-                 return result;
+                
+                return result;
             },
             ticks() {
                 let result = [];

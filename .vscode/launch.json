@@ -24,7 +24,6 @@
                 "watchdog"
             ]
         },
-
         {
             "name": "Worker",
             "type": "python",
@@ -33,8 +32,8 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/backend",
             "args": [
-                "-A", 
-                "timeline.celery_process", 
+                "-A",
+                "timeline.celery_process",
                 "worker",
                 "-P",
                 "prefork",
@@ -53,8 +52,8 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/backend",
             "args": [
-                "-A", 
-                "timeline.celery_video", 
+                "-A",
+                "timeline.celery_video",
                 "worker",
                 "-P",
                 "prefork",
@@ -65,7 +64,6 @@
                 "transcode"
             ]
         },
-
         {
             "name": "Webapp",
             "type": "python",
@@ -76,11 +74,9 @@
                 "FLASK_APP": "timeline.app",
                 "FLASK_ENV": "development",
                 "FLASK_DEBUG": "1"
-                
             },
             "args": [
-                "run",
-                // "--no-debugger"
+                "run"
             ],
             "jinja": false
         },
@@ -91,7 +87,6 @@
             "cwd": "${workspaceFolder}/frontend",
             "type": "node-terminal"
         },
-
         {
             "name": "Python: Debug Current File",
             "cwd": "${workspaceFolder}/backend",
@@ -99,8 +94,37 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false,
-        }
+            "justMyCode": false
+        },
+        /*
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "vuejs: chrome",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/frontend/src",
+            "breakOnLoad": true,
+            "pathMapping": {
+              "/_karma_webpack_": "${workspaceFolder}/frontend/src"
+            },
+            "sourceMapPathOverrides": {
+              "webpack:/*": "${webRoot}/*",
+              "/./*": "${webRoot}/*",
+              "/src/*": "${webRoot}/*",
+              "/*": "*",
+              "/./~/*": "${webRoot}/node_modules/*"
+            },
+            // "preLaunchTask": "vuejs: start"
+          }
+          */
+          {
+              "cwd": "${workspaceFolder}",
+              "name": "Launch Chrome",
+              "request": "launch",
+              "type": "chrome",
+              "url": "http://localhost:8080",
+              "webRoot": "${workspaceFolder}/frontend"
 
+          },
     ]
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -296,12 +296,6 @@
             }
         },
 
-        /*
-        created() {
-            
-            this.showFullscreenBt = document.fullscreenEnabled
-        },
-        */
         computed: {
             ...mapState({
                 knownPersons: state => state.person.allPersons

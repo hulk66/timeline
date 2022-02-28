@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "vuejs: start",
+      "type": "npm",
+      "script": "serve",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      }
+
+    }
+  ]
+}

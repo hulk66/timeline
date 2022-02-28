@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Tobias Himstedt
+ * Copyright (C) 2021, 2022 Tobias Himstedt
  * 
  * 
  * This file is part of Timeline.
@@ -16,7 +16,7 @@
  */
 import Vue from 'vue'
 import Router from 'vue-router'
-import AssetWall from "./components/AssetWall";
+import Wall from "./components/Wall";
 import PersonsView from "./components/PersonsView";
 import SimilarPersons from "./components/SimilarPersons";
 import ThingsView from "./components/ThingsView";
@@ -33,8 +33,8 @@ export default new Router({
 
     {
       path: '/wall',
-      name: 'assetWall',
-      component: AssetWall,
+      name: 'wall',
+      component: Wall,
       props: castRouteParams
     },
 
