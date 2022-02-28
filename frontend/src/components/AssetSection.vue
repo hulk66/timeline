@@ -202,14 +202,6 @@
                     this.segments = this.computeSegments();
                     if (this.scrollToDate) {
                         this.scrollToSegment = this.findSegment(this.scrollToDate);
-
-                        /*                
-                        if (segment) {
-                            const index = segment.nr;
-                            const segmentElement = this.getSegmentEl(index) 
-                            segmentElement.scrollIntoView();
-                        }
-                        */
                         this.scrollToDate = null;
                     } 
 

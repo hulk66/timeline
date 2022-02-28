@@ -182,13 +182,13 @@
             },
             clickFace() {
                 if (this.person.confirmed)
-                    this.$router.push({name:'assetWall', query:{ person_id:this.person.id}});
+                    this.$router.push({name:'wall', query:{ person_id:this.person.id}});
                 else
                     this.$router.push( {name:'similarPersons', query:{ person_id:this.person.id}});
             },
             to(person) {
                 if (person.confirmed)
-                    return {name:'assetWall', query:{ person_id:person.id}};
+                    return {name:'wall', query:{ person_id:person.id}};
                 else {
                     return {name:'similarPersons', query:{ person_id:person.id}}
 

@@ -32,7 +32,7 @@
         </div>
         <div class="flex-grow-1">
             <wall  
-                ref="assetWall"
+                ref="wall"
                 :showassetCount="false"
                 :selectionAllowed="true"
                 :albumId="albumId">

@@ -29,7 +29,7 @@
                         :ref="'section' + section.id"
                         :target-height="previewHeight"
                         :section="section"
-                        :key="section.id"
+                        :key="section.uuid"
                         :initialHeight="height(section)"
                         :filter-person-id="personId"
                         :filter-thing-id="thingId"
@@ -76,7 +76,7 @@
             ref="viewerDialog">
             <image-viewer :photo="currentPhoto.asset" ref="viewer"
                             :nextPhoto="nextPhoto.asset"
-                            v-if="photoFullscreen"
+                            v-if="photoFullscreen && currentPhoto"
                             :prevPhoto="prevPhoto.asset"
                             :direction="imageViewerDirection"
                             @close="closeViewer"
@@ -397,14 +397,9 @@
 
             },
 
-            setRating(value, segment, index) {
-                if (segment == null && index == null) {
-                    // if this is coming from the imageviewer then it is simply the currentIndex in the currentSegment
-                    segment = this.currentSegment;
-                    index = this.currentIndex;
-                }
-                if (value <= 5 && segment && this.currentIndex >= 0) {
-                     segment.setRating(index, value); 
+            setRating(value) {
+                if (value <= 5 && this.currentPhoto) {
+                     this.currentPhoto.segmentElement.setRating(this.currentPhoto.index, value); 
                      if (this.photoFullscreen) 
                          this.$refs.viewer.mouseMove();
                            
@@ -419,6 +414,7 @@
                 else if (event.code == "ArrowRight")
                     this.navigate(1);
                 else if (event.code == "Escape") {
+                    this.photoFullscreen = false;
                     this.clearNav();
                     this.clearSelection();
                 } else if (event.code == "Space") {
@@ -426,9 +422,7 @@
                     event.preventDefault();
                 } else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
-                    this.setRating(value, 
-                        this.currentPhoto.currentSegment.segment, 
-                        this.currentPhoto.index);
+                    this.setRating(value); 
                 }
             },
 
@@ -441,11 +435,9 @@
                     this.navigate(1);
                 else if (event.code.startsWith("Digit")) {
                     let value = parseInt(event.key);
-                    this.setRating(value, 
-                        this.currentPhoto.currentSegment.segment, 
-                        this.currentPhoto.index);
-                } else if (event.code == "Space")
-                    this.currentPhoto = null;
+                    this.setRating(value);
+                } else if (event.code == "Escape")
+                    this.clearNav();
 
 
             },
@@ -718,13 +710,11 @@
                 if (!isNaN(this.albumId))
                     params['album_id'] = this.albumId;
                 axios.get("/api/section/all", config).then((result) => {
-                    this.$set(this, "sections",  result.data.sections);
-                    // this.sections = result.data.sections;
+                    this.sections = result.data.sections;
                     this.max_date = moment(result.data.max_date);
                     this.min_date = moment(result.data.min_date);
                     this.totalAssets = result.data.totalAssets;
                     this.total_duration = moment.duration(this.max_date.diff(this.min_date));
-                    // this.tickDates = this.getTickDates();
                     this.calcTickPositions();
                 });
             }
