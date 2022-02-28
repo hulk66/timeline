@@ -4,7 +4,7 @@ COPY package*.json ./
 RUN npm install
 COPY ./ .
 RUN npm run build
-RUN npm audit fix
+# RUN npm audit fix
 
 FROM nginx as production-stage
 RUN mkdir /app
