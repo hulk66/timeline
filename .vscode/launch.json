@@ -61,7 +61,7 @@
                 "-n",
                 "video@%n",
                 "-Q",
-                "transcode"
+                "transcode_prio,transcode"
             ]
         },
         {

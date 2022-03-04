@@ -19,7 +19,7 @@ from celery.signals import celeryd_after_setup, worker_process_init, worker_init
 
 from timeline.util.path_util import get_preview_path
 from timeline.util.path_util import get_full_path
-from timeline.domain import Asset
+from timeline.domain import Asset, TranscodingStatus
 from timeline.app import create_app, setup_logging
 from timeline.extensions import db, celery
 import logging
@@ -55,19 +55,19 @@ def create_preview_video(asset_id, max_dim: int) -> None:
     path = get_full_path(asset.path)
 
     # next generate a static jpg preview image
-    logger.debug("Create jpg preview %s", asset.path)
-    preview_path = get_preview_path(
-        asset.path, ".jpg", str(max_dim), "high_res")
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1,
-                                                           movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
+    #logger.debug("Create jpg preview %s", asset.path)
+    #preview_path = get_preview_path(
+    #    asset.path, ".jpg", str(max_dim), "high_res")
+    #os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    #ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1,
+    #                                                       movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
 
     # also generate a very low res resolution preview jpg for fast loading
-    preview_path = get_preview_path(
-        asset.path, ".jpg", str(max_dim), "low_res")
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    ffmpeg.input(path).filter("scale", -2, max_dim/10).output(preview_path, map_metadata=0, threads=1,
-                                                              movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
+    #preview_path = get_preview_path(
+    #    asset.path, ".jpg", str(max_dim), "low_res")
+    #os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    #ffmpeg.input(path).filter("scale", -2, max_dim/10).output(preview_path, map_metadata=0, threads=1,
+    #                                                          movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
 
     # finally generate a preview mp4 and strip the audio
     logger.debug("Create mp4 preview for hovering %s", asset.path)
@@ -84,20 +84,30 @@ def create_preview_video(asset_id, max_dim: int) -> None:
 @celery.task(name="Create Fullscreen Video")
 def create_fullscreen_video(asset_id) -> None:
     asset = Asset.query.get(asset_id)
+
+    logger.debug("Convert to browser compatible mp4 %s", asset.path)
+
+    if asset.video_fullscreen_transcoding_status == TranscodingStatus.STARTED or asset.video_fullscreen_transcoding_status == TranscodingStatus.DONE:
+        logger.debug("Nothing to be done. Video is either already transcoded or manually triggered")
+        return
+        
     path = get_full_path(asset.path)
+    asset.video_fullscreen_transcoding_status = TranscodingStatus.STARTED
+    asset.video_fullscreen_generated_progress = 50 # replace this later when we have a progress
+    db.session.commit()
 
     # For the conversion with ffmpeg limit everything to just 1 thread
     # otherwise it will span multiple thread per conversion
     # this wil slow down the system too much
 
     # convert in any case (mp4 or mov); not all mp4 are playable in the browser
-    logger.debug("Convert to browser compatible mp4 %s", asset.path)
     # convet mov to mp4 to have it playable in the browser
     preview_path = get_preview_path(asset.path, ".mp4", "video", "full")
     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
     ffmpeg.input(path).output(preview_path, loglevel="error", vcodec="libx264", acodec="aac",
                               pix_fmt="yuv420p", movflags="faststart +use_metadata_tags").overwrite_output().run(cmd=nice_ffmpeg)
 
-    asset.video_fullscreen_generated = True
+    asset.video_fullscreen_transcoding_status = TranscodingStatus.DONE
+    asset.video_fullscreen_generated_progress = 100 # replace this later when we have a progress
     db.session.commit()
 

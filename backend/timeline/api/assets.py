@@ -20,11 +20,12 @@ from timeline.util.gps import get_labeled_exif
 import flask
 import io
 from flask import Blueprint, abort
+from timeline.extensions import celery
 
 from timeline.tasks.crud_tasks import create_preview
 from timeline.util.image_ops import exif_transpose
 import logging
-from timeline.domain import Asset, Status, Album, Person, AssetType
+from timeline.domain import Asset, Status, Album, Person, AssetType, TranscodingStatus
 from flask import request
 from PIL import Image
 from pathlib import Path
@@ -107,6 +108,42 @@ def video_preview(path):
     asset = asset_by_path(path)
     p = get_preview_path(asset.path, ".mp4", "video", "preview")
     return send_video(p)
+
+@blueprint.route('/transcodingstatus/<int:asset_id>', methods=['GET'])
+def transcoding_status(asset_id):
+    asset = Asset.query.get(asset_id)
+    result = TranscodingStatus.NONE
+
+    if not asset:
+        logger.warn("Asset with id %d not found", asset_id)
+    else:     
+        if asset.is_video:
+            result = asset.video_fullscreen_transcoding_status
+        else:
+            logger.warn("Transcoding is only for videos. This asset is a photo")
+    return flask.jsonify(result.value)
+
+@blueprint.route('/transcode/<int:asset_id>', methods=['GET'])
+def transcode(asset_id):
+    logger.warn("Transcode Asseet/Video %d", asset_id)
+    asset = Asset.query.get(asset_id)
+    if not asset:
+        logger.warn("Asset with id %d not found", asset_id)
+        return flask.jsonify(False)
+    else:
+        if asset.is_video:
+
+            if asset.video_fullscreen_transcoding_status == TranscodingStatus.DONE:    
+                logger.info("Nothing to do. Video %d is already transcoded", asset_id)
+            elif asset.video_fullscreen_transcoding_status == TranscodingStatus.WAITING:
+                logger.info("Transcoding for asset %d aleady scheduled", asset_id)
+            else:
+                asset.video_fullscreen_transcoding_status = TranscodingStatus.WAITING
+                db.session.commit()
+                celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode_prio")
+        else:
+            logger.warn("Transcoding is only for videos. Asset %d is a photo", asset_id)
+    return flask.jsonify(asset.video_fullscreen_transcoding_status.value)
 
 
 @blueprint.route('/preview/<int:max_dim>/<resolution>/<path:path>', methods=['GET'])
@@ -228,3 +265,5 @@ def upload():
             fout.close()
 
     return flask.jsonify(True)
+
+

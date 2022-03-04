@@ -26,7 +26,7 @@ from celery import chain
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
 
-from timeline.domain import Album, GPS, Exif, Person, Asset, Section, Status, DateRange, AssetType
+from timeline.domain import Album, GPS, Exif, Person, Asset, Section, Status, DateRange, AssetType, TranscodingStatus
 from timeline.extensions import celery, db
 from timeline.util.gps import (get_exif_value, get_geotagging, get_gps_data,
                                get_labeled_exif, get_lat_lon)
@@ -40,7 +40,7 @@ from pillow_heif import register_heif_opener
 import exiftool
 import ffmpeg
 from celery.exceptions import SoftTimeLimitExceeded
-
+from distutils.util import strtobool
 
 logger = logging.getLogger(__name__)
 register_heif_opener()
@@ -122,7 +122,9 @@ def create_asset(path: str, commit=True):
     else:
         md = exiftool.get_metadata(path)
         asset.video_preview_generated = False
-        asset.video_fullscreen_generated = False
+        asset.video_fullscreen_transcoding_status = TranscodingStatus.NONE
+        asset.video_fullscreen_generated_progress = 0
+        
         asset.width = md.get("QuickTime:ImageWidth")
         asset.height = md.get("QuickTime:ImageHeight")
 
@@ -814,7 +816,9 @@ def create_preview(asset_id: int):
         create_jpg_preview(asset, 400, True)
     elif asset.is_video():
         celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode")
-        celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode")
+        video_create_on_demand = bool(strtobool(current_app.config['VIDEO_TRANSCODE_ON_DEMAND']))
+        if not video_create_on_demand:
+            celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode")
 
         # create_preview_video.apply_async( (asset_id, 400), queue="transcode")
         # create_fullscreen_video.apply_async( (asset_id,), queue="transcode")

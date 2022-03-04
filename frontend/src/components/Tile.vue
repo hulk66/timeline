@@ -27,10 +27,20 @@
         </video-tile>
         <i :style="paddingStyle"></i>
 
-        <v-icon v-if="!hover && !isPhoto" class="top-right" color="white">
-            {{playIcon}}
-        </v-icon>
 
+
+        <span v-if="isVideo">
+            <v-progress-circular v-if="transcodingTriggered" 
+                indeterminate
+                color="white" 
+                class="top-right">
+            </v-progress-circular>
+            <span v-else>
+                <v-icon v-if="!hover" class="top-right" color="white">
+                    {{playIcon}}
+                </v-icon>
+            </span>
+        </span> 
         <v-fade-transition>
 
             <div v-if="hover || selected || marked" class="hovered">
@@ -60,92 +70,6 @@
         </v-fade-transition>
     </div>
 
-    <!--
-    <div> 
-        <div v-if="isVideo" >
-            <div v-if="asset.video_preview_generated" 
-                @click="clickPhoto"  
-                @mouseover="play()" 
-                @mouseleave="stop()" >
-                <video ref="video" loop muted style="max-width:100%" >
-                    <source :src="videoSource" type="video/mp4" >
-                </video>
-                <v-fade-transition>
-                    <v-icon v-if="!hover" class="top-right" color="white">
-                        {{playIcon}}
-                    </v-icon>
-
-                    <div v-if="hover" class="gradient full">
-                        <v-checkbox class="top-left" 
-                            v-if="selectionAllowed"
-                            dark
-                            v-model="selected"
-                            @change="selectPhoto"
-                            @click.shift="clickMultiple"
-                            @click="clickSingle"
-                            @click.native.stop> 
-                        </v-checkbox> 
-                            <v-rating 
-                            class="bottom-left"
-                            background-color="grey" 
-                            color="white" 
-                            small 
-                            length="5"
-                            dense 
-                            @input="ratePhoto"
-                            @click.native.stop
-                            clearable
-                            :value="asset.stars">
-                        </v-rating>
-                    </div>     
-                </v-fade-transition> 
-            </div>
-            <div v-else class="notFound">
-                <v-icon class="camera" x-large>mdi-video-outline</v-icon>
-            </div>
-        </div> 
-        <v-img v-else @click="clickPhoto" 
-                :src="thumbSrc"
-                :class="markedClass"
-                transition="false"
-                contains
-                @mouseover="hover = true" 
-                @mouseleave="hover = false"
-                ref="img">
-            <div class="container fill-height">
-            
-            <v-fade-transition>
-                <div v-if="hover || selected || marked" class="gradient fill-height container">
-
-                    <v-checkbox class="top-left" 
-                        v-if="selectionAllowed"
-                        dark
-                        v-model="selected"
-                        @change="selectPhoto"
-                        @click.shift="clickMultiple"
-                        @click="clickSingle"
-                        @click.native.stop> 
-                    </v-checkbox>       
-                    <v-rating 
-                        class="bottom-left"
-                        background-color="grey" 
-                        color="white" 
-                        small 
-                        length="5"
-                        dense 
-                        @input="ratePhoto"
-                        @click.native.stop
-                        clearable
-                        :value="asset.stars">
-                    </v-rating>
-                </div>
-                                    
-            </v-fade-transition>
-            
-            </div>
-    </v-img>
-    </div>
-    -->
 </template>
 <script>
 
@@ -153,6 +77,8 @@
     import { isVisible} from "./Util";
     import ImgTile from "./ImgTile.vue"
     import VideoTile from "./VideoTile.vue"
+    import axios from "axios";
+
     export default {
     
         name: "Tile",
@@ -169,9 +95,10 @@
         data() {
             return {
                 hover: false,
-                // visible: false,
                 marked: false,
                 selected: false,
+                transcodingStatus: 'NONE',
+                timer: ''
             };
         },
 
@@ -179,10 +106,26 @@
         mounted() {
             if (this.isVideo) {
                 this.videoSource = encodeURI("/assets/video/preview/" + this.asset.path + ".mp4");
+                this.transcodingStatus = this.asset.video_fullscreen_transcoding_status;
+                if (this.transcodingTriggered)
+                    this.timer = setInterval(this.getTranscodingStatus, 10000);
             }
         },
 
         computed: {
+
+            transcodingNotDone() {
+                return this.transcodingStatus != 'DONE';
+            },
+
+            transcodingStarted() {
+                return this.transcodingStatus == 'STARTED';
+            },
+
+
+            transcodingTriggered() {
+                return this.transcodingStatus == 'WAITING' || this.transcodingStatus == 'STARTED';
+            },
 
             th() {
                 return this.marked ? this.targetHeight-5 : this.targetHeight;
@@ -206,18 +149,19 @@
             },
 
             playIcon() {
-                return this.asset.video_fullscreen_generated ? "mdi-play-circle-outline" : "mdi-autorenew";
+                return this.transcodingNotDone ?  "mdi-autorenew" : "mdi-play-circle-outline"
             },
 
             thumbSrc() {
                 return encodeURI("/assets/preview/400/high_res/" + this.asset.path);
             },
 
+            /*
             lowRes() {
                 return encodeURI("/assets/preview/400/low_res/" + this.asset.path);
 
             },
-
+            */
             tileClass() {
                 return "tile " + (this.marked ? "marked" : "");
             },
@@ -241,16 +185,37 @@
 
         methods: {
 
+            getTranscodingStatus() {
+                if (this.transcodingStatus != 'DONE') {
+                    console.log("timer active")
+                    axios.get( "/assets/transcodingstatus/" + this.asset.id).then((result) => {
+                        this.transcodingStatus = result.data;
+                    })
+
+                } else {
+                    console.log("clear timer")
+                    clearInterval(this.timer)
+                }
+
+            },
             startHover() {
-                if (!this.isPhoto)
+                if (this.isVideo) {
                     this.$refs.video.play();
+
+                }
                 this.hover = true;
             },
 
             stopHover() {
                 this.hover = false;
-                if (!this.isPhoto)
+                if (this.isVideo) {
                     this.$refs.video.stop();
+                }
+
+            },
+
+            beforeDestroy() {
+                this.clearInterval(this.timer);
             },
 
             ratePhoto(v) {
@@ -258,8 +223,22 @@
             },
 
             clickPhoto() {
-                if (!this.isVideo || this.asset.video_fullscreen_generated)
+                if (this.isVideo) {
+                    // Video we have to check if the video has been transcoded already
+                    if (this.transcodingStatus == "DONE")
+                        this.$emit("click-photo", this.index);
+                    else {
+                        // if not, trigger transcoding task
+                        axios.get("/assets/transcode/" + this.asset.id).then( result => {
+                            this.transcodingStatus = result.data;
+                        });
+                        this.timer = setInterval(this.getTranscodingStatus, 10000);
+
+                    }
+                } else
+                    // Photo can be opened
                     this.$emit("click-photo", this.index);
+
             },
 
             clickSingle() {

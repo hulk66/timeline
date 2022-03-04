@@ -7,9 +7,10 @@ import ffmpeg
 from PIL import Image
 import exiftool
 from timeline.tasks.crud_tasks import create_asset, create_preview
+from timeline.celery_video import create_fullscreen_video, create_preview_video
 from timeline.app import create_app
 from timeline.extensions import db
-from timeline.domain import Asset, Status
+from timeline.domain import Asset, Status, TranscodingProcess
 import shutil
 
  
@@ -79,9 +80,11 @@ class Test_VideoConversion(unittest.TestCase):
         with self.app.app_context():
             create_asset("tests/fjord.mov")
             video = Asset.query.first()        
-            create_preview(video.id)
-            assert os.path.exists("tests/400/high_res/tests/fjord.mov.jpg")
-            assert os.path.exists("tests/400/low_res/tests/fjord.mov.jpg")
+            # create_preview(video.id)
+            create_preview_video(video.id, 400)
+            create_fullscreen_video(video.id)
+            #assert os.path.exists("tests/400/high_res/tests/fjord.mov.jpg")
+            #assert os.path.exists("tests/400/low_res/tests/fjord.mov.jpg")
             assert os.path.exists("tests/video/full/tests/fjord.mov.mp4")
             assert os.path.exists("tests/video/preview/tests/fjord.mov.mp4")
             probe = ffmpeg.probe("tests/video/full/tests/fjord.mov.mp4")
@@ -103,11 +106,32 @@ class Test_VideoConversion(unittest.TestCase):
             height = int(video_stream['height'])
             assert height== 400
             
-            image = Image.open("tests/400/high_res/tests/fjord.mov.jpg")
-            assert image.height == 400
+            #image = Image.open("tests/400/high_res/tests/fjord.mov.jpg")
+            #assert image.height == 400
 
             #shutil.rmtree("tests/400")
             #shutil.rmtree("tests/video")
+
+    def test_transcode_process(self):
+        with self.app.app_context():
+            create_asset("tests/fjord.mov")
+            video = Asset.query.first()        
+            tp = TranscodingProcess()
+            tp.asset = video
+            tp.progress = 40
+            db.session.add(tp)
+            db.session.commit()
+
+            tp = TranscodingProcess.query.first()
+            assert tp.progress == 40
+            assert tp.id == video.id
+            db.session.delete(tp)
+            db.session.commit()
+
+            tp = TranscodingProcess.query.first()
+            assert tp is None
+            video = Asset.query.first()        
+            assert video 
 
 
 if __name__ == '__main__':

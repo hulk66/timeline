@@ -192,6 +192,12 @@ class AssetType(enum.Enum):
     mp4_video = "mp4"
     avi_video = "avi"
 
+class TranscodingStatus(enum.Enum):
+    NONE = "NONE"
+    WAITING = "WAITING"
+    STARTED = "STARTED"
+    DONE = "DONE"
+
 
 class Asset(db.Model, SerializerMixin):
     __tablename__ = 'assets'
@@ -216,8 +222,8 @@ class Asset(db.Model, SerializerMixin):
     score_technical = db.Column(db.Float)
     # score_brisque = db.Column(db.Float)
     video_preview_generated = db.Column(db.Boolean)
-    video_fullscreen_generated = db.Column(db.Boolean)
-
+    video_fullscreen_transcoding_status = db.Column(db.Enum(TranscodingStatus))
+    video_fullscreen_generated_progress = db.Column(db.Integer) 
 
     gps = db.relationship(
         "GPS", uselist=False, cascade="all, delete, delete-orphan", 
@@ -318,3 +324,5 @@ class GPS(db.Model, SerializerMixin):
     village = db.Column(db.String(100))
     municipality = db.Column(db.String(100))
     display_address = db.Column(db.String(1000))
+
+

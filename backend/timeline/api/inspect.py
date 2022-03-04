@@ -140,7 +140,7 @@ def status():
         "process": get_queue_len("process"),
         "analyze": get_queue_len("analyze"),
         "geo": get_queue_len("geo"),
-        "transcode": get_queue_len("transcode"),
+        "transcode": get_queue_len("transcode_prio") + get_queue_len("transcode") ,
         "totalFaces": numFaces,
         "totalThings": numThings,
         "totalassets": Asset.query.count()

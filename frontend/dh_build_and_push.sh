@@ -1,3 +1,3 @@
 #!/bin/sh
-docker build . -t hulk66/timeline_fe:0.95
-docker push hulk66/timeline_fe:0.95
+docker build . -t hulk66/timeline_fe:0.95.1
+docker push hulk66/timeline_fe:0.95.1

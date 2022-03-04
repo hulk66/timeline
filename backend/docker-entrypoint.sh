@@ -18,7 +18,7 @@ elif [ $APP = 'worker' ]
 elif [ $APP = 'transcoder' ]
   then 
       ./wait
-      nice -n 20 celery -A timeline.celery_video worker --autoscale=1,0 -Q transcode
+      nice -n 20 celery -A timeline.celery_video worker --autoscale=1,0 -Q transcode_prio,transcode
 
 elif [ $APP = 'watchdog' ]
   then
