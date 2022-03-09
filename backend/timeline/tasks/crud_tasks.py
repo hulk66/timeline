@@ -521,6 +521,9 @@ def compute_sections():
         logger.debug("Sectioning assets - nothing to do")
         status.next_import_is_new = True
         db.session.commit()
+
+        # if there is nothing new it is a good point to start the event finder
+        celery.send_task("Find Events", queue="analyze")        
         return
     sort_old_assets()
 
