@@ -37,21 +37,6 @@ RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 # footprint should reduce  
 WORKERS_PROCESS=2
 
-# vvv --- Ignore this for now. Old
-# There are two workers, one that just reads the photos, extracts exif, 
-# creates preview and so on. They are CPU intensive but not very memory intensive 
-# When everything is done, those worker processes will be scaled down automatically
-# by Celery
-# The other worker does all the machine learning stuff. Due to the loaded models
-# they are CPU intensive and quite memory intensive, so we create fewer of them
-# on process can eat up to 2.5GB Memory. So be reasonable with them
-# Unfortunatley Tensorflow/Keras seems not to be thread safe, so we have to used
-# prefork workers. Moreoever, each forked process need very own instances 
-# of each model. That is why they are so memory intensive. 
-# Also the autoscaling from Celery Unfortunatley does not work here
-# WORKERS_ANALYZE=2
-# ^^^ -- not used atm
-
 # This is the password to access adminer
 # under http://<machine>:9091/adminer
 # with the root user
@@ -82,3 +67,9 @@ FACE_CLUSTER_MAX_FACES=8000
 FACE_DISTANCE_VERY_SAFE=0.55
 FACE_DISTANCE_SAFE=0.675
 FACE_DISTANCE_MAYBE=0.75
+
+# How many Assets are needed to detect an Event
+EVENT_MIN_SAMPLES=50
+
+# What is the timeframe to detect this Event
+EVENT_HOURS_EPSILON=24

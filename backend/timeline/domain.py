@@ -15,15 +15,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-from enum import unique
+import enum
 import pickle
 import zlib
-from sqlalchemy_serializer import SerializerMixin
+from enum import unique
+
 import sqlalchemy
+from sqlalchemy_serializer import SerializerMixin
+
 from timeline.extensions import db
-import enum
-import os
-from sqlalchemy.ext.hybrid import hybrid_property
+
 
 class NumpyType(sqlalchemy.types.TypeDecorator):
     cache_ok = True
@@ -95,6 +96,13 @@ asset_album = db.Table('asset_album', db.Model.metadata,
                        )
 
 
+class AlbumType(enum.Enum):
+    SMART = "smart"
+    MANUAL = "manual"
+    EVENT = "event"
+    PEOPLE = "people"
+
+
 class Album(db.Model, SerializerMixin):
     __tablename__ = 'albums'
     id = db.Column(db.Integer, primary_key=True)
@@ -102,7 +110,8 @@ class Album(db.Model, SerializerMixin):
     assets = db.relationship(
         'Asset', secondary=asset_album, back_populates='albums')
 
-    smart = db.Column(db.Boolean)
+    album_type = db.Column(db.Enum(AlbumType))
+    # smart = db.Column(db.Boolean)
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     rating = db.Column(db.Integer)
@@ -315,3 +324,18 @@ class GPS(db.Model, SerializerMixin):
     village = db.Column(db.String(100))
     municipality = db.Column(db.String(100))
     display_address = db.Column(db.String(1000))
+
+
+class Event(db.Model, SerializerMixin):
+    __tablename__ = 'event'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    ignore = db.Column(db.Boolean)
+    #album = db.relationship(
+    #    "Album", uselist=False, 
+    #    single_parent=True)
+    #album_id = db.Column(db.Integer, db.ForeignKey('album.id'))
+

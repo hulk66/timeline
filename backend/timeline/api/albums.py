@@ -19,7 +19,7 @@ from timeline.api.util import assets_from_smart_album
 import flask
 from flask import Blueprint, request
 import logging
-from timeline.domain import Album, Asset
+from timeline.domain import Album, Asset, AlbumType
 from timeline.extensions import db
 from timeline.api.util import list_as_json
 from sqlalchemy import and_
@@ -38,7 +38,7 @@ def get_all_albums():
 @blueprint.route('/allManualAlbums', methods=['GET'])
 def get_manual_albums():
     logger.debug("get all manual albums")
-    albums = Album.query.filter( and_(Album.id > 1, Album.smart == False)).order_by(Album.name).all()
+    albums = Album.query.filter( and_(Album.id > 1, Album.album_type == AlbumType.MANUAL)).order_by(Album.name).all()
     return flask.jsonify([a.to_dict() for a in albums])
 
 
@@ -53,7 +53,7 @@ def create_new_album():
     album_name = req_data.get("albumName")
     asset_ids = req_data["pids"]
     album = Album()
-    album.smart = False
+    album.album_type = AlbumType.MANUAL
     album.name = album_name
     add_assets(album, asset_ids)
     db.session.add(album)
@@ -99,7 +99,7 @@ def info(id):
 @blueprint.route('/assets/<int:album_id>/<int:count>', methods=['GET'])
 def assets(album_id, count):
     album = Album.query.get(album_id)
-    if album.smart:
+    if album.album_type != AlbumType.MANUAL:
         assets = assets_from_smart_album(album)
     else:
         assets = Asset.query.join(Asset.albums).filter(Album.id == album_id)
@@ -110,10 +110,10 @@ def assets(album_id, count):
 
 
 
-@blueprint.route('/smartalbum/all', methods=['GET'])
-def all_smartalbum():
-    albums = SmartAlbum.query
-    return list_as_json(albums)
+#@blueprint.route('/smartalbum/all', methods=['GET'])
+#def all_smartalbum():
+#    albums = SmartAlbum.query
+#    return list_as_json(albums)
 
 @blueprint.route('/smartalbum/<int:id>', methods=['GET'])
 def get_smartalbum(id):
@@ -139,13 +139,11 @@ def create_or_update_smart_album():
         smart_album = Album.query.get(id)
     else:
         smart_album = Album()
-        smart_album.smart = True
+        smart_album.album_type = AlbumType.SMART
         db.session.add(smart_album)
 
     smart_album.name = name
-
     smart_album.person_id = person_id
-
     smart_album.thing_id = thing_id
     smart_album.country = country
     smart_album.county = county
