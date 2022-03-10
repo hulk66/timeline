@@ -342,8 +342,4 @@ class Event(db.Model, SerializerMixin):
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     ignore = db.Column(db.Boolean)
-    #album = db.relationship(
-    #    "Album", uselist=False, 
-    #    single_parent=True)
-    #album_id = db.Column(db.Integer, db.ForeignKey('album.id'))
 

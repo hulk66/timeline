@@ -5,6 +5,8 @@ if [ $APP = 'web' ]
       ./wait
       # gunicorn -b 0.0.0.0:5000 --log-file /log/gunicorn.log --access-logfile /log/gunicorn_access.log timeline.wsgi:app
       python -m timeline.manage init
+      python -m timeline.manage db stamp head
+      python -m timeline.manage db upgrade
       gunicorn -b 0.0.0.0:5000 --workers=$GUNICORN_WORKERS --worker-class=$GUNICORN_WORKER_CLASS timeline.wsgi:app
 elif [ $APP = 'worker' ]
   then 
