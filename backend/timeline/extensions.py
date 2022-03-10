@@ -19,8 +19,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 from celery import Celery
 import flask
-
 from flask_caching import Cache
+from flask_migrate import Migrate
 
 class FlaskCelery(Celery):
 
@@ -57,3 +57,4 @@ celery = FlaskCelery()
 celery.conf.worker_proc_alive_timeout = 240.0
 db = SQLAlchemy()
 cache = Cache()
+migrate = Migrate()

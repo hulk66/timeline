@@ -22,12 +22,13 @@ imagehash = "*"
 ffmpeg-python = "*"
 keras-applications = "*"
 keras-vggface = {git = "https://github.com/yaledhlab/vggface.git"}
-pyexiftool = "*"
 tensorflow = "~=2.5"
 tensorflow-hub = "*"
 pillow-heif = "*"
 flask-caching = "*"
 redis = "*"
+flask-migrate = "*"
+pyexiftool = "==0.4.13"
 
 [dev-packages]
 pylint = "*"
