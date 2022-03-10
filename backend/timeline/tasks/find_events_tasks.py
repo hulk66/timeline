@@ -24,7 +24,7 @@ from pymysql.err import InternalError
 from scipy.spatial.distance import cdist
 from sklearn.cluster import DBSCAN
 from sqlalchemy import and_, or_
-from timeline.domain import Asset, Event, GPS, Album, AlbumType
+from timeline.domain import Asset, Event, GPS, Album, AlbumType, Status
 from timeline.extensions import celery, db
 from datetime import datetime
 logger = logging.getLogger(__name__)
@@ -53,8 +53,12 @@ def find_name(asset_id_list:numpy.ndarray, min_date:datetime) -> String:
 
 @celery.task(name="Find Events")
 def find_events():
-    logger.debug("Find Events")
+    status = Status.query.first()
+    if not status.find_events_needed:
+        logger.debug("Find Events: Nothing to do")
+        return
 
+    logger.debug("Find Events: Go")
     all_assets = Asset.query.with_entities(Asset.id, Asset.created).all()
     ids, creation_dates = zip(*all_assets)
     ids = numpy.asarray(ids)
@@ -104,6 +108,7 @@ def find_events():
                     album.name = event.name
                     db.session.add(album)
 
+    status.find_events_needed = False
     db.session.commit()
 
 

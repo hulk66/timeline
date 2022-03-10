@@ -303,6 +303,7 @@ class Status(db.Model, SerializerMixin):
         single_parent=True)
     last_import_album_id = db.Column(db.Integer, db.ForeignKey('albums.id'))   
     in_sectioning = db.Column(db.Boolean)
+    find_events_needed = db.Column(db.Boolean)
 
 class Exif(db.Model, SerializerMixin):
     __tablename__ = 'exif'

@@ -54,13 +54,13 @@ def create_preview_video(asset_id, max_dim: int) -> None:
     asset = Asset.query.get(asset_id)
     path = get_full_path(asset.path)
 
-    # next generate a static jpg preview image
-    #logger.debug("Create jpg preview %s", asset.path)
-    #preview_path = get_preview_path(
-    #    asset.path, ".jpg", str(max_dim), "high_res")
-    #os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    #ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1,
-    #                                                       movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
+    # generate a static jpg preview image
+    logger.debug("Create jpg preview %s", asset.path)
+    preview_path = get_preview_path(
+        asset.path, ".jpg", str(max_dim), "high_res")
+    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1,
+                                                           movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run(cmd=nice_ffmpeg)
 
     # also generate a very low res resolution preview jpg for fast loading
     #preview_path = get_preview_path(

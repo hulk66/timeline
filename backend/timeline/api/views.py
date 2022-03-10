@@ -29,7 +29,7 @@ from sqlalchemy import and_, or_
 from timeline.api.assets import send_image
 from timeline.api.util import list_as_json, refine_query, assets_from_smart_album
 from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
-                             asset_thing, Exif, asset_album, Album)
+                             asset_thing, Exif, asset_album, Album, AlbumType)
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, 
                                         distance_safe,
@@ -249,7 +249,7 @@ def amend_query(request, q):
 
     if album_id:
         album = Album.query.get(album_id)
-        if album.smart:
+        if album.album_type != AlbumType.MANUAL:
             q = assets_from_smart_album(album, q)
         else:
             q = q.join(asset_album).filter(asset_album.c.album_id == album_id)
