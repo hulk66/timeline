@@ -203,9 +203,7 @@ class Asset(db.Model, SerializerMixin):
     __tablename__ = 'assets'
 
     id = db.Column(db.Integer, primary_key=True)
-    path = db.Column(db.String(512), unique=True)
-    # path_without_ext = db.Column(db.String(512), unique=True)
-            
+    path = db.Column(db.String(512), unique=True)            
     filename = db.Column(db.String(100))
 
     directory = db.Column(db.String(512))

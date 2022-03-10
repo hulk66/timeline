@@ -3,6 +3,7 @@
 FLASK_ENV=development
 SECRET_KEY=changeme
 SQLALCHEMY_DATABASE_URI=mysql+pymysql://timeline:timeline@localhost:3306/timeline
+# SQLALCHEMY_DATABASE_URI=sqlite:///
 CELERY_BROKER_URL=pyamqp://guest:guest@localhost:5672
 CELERY_RESULT_BACKEND=rpc://
 PHOTO_PATH="/mnt/c/Users/himst/Pictures/Camera Roll"

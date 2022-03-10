@@ -59,7 +59,7 @@ def configure_extensions(app, cli):
     create_db(app)
     db.init_app(app)
     migrate.init_app(app, db)
-    db.create_all(app=app)
+    # db.create_all(app=app)
     celery.init_app(app)
     cache.init_app(app)
 

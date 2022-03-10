@@ -15,6 +15,43 @@
             ]
         },
         {
+            "name": "Set initial DB Version",
+            "type": "python",
+            "request": "launch",
+            "module": "timeline.manage",
+            "cwd": "${workspaceFolder}/backend",
+            "args": [
+                "db",
+                "stamp",
+                "head"
+            ]
+        },
+
+        {
+            "name": "DB Migrate",
+            "type": "python",
+            "request": "launch",
+            "module": "timeline.manage",
+            "cwd": "${workspaceFolder}/backend",
+            "args": [
+                "db",
+                "migrate"
+            ]
+        },
+
+        {
+            "name": "DB Upgrade",
+            "type": "python",
+            "request": "launch",
+            "module": "timeline.manage",
+            "cwd": "${workspaceFolder}/backend",
+            "args": [
+                "db",
+                "upgrade"
+            ]
+        },
+
+        {
             "name": "Watchdog",
             "type": "python",
             "request": "launch",

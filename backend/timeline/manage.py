@@ -77,12 +77,12 @@ def init():
     """
     from timeline.extensions import db
 
+    db.create_all()
     click.echo("init things")
     required = insert_things("timeline/resources/class-descriptions.csv")
     click.echo("init thing relationships")
     if required:
         set_hierarchy("timeline/resources/bbox_labels_600_hierarchy.json")
-    db.create_all()
     status = Status.query.first()
     if not status:
         status = Status()
