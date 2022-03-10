@@ -39,15 +39,15 @@ def find_name(asset_id_list:numpy.ndarray, min_date:datetime) -> String:
     if location:
         result += " - "
         if location.village:
-            result += location.village
+            result += location.village + ", "
         elif location.city:
-            result += location.city
+            result += location.city + ", "
         elif location.municipality:
-            result += location.municipality
+            result += location.municipality + ", "
         elif location.county:
-            result += location.county
+            result += location.county + ", "
         if location.country:
-            result += ", " + location.country 
+            result += location.country 
 
     return result      
 
