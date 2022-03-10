@@ -32,6 +32,7 @@ import timeline.tasks.process_tasks
 import timeline.tasks.face_tasks
 import timeline.tasks.iq_tasks
 import timeline.tasks.classify_tasks
+import timeline.tasks.find_events_tasks
 
 import logging
 

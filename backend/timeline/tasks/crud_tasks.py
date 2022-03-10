@@ -140,9 +140,14 @@ def create_asset(path: str, commit=True):
 
         dateStr = md.get("QuickTime:MediaCreateDate")
         if dateStr:
-            dt = datetime.strptime(str(dateStr), "%Y:%m:%d %H:%M:%S")
-            asset.created = dt
-            asset.no_creation_date = False
+            try:
+                dt = datetime.strptime(str(dateStr), "%Y:%m:%d %H:%M:%S")
+                asset.created = dt
+                asset.no_creation_date = False
+            except ValueError:
+                logger.info("Could not parse Date for Video")
+                asset.created = datetime.today()
+                asset.no_creation_date = True
 
     # asset.directory = os.path.
     db.session.add(asset)
@@ -274,6 +279,7 @@ def insert_asset_into_section(asset):
 def add_to_last_import(asset):
     status = Status.query.first()
     status.sections_dirty = True
+    status.find_events_needed = True
     album = Album.query.get(status.last_import_album_id)
 
     if album is None:
@@ -521,6 +527,9 @@ def compute_sections():
         logger.debug("Sectioning assets - nothing to do")
         status.next_import_is_new = True
         db.session.commit()
+
+        # if there is nothing new it is a good point to start the event finder
+        celery.send_task("Find Events", queue="beat")        
         return
     sort_old_assets()
 
@@ -831,8 +840,7 @@ def create_preview(asset_id: int):
 def recreate_previews(dimension=400, low_res=True):
     logger.debug("Recreating Previews for size %d", dimension)
     for asset in Asset.query:
-        create_preview.apply_async(
-            (asset.path, dimension, low_res), queue='process')
+        create_preview.apply_async((asset.id,), queue='process')
 
 
 @celery.task(name="Split path and filename")
