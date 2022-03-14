@@ -275,6 +275,13 @@ def insert_asset_into_section(asset):
 
     section.assets.append(asset)
 
+def init_status():
+    status = Status.query.first()
+    status.sections_dirty = True
+    status.find_events_needed = True
+    status.in_sectioning = False
+    db.session.commit()
+
 
 def add_to_last_import(asset):
     status = Status.query.first()
