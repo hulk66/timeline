@@ -63,7 +63,7 @@ class Face(db.Model, SerializerMixin):
     person_id = db.Column(db.Integer, db.ForeignKey('persons.id'))
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'))
     encoding = db.Column(NumpyType)
-    confidence_level = db.Column(db.Integer)
+    confidence_level = db.Column(db.Integer, index=True)
     already_clustered = db.Column(db.Boolean)
 
     distance_to_human_classified = db.Column(db.Integer, index=True)
