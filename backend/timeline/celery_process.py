@@ -33,6 +33,7 @@ import timeline.tasks.face_tasks
 import timeline.tasks.iq_tasks
 import timeline.tasks.classify_tasks
 import timeline.tasks.find_events_tasks
+import celery.bin.amqp
 
 import logging
 
@@ -44,9 +45,15 @@ logger = logging.getLogger(__name__)
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
+
+    amqp = celery.bin.amqp.amqp(app = celery)
+    amqp.run('queue.purge', 'beat')
+
     # let's see the first assets after 5min and after this according to the plan (15min)
     schedule_next_compute_sections(5)
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
+
+
 
 
 @worker_process_init.connect
