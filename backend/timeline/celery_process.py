@@ -15,17 +15,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
  
-from celery.signals import celeryd_after_setup, worker_process_init, worker_init
-
+from celery.signals import celeryd_after_setup, worker_process_init, worker_init, celeryd_init
+from amqp.exceptions import NotFound
 from timeline.app import create_app, setup_logging
 from timeline.extensions import celery, db
-from timeline.tasks.crud_tasks import schedule_next_compute_sections
+from timeline.tasks.crud_tasks import schedule_next_compute_sections, init_status
 from timeline.tasks.match_tasks import do_background_face_tasks
 from timeline.tasks.classify_tasks import init_classify_services
 from timeline.tasks.face_tasks import init_vgg_face, init_face_age_gender
 from timeline.tasks.iq_tasks import init_iq
-from timeline.tasks.crud_tasks import init_status
-
 import timeline.tasks.geo_tasks
 import timeline.tasks.match_tasks
 import timeline.tasks.process_tasks
@@ -33,27 +31,35 @@ import timeline.tasks.face_tasks
 import timeline.tasks.iq_tasks
 import timeline.tasks.classify_tasks
 import timeline.tasks.find_events_tasks
-import celery.bin.amqp
-
 import logging
 
-flask_app = create_app()
-setup_logging("timeline", flask_app, 'process_worker.log')
-setup_logging("celery.worker.autoscale", flask_app, 'celery.log')
 
-logger = logging.getLogger(__name__) 
+def setup():
+    global flask_app
+    global logger
+
+    setup_logging("timeline", flask_app, 'process_worker.log')
+    setup_logging("celery.worker.autoscale", flask_app, 'celery.log')
+    
+    # make sure the backgound tasks queue is purged
+    # This only works with AMQP 
+    with celery.connection_for_write() as conn:
+        try:
+            count = celery.amqp.queues['beat'].bind(conn).purge()
+            logger.debug("Purged %d messages from beat - should be 2", count)
+        except NotFound:
+            logger.debug("Beat queue not created, normal during first start")
+
+    # make sure Status is reset, this is important in case the worker crashed during the sectioning
+    with flask_app.app_context():
+        init_status()
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
 
-    amqp = celery.bin.amqp.amqp(app = celery)
-    amqp.run('queue.purge', 'beat')
-
     # let's see the first assets after 5min and after this according to the plan (15min)
     schedule_next_compute_sections(5)
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)
-
-
 
 
 @worker_process_init.connect
@@ -72,10 +78,13 @@ def init_worker(**kwargs):
     with flask_app.app_context():
         db.engine.dispose()
 
-    init_status()
     init_face_age_gender()
     init_iq()
     init_classify_services(flask_app.config['OBJECT_DETECTION_MODEL_PATH'])
     init_vgg_face()
     logger.debug("Initialize Worker - done")
  
+
+flask_app = create_app()
+logger = logging.getLogger(__name__) 
+setup()

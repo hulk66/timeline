@@ -12,9 +12,9 @@ elif [ $APP = 'worker' ]
       ./wait
       # fix this warning by creating proper user and group in the container
       # export C_FORCE_ROOT='true'
-      # celery -A timeline.celery_main purge -f -Q beat 
-      celery -A timeline.celery_process amqp queue.purge beat
-      celery -A timeline.celery_process amqp queue.delete beat
+
+      #celery -A timeline.celery_process amqp queue.purge beat
+      #celery -A timeline.celery_process amqp queue.delete beat
       nice celery -A timeline.celery_process worker --autoscale=$WORKERS_PROCESS,0 -Q beat,process,analyze,geo
 elif [ $APP = 'transcoder' ]
   then 
