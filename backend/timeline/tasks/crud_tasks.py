@@ -543,7 +543,7 @@ def compute_sections():
     status.in_sectioning = True
     db.session.commit()
 
-    batch_size = 200
+    batch_size = int(current_app.config['SECTION_TARGET_SIZE'])
     current_section = 1
     # Get all assets sorted descending, meaning the newest first
     assets = Asset.query.filter(Asset.ignore == False).order_by(

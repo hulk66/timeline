@@ -78,3 +78,7 @@ EVENT_MIN_SAMPLES=50
 
 # What is the timeframe to detect this Event
 EVENT_HOURS_EPSILON=24
+
+# This is the target size for one section. It detemines basically how many asset are 
+# loaded if a section becomes visible; 200-300 might be good
+SECTION_TARGET_SIZE=300
