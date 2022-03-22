@@ -60,59 +60,55 @@ def find_events():
 
     logger.debug("Find Events: Go")
     all_assets = Asset.query.with_entities(Asset.id, Asset.created).all()
-    ids, creation_dates = zip(*all_assets)
-    ids = numpy.asarray(ids)
-    timestamps = map(lambda d: d.timestamp(), creation_dates)
-    timestamps = numpy.asarray(tuple(timestamps))
 
-    asset_sample = int(current_app.config['EVENT_MIN_SAMPLES'])
-    epsilon = int(current_app.config['EVENT_HOURS_EPSILON']) * 3600
-    dbscan = DBSCAN(eps=epsilon, min_samples=asset_sample).fit(timestamps.reshape(-1,1))
-    labels = dbscan.labels_
-    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    if len(all_assets) > 0:
+        ids, creation_dates = zip(*all_assets)
+        ids = numpy.asarray(ids)
+        timestamps = map(lambda d: d.timestamp(), creation_dates)
+        timestamps = numpy.asarray(tuple(timestamps))
 
-    for cluster in range(n_clusters - 1):
-        indices = numpy.where(labels == cluster)
-        cluster_elements = timestamps[indices]
-        asset_id_list = ids[indices]
-        start = datetime.fromtimestamp(cluster_elements.min())
-        end = datetime.fromtimestamp(cluster_elements.max())
-        event = Event.query.filter( and_(Event.start_date == start, Event.end_date == end )).first()
-        if event:
-            logger.debug("Found Event: has already been identified")
-            # do nothing, the found window is within an already existing event
-            pass
-        else: 
-            event = Event.query.filter( and_(Event.start_date == start, Event.end_date <= end )).first()
+        asset_sample = int(current_app.config['EVENT_MIN_SAMPLES'])
+        epsilon = int(current_app.config['EVENT_HOURS_EPSILON']) * 3600
+        dbscan = DBSCAN(eps=epsilon, min_samples=asset_sample).fit(timestamps.reshape(-1,1))
+        labels = dbscan.labels_
+        n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+
+        for cluster in range(n_clusters - 1):
+            indices = numpy.where(labels == cluster)
+            cluster_elements = timestamps[indices]
+            asset_id_list = ids[indices]
+            start = datetime.fromtimestamp(cluster_elements.min())
+            end = datetime.fromtimestamp(cluster_elements.max())
+            event = Event.query.filter( and_(Event.start_date == start, Event.end_date == end )).first()
             if event:
-                logger.debug("Found Event: extending end date")
-                event.end_date = end
-            else:
-                event = Event.query.filter( and_(Event.start_date >= start, Event.end_date == end )).first()
+                logger.debug("Found Event: has already been identified")
+                # do nothing, the found window is within an already existing event
+                pass
+            else: 
+                event = Event.query.filter( and_(Event.start_date == start, Event.end_date <= end )).first()
                 if event:
-                    logger.debug("Found Event: extending start date")
-                    event.start_date = start
-                else:
-                    logger.debug("New Event: From " + start.isoformat()  +  "To " + end.isoformat())
-                    event = Event()
-                    event.start_date = start
+                    logger.debug("Found Event: extending end date")
                     event.end_date = end
-                    event.name = find_name(asset_id_list, start)
-                    event.ignore = False
-                    db.session.add(event)
+                else:
+                    event = Event.query.filter( and_(Event.start_date >= start, Event.end_date == end )).first()
+                    if event:
+                        logger.debug("Found Event: extending start date")
+                        event.start_date = start
+                    else:
+                        logger.debug("New Event: From " + start.isoformat()  +  "To " + end.isoformat())
+                        event = Event()
+                        event.start_date = start
+                        event.end_date = end
+                        event.name = find_name(asset_id_list, start)
+                        event.ignore = False
+                        db.session.add(event)
 
-                    album = Album()
-                    album.type = AlbumType.EVENT
-                    album.start_date = start
-                    album.end_date = end
-                    album.name = event.name
-                    db.session.add(album)
+                        album = Album()
+                        album.type = AlbumType.EVENT
+                        album.start_date = start
+                        album.end_date = end
+                        album.name = event.name
+                        db.session.add(album)
 
     status.find_events_needed = False
     db.session.commit()
-
-
-
-
-
-

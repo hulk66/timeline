@@ -21,7 +21,7 @@ from celery import Celery
 from flask import Blueprint
 import logging
 import flask
-
+from amqp.exceptions import ChannelError
 from timeline.domain import Asset, Face
 from timeline.extensions import celery
 
@@ -61,6 +61,16 @@ def stats():
 
 
 def get_queue_len(qname):
+    jobs = 0
+    try:
+        with celery.connection_or_acquire() as conn:
+            jobs = conn.default_channel.queue_declare(
+                    queue=qname, passive=True).message_count
+    except ChannelError:
+        pass
+    return jobs
+
+def get_queue_len_old(qname):
     global connection 
     if not connection:
         connection = celery.connection()
@@ -137,7 +147,7 @@ def status():
     numThings = Asset.query.filter(Asset.things != None).count()
 
     result = {
-        "process": get_queue_len("process"),
+        "process": get_queue_len("beat"),
         "analyze": get_queue_len("analyze"),
         "geo": get_queue_len("geo"),
         "transcode": get_queue_len("transcode_prio") + get_queue_len("transcode") ,

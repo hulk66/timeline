@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
  
-from celery.signals import celeryd_after_setup, worker_process_init, worker_init, celeryd_init
+from celery.signals import celeryd_after_setup, worker_process_init, worker_init, celeryd_init, worker_ready
 from amqp.exceptions import NotFound
 from timeline.app import create_app, setup_logging
 from timeline.extensions import celery, db
@@ -56,7 +56,6 @@ def setup():
 
 @celeryd_after_setup.connect
 def setup_direct_queue(sender, instance, **kwargs):
-
     # let's see the first assets after 5min and after this according to the plan (15min)
     schedule_next_compute_sections(5)
     do_background_face_tasks.apply_async((), queue="beat", countdown=10*60)

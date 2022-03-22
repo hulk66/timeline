@@ -38,7 +38,6 @@ from celery import signature
 from celery import chain
 from pillow_heif import register_heif_opener
 import exiftool
-import ffmpeg
 from celery.exceptions import SoftTimeLimitExceeded
 from distutils.util import strtobool
 
@@ -524,7 +523,7 @@ def new_import():
     album.assets = []
 
 
-@celery.task(ignore_result=True, soft_time_limit=900)
+@celery.task(ignore_result=True)
 def compute_sections():
     logger.debug("Sectioning assets")
 
@@ -624,6 +623,125 @@ def compute_sections():
     logger.debug("Sectioning done - ok")
 
 
+@celery.task(ignore_result=True)
+def schedule_next_compute_sections(minutes=None):
+    if minutes:
+        compute_sections_schedule = minutes
+    else:
+        compute_sections_schedule = int(
+            current_app.config['COMPUTE_SECTIONS_EVERY_MINUTES'])
+
+    # compute_sections.apply_async(countdown=compute_sections_schedule*60, queue="beat")
+
+    logger.debug("Scheduling next computing section in %i minutes",
+                 compute_sections_schedule)
+    c = chain(compute_sections.si().set(queue="beat"),
+              schedule_next_compute_sections.si().set(queue="beat"))
+    c.apply_async(countdown=compute_sections_schedule*60)
+
+
+def create_jpg_preview(asset: Asset, max_dim: int, low_res=True):
+    full_path = get_full_path(asset.path)
+    if asset.asset_type == AssetType.jpg_photo:
+        # not clear but it seems to be only necessary for jpg
+        image = read_and_transpose(full_path)
+    else:
+        # solves orientation in thumbnails
+        image = Image.open(full_path)
+        #out = io.BytesIO()
+        #image.save(out, format="JPEG")
+        #image = Image.open(out)
+
+    ar = image.width / image.height
+    width = max_dim * ar
+    image.thumbnail((width, max_dim), Image.ANTIALIAS)
+    preview_path = get_preview_path(
+        asset.path, ".jpg", str(max_dim), "high_res")
+    # print(preview_path)
+    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+    image.save(preview_path, optimize=True, progressive=True)
+
+    if low_res:
+        preview_path_low_res = get_preview_path(
+            asset.path, ".jpg", str(max_dim), "low_res")
+        os.makedirs(os.path.dirname(preview_path_low_res), exist_ok=True)
+        image.thumbnail((width/10, max_dim/10), Image.ANTIALIAS)
+        image.save(preview_path_low_res, optimize=True,
+                   quality=20, progressive=False)
+
+
+
+
+#@celery.task
+#def create_photo_preview(asset: Asset):
+#    logger.debug("Create Photo Preview for %s", asset.path)
+#    _create_jpg_preview(asset, 2160, False)
+#    _create_jpg_preview(asset, 400, True)
+
+
+#@celery.task
+#def create_video_preview(asset: Asset):
+#    logger.debug("Create Video Preview for %s", asset.path)
+#    _create_video_preview(asset, 400)
+
+
+@celery.task
+def create_preview(asset_id: int):
+    asset = Asset.query.get(asset_id)
+    if asset.is_photo():
+        create_jpg_preview(asset, 2160, False)
+        create_jpg_preview(asset, 400, True)
+    elif asset.is_video():
+        celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode")
+        video_create_on_demand = bool(strtobool(current_app.config['VIDEO_TRANSCODE_ON_DEMAND']))
+        if not video_create_on_demand:
+            celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode")
+
+        # create_preview_video.apply_async( (asset_id, 400), queue="transcode")
+        # create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
+    else:
+        logger.error(
+            "create_preview: Something went wrong. Should be a photo or a video")
+
+
+@celery.task(name="Recreate Previews")
+def recreate_previews(dimension=400, low_res=True):
+    logger.debug("Recreating Previews for size %d", dimension)
+    for asset in Asset.query:
+        create_preview.apply_async((asset.id,), queue='process')
+
+
+@celery.task(name="Split path and filename")
+def split_filename_and_path():
+    logger.debug("Splitting up filename and path for all assets again")
+    for asset in Asset.query:
+        asset.directory, asset.filename = os.path.split(asset.path)
+    db.session.commit()
+
+
+@celery.task()
+def _resync_asset(asset_id):
+    # logger.debug("Resync asset")
+    asset = Asset.query.get(asset_id)
+    if not asset:
+        logger.error(
+            "Something is wrong. asset with id %d not found. Deleted already?", asset_id)
+        return
+    path = get_full_path(asset.path)
+    if not os.path.exists(path):
+        # We are out of sync. The database references a asset which does not exist in the filesystem anymore
+        logger.debug(
+            "asset %s no longer exists. Remove it from the catalog", asset.path)
+        _delete_asset(asset)
+    db.session.commit()
+
+
+@celery.task(name="Resync assets")
+def resync_assets():
+    logger.debug(
+        "Sync assets. Ensure the Database is reflecting the filesystem")
+    for asset in Asset.query:
+        _resync_asset.apply_async((asset.id,), queue="process")
 
 
 @celery.task(ignore_result=True, soft_time_limit=900)
@@ -764,120 +882,3 @@ def compute_sections_old():
     db.session.commit()
     logger.debug("Compute Sections - Done")
 
-
-@celery.task(ignore_result=True)
-def schedule_next_compute_sections(minutes=None):
-    if minutes:
-        compute_sections_schedule = minutes
-    else:
-        compute_sections_schedule = int(
-            current_app.config['COMPUTE_SECTIONS_EVERY_MINUTES'])
-    logger.debug("Scheduling next computing section in %i minutes",
-                 compute_sections_schedule)
-    c = chain(compute_sections.si().set(queue="beat"),
-              schedule_next_compute_sections.si().set(queue="beat"))
-    c.apply_async(countdown=compute_sections_schedule*60)
-
-
-def create_jpg_preview(asset: Asset, max_dim: int, low_res=True):
-    full_path = get_full_path(asset.path)
-    if asset.asset_type == AssetType.jpg_photo:
-        # not clear but it seems to be only necessary for jpg
-        image = read_and_transpose(full_path)
-    else:
-        # solves orientation in thumbnails
-        image = Image.open(full_path)
-        #out = io.BytesIO()
-        #image.save(out, format="JPEG")
-        #image = Image.open(out)
-
-    ar = image.width / image.height
-    width = max_dim * ar
-    image.thumbnail((width, max_dim), Image.ANTIALIAS)
-    preview_path = get_preview_path(
-        asset.path, ".jpg", str(max_dim), "high_res")
-    # print(preview_path)
-    os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-    image.save(preview_path, optimize=True, progressive=True)
-
-    if low_res:
-        preview_path_low_res = get_preview_path(
-            asset.path, ".jpg", str(max_dim), "low_res")
-        os.makedirs(os.path.dirname(preview_path_low_res), exist_ok=True)
-        image.thumbnail((width/10, max_dim/10), Image.ANTIALIAS)
-        image.save(preview_path_low_res, optimize=True,
-                   quality=20, progressive=False)
-
-
-
-
-#@celery.task
-#def create_photo_preview(asset: Asset):
-#    logger.debug("Create Photo Preview for %s", asset.path)
-#    _create_jpg_preview(asset, 2160, False)
-#    _create_jpg_preview(asset, 400, True)
-
-
-#@celery.task
-#def create_video_preview(asset: Asset):
-#    logger.debug("Create Video Preview for %s", asset.path)
-#    _create_video_preview(asset, 400)
-
-
-@celery.task
-def create_preview(asset_id: int):
-    asset = Asset.query.get(asset_id)
-    if asset.is_photo():
-        create_jpg_preview(asset, 2160, False)
-        create_jpg_preview(asset, 400, True)
-    elif asset.is_video():
-        celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode")
-        video_create_on_demand = bool(strtobool(current_app.config['VIDEO_TRANSCODE_ON_DEMAND']))
-        if not video_create_on_demand:
-            celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode")
-
-        # create_preview_video.apply_async( (asset_id, 400), queue="transcode")
-        # create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
-    else:
-        logger.error(
-            "create_preview: Something went wrong. Should be a photo or a video")
-
-
-@celery.task(name="Recreate Previews")
-def recreate_previews(dimension=400, low_res=True):
-    logger.debug("Recreating Previews for size %d", dimension)
-    for asset in Asset.query:
-        create_preview.apply_async((asset.id,), queue='process')
-
-
-@celery.task(name="Split path and filename")
-def split_filename_and_path():
-    logger.debug("Splitting up filename and path for all assets again")
-    for asset in Asset.query:
-        asset.directory, asset.filename = os.path.split(asset.path)
-    db.session.commit()
-
-
-@celery.task()
-def _resync_asset(asset_id):
-    # logger.debug("Resync asset")
-    asset = Asset.query.get(asset_id)
-    if not asset:
-        logger.error(
-            "Something is wrong. asset with id %d not found. Deleted already?", asset_id)
-        return
-    path = get_full_path(asset.path)
-    if not os.path.exists(path):
-        # We are out of sync. The database references a asset which does not exist in the filesystem anymore
-        logger.debug(
-            "asset %s no longer exists. Remove it from the catalog", asset.path)
-        _delete_asset(asset)
-    db.session.commit()
-
-
-@celery.task(name="Resync assets")
-def resync_assets():
-    logger.debug(
-        "Sync assets. Ensure the Database is reflecting the filesystem")
-    for asset in Asset.query:
-        _resync_asset.apply_async((asset.id,), queue="process")

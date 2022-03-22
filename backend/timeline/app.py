@@ -74,19 +74,19 @@ def register_blueprints(app):
     app.register_blueprint(albums.blueprint)
 
 
-def init_celery(app=None):
-    app = app or create_app()
-    # celery.conf.update(app.config.get("CELERY", {}))
-    # celery.conf.update(result_backend=timeline.config.CELERY_RESULT_BACKEND, broker_url=timeline.config.CELERY_RESULT_BACKEND)
-    class ContextTask(celery.Task):
-        """Make celery tasks work with Flask app context"""
-
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery.Task = ContextTask
-    return celery
+#def init_celery(app=None):
+#    app = app or create_app()
+#    # celery.conf.update(app.config.get("CELERY", {}))
+#    # celery.conf.update(result_backend=timeline.config.CELERY_RESULT_BACKEND, broker_url=timeline.config.CELERY_RESULT_BACKEND)
+#    class ContextTask(celery.Task):
+#        """Make celery tasks work with Flask app context"""
+#
+#        def __call__(self, *args, **kwargs):
+#            with app.app_context():
+#                return self.run(*args, **kwargs)
+#
+#    celery.Task = ContextTask
+#    return celery
 
 
 def setup_logging(package, app, logfile_name):

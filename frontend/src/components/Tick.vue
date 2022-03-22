@@ -16,7 +16,7 @@
  */
 <template>
     <div>
-        <div v-text="date" class="caption" style="position: absolute; top: -10px"></div>
+        <div v-text="date" class="caption" ></div>
         <div v-for="t in ticks"
              :style="{
                 position:'absolute',

@@ -82,3 +82,10 @@ EVENT_HOURS_EPSILON=24
 # This is the target size for one section. It detemines basically how many asset are 
 # loaded if a section becomes visible; 200-300 might be good
 SECTION_TARGET_SIZE=300
+
+# optional configure FFMPEG_HWACCEL 
+# Possible options
+# libx264 - this is the default, slow but good
+# Mac: h264_videotoolbox - don't use it, lousy encoding quality
+# Linux: possibly vdpau or cuda - not tested
+# FFMPEG_HWACCEL=

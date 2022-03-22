@@ -194,6 +194,7 @@
             },
             calcTickPositions() {
                 this.tickDates = this.getTickDates();
+                let startTickYPos = 0
                 for (let index=0; index<this.tickDates.length-1; index++) {
                     const top = this.tickDates[index];
                     const bottom = this.tickDates[index+1];
@@ -201,7 +202,8 @@
                     const start_pos = this.pos_percent(top);
                     const end_pos = this.pos_percent(bottom);
 
-                    const startTickYPos = start_pos/100 * this.$refs.timelineContainer.clientHeight;
+                    if (index == 0)
+                        startTickYPos = start_pos/100 * this.$refs.timelineContainer.clientHeight;
                     const endTickYPos = end_pos/100 * this.$refs.timelineContainer.clientHeight;
                     const height = endTickYPos - startTickYPos
 
@@ -212,7 +214,9 @@
                             date: this.tickDates[index]
                         };
                         this.ticks.push(tick);
-                    } 
+                        startTickYPos = endTickYPos
+
+                    }
                 }
             },
 
@@ -767,6 +771,7 @@
 
     .timelineContainer {
         width: 30px;
+        background: yellow;
     }
 
     #tick {
