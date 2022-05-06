@@ -181,7 +181,7 @@
                 this.contWidth = this.$refs.segmentCont.clientWidth;
             },
             thumbSrc(photo) {
-                return encodeURI("/assets/preview/" + this.targetHeight + "/" + photo.path);
+                return encodeURI(process.env.BASE_URL + "assets/preview/" + this.targetHeight + "/" + photo.path);
             },
 
             clickPhoto(index) {

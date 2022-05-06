@@ -24,6 +24,7 @@ import numpy
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 import sqlalchemy
+from flask import Blueprint
 
 def create_app(testing=False, cli=False, env=None):
     """Application factory, used to create application"""
@@ -31,7 +32,7 @@ def create_app(testing=False, cli=False, env=None):
           
     app.config.from_object("timeline.config")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+    # app.config['APPLICATION_ROOT'] = '/timeline'
     if env:
         app.config.from_pyfile(env)
     if testing is True:
@@ -67,12 +68,14 @@ def configure_extensions(app, cli):
 def register_blueprints(app):
     """register all blueprints for application
     """
-    app.register_blueprint(views.blueprint)
-    app.register_blueprint(assets.blueprint)
-    app.register_blueprint(admin.blueprint)
-    app.register_blueprint(inspect.blueprint)
-    app.register_blueprint(albums.blueprint)
-
+    prefix = app.config['APPLICATION_ROOT']
+    root = Blueprint('root', __name__, url_prefix=prefix)
+    root.register_blueprint(views.blueprint)
+    root.register_blueprint(assets.blueprint)
+    root.register_blueprint(admin.blueprint)
+    root.register_blueprint(inspect.blueprint)
+    root.register_blueprint(albums.blueprint)
+    app.register_blueprint(root)
 
 #def init_celery(app=None):
 #    app = app or create_app()

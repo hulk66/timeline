@@ -48,7 +48,7 @@
         computed: {
 
             src() {
-                return encodeURI("/assets/video/preview/" + this.asset.path + ".mp4");
+                return encodeURI(process.env.BASE_URL + "assets/video/preview/" + this.asset.path + ".mp4");
 
             },
 

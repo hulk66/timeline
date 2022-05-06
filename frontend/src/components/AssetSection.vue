@@ -197,7 +197,7 @@
                     params["album_id"] = this.filterAlbumId;
 
 
-                axios.get( "/api/asset/by_section/" + this.section.id, config).then((result) => {
+                axios.get( process.env.BASE_URL + "api/asset/by_section/" + this.section.id, config).then((result) => {
                     this.assets = result.data;
                     this.segments = this.computeSegments();
                     if (this.scrollToDate) {

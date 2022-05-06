@@ -89,3 +89,6 @@ SECTION_TARGET_SIZE=300
 # Mac: h264_videotoolbox - don't use it, lousy encoding quality
 # Linux: possibly vdpau or cuda - not tested
 # FFMPEG_HWACCEL=
+
+# set the basepath where the application will reside, e.g. http://myserver/timeline/....
+TIMELINE_BASEPATH=/timeline

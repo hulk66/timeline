@@ -50,7 +50,7 @@
         },
 
         mounted() {
-            axios.get(`/albums/assets/${this.album.id}/4`).then((result) => {
+            axios.get(process.env.BASE_URL + `albums/assets/${this.album.id}/4`).then((result) => {
                 this.assets = result.data;
             });
         },
@@ -69,7 +69,7 @@
 
         methods: {
             src(p) {
-                return  encodeURI("/assets/preview/400/high_res/" + p.path);
+                return  encodeURI(process.env.BASE_URL + "assets/preview/400/high_res/" + p.path);
             },
 
             ar() {

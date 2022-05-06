@@ -552,7 +552,8 @@
                 uploadDialog: false,
                 uploadFiles: [],
                 uploading: false,
-                uploadCount: 0
+                uploadCount: 0,
+                rootPath: 'timeline'
             };
         },
 
@@ -605,7 +606,7 @@
             selectedItem(val) {
 
                 if (val.type == 'unknown')
-                    axios.get("/api/cluster/faces/" + val.value).then((result) => {
+                    axios.get(process.env.BASE_URL + "api/cluster/faces/" + val.value).then((result) => {
                         this.faces = result.data
                     }).catch((error) => {
                         // eslint-disable-next-line
@@ -634,6 +635,7 @@
             const locale = window.navigator.userLanguage || window.navigator.language;
             moment.locale(locale);
             */
+            this.rootPath = process.env.BASE_URL;
             this.checkNewFaces();
             setInterval( this.getStatusJobs, 10000 ); // 10 seconds
             setInterval( this.checkNewFaces, 1000*60*5 ); // 5 Minutes
@@ -664,7 +666,7 @@
                     formData.append('files', file);
 
                     axios.post(
-                        "/assets/upload",
+                        process.env.BASE_URL + "assets/upload",
                         formData, { 
                         headers: { 'Content-Type': 'multipart/form-data'}
                     }).then(() => {
@@ -680,7 +682,7 @@
             },
 
             deleteassets() {
-                axios.post("/assets/remove", {
+                axios.post(process.env.BASE_URL + "assets/remove", {
                         physically: false,
                         pids: this.selectedPhotos.map(a => a.id)
                     }).then(() => {
@@ -694,7 +696,7 @@
             },
 
             deleteAlbum() {
-                axios.get(`/albums/remove/${this.selectedAlbum.id}`).then(() => {
+                axios.get(process.env.BASE_URL + `albums/remove/${this.selectedAlbum.id}`).then(() => {
                     this.$router.push({'name':'albumList'})
                 });
                 this.deleteAlbumDialog = false;
@@ -709,7 +711,7 @@
             },
             showAlbumDialog() {
                 this.albumDialog = true;
-                axios.get("/albums/allManualAlbums").then((result) => {
+                axios.get(process.env.BASE_URL + "albums/allManualAlbums").then((result) => {
                         this.albums = result.data
                     }).catch((error) => {
                         // eslint-disable-next-line
@@ -721,7 +723,7 @@
                 this.albumDialog = false;
                 if (albumId == -1) {
                     // New Album
-                    axios.post("/albums/create", {
+                    axios.post(process.env.BASE_URL + "albums/create", {
                         albumName: "Change me",
                         pids: this.selectedPhotos.map(a => a.id)
                     }).then((result) => {
@@ -732,7 +734,7 @@
                         console.log(error);
                     });
                 } else {
-                    axios.post("/albums/addAssetToAlbum", {
+                    axios.post(process.env.BASE_URL + "albums/addAssetToAlbum", {
                         albumId: albumId,
                         pids: this.selectedPhotos.map(a => a.id)
                     }).then(() => {
@@ -748,10 +750,10 @@
             p(p, i) {
                 return p + i.toString();
             },
-
+ 
             checkNewFaces() {
                 let self = this;
-                axios.get("/api/checkNewFaces").then ( result => {
+                axios.get(process.env.BASE_URL + "api/checkNewFaces").then ( result => {
                     self.$store.commit("setNewFaces", result.data);
                     // self.newFaces = result.data;
                 });
@@ -761,7 +763,8 @@
                 if (this.inStatusCheck)
                     return;
                 this.inStatusCheck = true
-                axios.get("/inspect/status", {params: {timestamp:new Date().getTime()}}).then((result) => {
+                
+                axios.get(this.rootPath + "/inspect/status", {params: {timestamp:new Date().getTime()}}).then((result) => {
                     if (result.data.active)
                         this.active = result.data.active;
                     /*

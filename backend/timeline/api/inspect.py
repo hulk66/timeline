@@ -25,6 +25,7 @@ from amqp.exceptions import ChannelError
 from timeline.domain import Asset, Face
 from timeline.extensions import celery
 
+
 blueprint = Blueprint("inspect", __name__, url_prefix="/inspect")
 logger = logging.getLogger(__name__)
 connection = None

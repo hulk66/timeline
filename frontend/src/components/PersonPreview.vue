@@ -123,9 +123,9 @@
         mounted() {
             this.personObject = this.person;
             if (this.personObject) {
-                axios.get("/api/face/data/by_person/" + this.person.id).then (result => {
+                axios.get(process.env.BASE_URL + "api/face/data/by_person/" + this.person.id).then (result => {
                     this.face = result.data;
-                    this.src = "/api/face/preview/200/" + this.face.id + ".png";
+                    this.src = process.env.BASE_URL + "api/face/preview/200/" + this.face.id + ".png";
 
                 });
 

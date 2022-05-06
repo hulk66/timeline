@@ -42,7 +42,7 @@
         computed: {
 
             src() {
-                return encodeURI("/assets/preview/400/high_res/" + this.asset.path);
+                return encodeURI(process.env.BASE_URL + "assets/preview/400/high_res/" + this.asset.path);
             },
         }
 

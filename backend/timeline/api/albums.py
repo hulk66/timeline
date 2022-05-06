@@ -25,6 +25,7 @@ from timeline.api.util import list_as_json
 from sqlalchemy import and_
 from datetime import datetime
 
+
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 logger = logging.getLogger(__name__)
 

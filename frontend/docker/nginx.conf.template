@@ -46,12 +46,6 @@ http {
         alias /preview/$path.jpg;
     }
 
-    #location /assets/preview {
-    #    expires 30d;
-    #    alias /preview;
-    #    try_files $uri @generate_preview;
-    #}
-
     location ~ "^/assets/video/full/(?<path>.+)$" {
         expires 30d;
         alias /preview/video/full/$path;
@@ -67,10 +61,6 @@ http {
         proxy_pass http://webapp:5000$request_uri;
     }
 
-    #location /api/face/preview {
-    #    proxy_pass http://${BE_HOST}:${BE_PORT}/api/face/preview;
-    #}
-
     location /api/face/preview {
         alias /preview/faces;
         try_files $uri @generate_face_preview;
@@ -85,32 +75,32 @@ http {
     }
 
     location /albums {
-        proxy_pass http://${BE_HOST}:${BE_PORT}/albums;
+        proxy_pass http://${BE_HOST}:${BE_PORT}/${TIMELINE_BASEPATH}/albums;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }
 
     location /api {
-        proxy_pass http://${BE_HOST}:${BE_PORT}/api;
+        proxy_pass http://${BE_HOST}:${BE_PORT}/${TIMELINE_BASEPATH}/api;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }
 
 
     location /inspect {
-        proxy_pass http://${BE_HOST}:${BE_PORT}/inspect;
+        proxy_pass http://${BE_HOST}:${BE_PORT}/${TIMELINE_BASEPATH}/inspect;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }
 
     location /admin {
-        proxy_pass http://${BE_HOST}:${BE_PORT}/admin;
+        proxy_pass http://${BE_HOST}:${BE_PORT}/${TIMELINE_BASEPATH}/admin;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }
 
     location /assets {
-        proxy_pass http://${BE_HOST}:${BE_PORT}/assets;
+        proxy_pass http://${BE_HOST}:${BE_PORT}/${TIMELINE_BASEPATH}/assets;
         # auth_basic "Protected area";
         # auth_basic_user_file /etc/nginx/conf.d/nginx.htpasswd;
     }

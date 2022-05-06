@@ -103,9 +103,9 @@
         methods: {
             showParent(face, event) {
                 let self = this;
-                axios.get("/api/asset/by_face/" + face.id).then( result => {
+                axios.get(process.env.BASE_URL + "api/asset/by_face/" + face.id).then( result => {
                     let asset = result.data;
-                    self.parentUrl = encodeURI("/assets/preview/200/" + asset.path);
+                    self.parentUrl = encodeURI(process.env.BASE_URL + "assets/preview/200/" + asset.path);
                     self.showDetail = true;
                 });
                 this.currentX = event.clientX - event.offsetX;
@@ -118,21 +118,21 @@
 
             getFaces() {
                 let self = this;
-                axios.get("/api/face/by_person/" + this.personId).then (result => {
+                axios.get(process.env.BASE_URL + "api/face/by_person/" + this.personId).then (result => {
                     self.faces = result.data
                 });
             },
 
             getKnownPersons() {
                 let self = this;
-                axios.get("/api/person/known").then (result => {
+                axios.get(process.env.BASE_URL + "api/person/known").then (result => {
                     self.knownPersons = result.data
                 });
             },
 
             thumbSrc(face) {
                 if (face)
-                    return "/api/face/preview/200/" + face.id + ".png" ;
+                    return process.env.BASE_URL + "api/face/preview/200/" + face.id + ".png" ;
                 else
                     return null;
             },
@@ -141,7 +141,7 @@
 
                 if (! this.newPerson)
                     this.newPerson = this.value;
-                axios.post("/api/face/setname", {
+                axios.post(process.env.BASE_URL + "api/face/setname", {
                     oldPersonId: this.personId,
                     newPerson: this.newPerson,
                     ids: this.selectedIds,

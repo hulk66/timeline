@@ -37,7 +37,7 @@ services:
       - ${RABBITMQ_DATA}:/var/lib/rabbitmq
 
   webapp:
-    image: hulk66/timeline_be:0.95.2
+    image: hulk66/timeline_be:0.95.3
     # build: backend
     restart: always
     ports: 
@@ -60,12 +60,13 @@ services:
       FACE_DISTANCE_MAYBE: ${FACE_DISTANCE_MAYBE}
       FACE_CLUSTER_MAX_FACES: ${FACE_CLUSTER_MAX_FACES}
       UPLOAD_FOLDER: ${UPLOAD_FOLDER}
+      TIMELINE_BASEPATH: ${TIMELINE_BASEPATH}
     depends_on:
       - db
       - rabbitmq
 
   worker:
-    image: hulk66/timeline_be:0.95.2
+    image: hulk66/timeline_be:0.95.3
     # build: backend
     restart: always
     environment:
@@ -94,7 +95,7 @@ services:
       - rabbitmq
 
   transcoder:
-    image: hulk66/timeline_be:0.95.2
+    image: hulk66/timeline_be:0.95.3
     # build: backend
     restart: always
     environment:
@@ -114,7 +115,7 @@ services:
       - rabbitmq
 
   frontend:
-    image: hulk66/timeline_fe:0.95.2
+    image: hulk66/timeline_fe:0.95.3
     # build: frontend
     restart: always
     ports:
@@ -123,6 +124,7 @@ services:
       - ${ASSET_PATH}:/photos:ro
       - ${PREVIEW_PATH}:/preview
     environment:
+      TIMELINE_BASEPATH: ${TIMELINE_BASEPATH}
       BE_HOST: webapp
       BE_PORT: 5000
       WAIT_HOSTS: webapp:5000
@@ -133,7 +135,7 @@ services:
       - webapp
 
   watchdog:
-    image: hulk66/timeline_be:0.95.2
+    image: hulk66/timeline_be:0.95.3
     # build: backend
     restart: always
     environment:

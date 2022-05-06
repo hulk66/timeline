@@ -62,7 +62,7 @@
         },
 
         mounted() {
-            axios.get(`/albums/all`).then((result) => {
+            axios.get(process.env.BASE_URL + `albums/all`).then((result) => {
                 this.albums = result.data;
             });
 

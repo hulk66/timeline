@@ -70,7 +70,7 @@
 
         mounted() {
             this.edit = this.newAlbum;
-            axios.get(`/albums/info/${this.albumId}`).then((result) => {
+            axios.get(process.env.BASE_URL + `albums/info/${this.albumId}`).then((result) => {
                 this.albumName = result.data.name
                 this.$store.commit("setSelectedAlbum", result.data)
                 if (this.edit) {
@@ -97,7 +97,7 @@
                 event.target.select();
             },
             saveName() {
-                axios.get(`/albums/rename/${this.albumId}/${this.albumName}`);
+                axios.get(process.env.BASE_URL + `albums/rename/${this.albumId}/${this.albumName}`);
                 this.edit = false;
                 this.$refs.nameInput.blur();
             }

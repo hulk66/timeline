@@ -50,7 +50,7 @@
         },
 
         mounted() {
-            axios.get(`/api/asset/importing`).then((result) => {
+            axios.get(process.env.BASE_URL + `api/asset/importing`).then((result) => {
                 this.assets = result.data;
             });
         },
@@ -62,7 +62,7 @@
 
         methods: {
             thumbSrc(asset) {
-                return encodeURI("/assets/preview/400/high_res/" + asset.path);
+                return encodeURI(process.env.BASE_URL + "assets/preview/400/high_res/" + asset.path);
             }
         }
     }

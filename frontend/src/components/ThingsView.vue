@@ -66,13 +66,13 @@
 
             src(thing) {
                 let self = this;
-                axios.get("/api/things/preview_asset" + { thing_id: thing.id }).then (result => {
+                axios.get(process.env.BASE_URL + "api/things/preview_asset" + { thing_id: thing.id }).then (result => {
                     self.asset = result.data
                 });
             },
             loadThings() {
                 let self = this;
-                axios.get("/api/things/all").then (result => {
+                axios.get(process.env.BASE_URL + "api/things/all").then (result => {
                     self.things = result.data
                 });
 

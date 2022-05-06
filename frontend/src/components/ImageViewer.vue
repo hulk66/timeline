@@ -312,7 +312,7 @@
             },
 
             videoSource() {
-                return this.isPhoto ? null : encodeURI("/assets/video/full/" + this.photo.path + ".mp4");
+                return this.isPhoto ? null : encodeURI(process.env.BASE_URL + "assets/video/full/" + this.photo.path + ".mp4");
 
             },
 
@@ -395,7 +395,7 @@
             },
 
             videoNotFound() {
-                this.videoSource = "/404.mp4";
+                this.videoSource = process.env.BASE_URL + "404.mp4";
                 this.$refs.video.load();
             },
             loadData(p) {
@@ -443,12 +443,12 @@
             photoUrl(photo) {
                 if (photo)
                     if (photo.asset_type == "mp4" || photo.asset_type == "mov")
-                        return encodeURI("/assets/video/full/" + photo.path + ".mp4");
+                        return encodeURI(process.env.BASE_URL + "assets/video/full/" + photo.path + ".mp4");
                     else
-                        return encodeURI("/assets/full/" + photo.path);
+                        return encodeURI(process.env.BASE_URL + "assets/full/" + photo.path);
             },
             faceUrl(id) {
-                return "/api/face/preview/80/" + id + ".png";
+                return process.env.BASE_URL + "api/face/preview/80/" + id + ".png";
             },
 
             left() {
