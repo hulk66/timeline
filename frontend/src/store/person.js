@@ -41,7 +41,7 @@ export const person = {
     actions: {
 
         setRating(context, {photo, stars}) {
-            let url = process.env.BASE_URL + `api/asset/setRating/${photo.id}/${stars}`;
+            let url = `/api/asset/setRating/${photo.id}/${stars}`;
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -51,7 +51,7 @@ export const person = {
         },
 
         ignoreFace(context, face) {
-            let url = process.env.BASE_URL + `api/face/ignore/${face.id}`;
+            let url = `/api/face/ignore/${face.id}`;
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -60,7 +60,7 @@ export const person = {
 
         },
         getClosestPerson(context, face) {
-            let url = process.env.BASE_URL + `api/face/nearestKnownFaces/${face.id}`
+            let url = `/api/face/nearestKnownFaces/${face.id}`
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -69,7 +69,7 @@ export const person = {
 
         },
         forgetPerson(context, person) {
-            let url = process.env.BASE_URL + `api/person/forget/${person.id}`
+            let url = `/api/person/forget/${person.id}`
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -78,7 +78,7 @@ export const person = {
         },
 
         ignoreUnknownPerson(context, person) {
-            let url = process.env.BASE_URL + `api/person/ignore_unknown_person/${person.id}`
+            let url = `/api/person/ignore_unknown_person/${person.id}`
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -87,7 +87,7 @@ export const person = {
         },
 
         getAllUnknownFaces(context, {page, size}) {
-            let url = process.env.BASE_URL + `api/face/allUnknownAndClosest/${page}/${size}`;
+            let url = `/api/face/allUnknownAndClosest/${page}/${size}`;
             axios.get(url).then( result => {
                 context.commit("setUnknownFaces", result.data);    
             })
@@ -95,7 +95,7 @@ export const person = {
         },
 
         getFacesToConfirm(context, {page, size}) {
-            let url = process.env.BASE_URL + `api/face/facesToConfirm/${page}/${size}`;
+            let url = `/api/face/facesToConfirm/${page}/${size}`;
             axios.get(url).then( result => {
                 context.commit("setFacesToConfirm", result.data);    
             })
@@ -106,7 +106,7 @@ export const person = {
             if (person)
                 pid = person.id;
             return new Promise((resolve => {
-                axios.post(process.env.BASE_URL + "api/face/assign_face_to_person", {
+                axios.post("/api/face/assign_face_to_person", {
                     personId: pid,
                     name: name,
                     faceId: faceId,
@@ -118,7 +118,7 @@ export const person = {
         },
 
         mergePerson(context, {src_person, target_person}) {
-            let url = process.env.BASE_URL + `api/person/merge/${src_person.id}/${target_person.id}`;
+            let url = `/api/person/merge/${src_person.id}/${target_person.id}`;
             return new Promise((resolve) => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -129,7 +129,7 @@ export const person = {
 
         renamePerson(context, {person, name}) {
             return new Promise((resolve) => {
-                axios.post(process.env.BASE_URL + "api/person/rename", {
+                axios.post("/api/person/rename", {
                     personId: person.id,
                     name: name
                 }).then( result => {
@@ -148,34 +148,34 @@ export const person = {
         },
         */
         getKnownPersons(context) {
-            axios.get(process.env.BASE_URL + "api/person/known").then (result => {
+            axios.get("/api/person/known").then (result => {
                 context.commit("setKnownPersons", result.data);    
             });
         },
 
         getAllPersons(context) {
-            axios.get(process.env.BASE_URL + "api/person/all").then (result => {
+            axios.get("/api/person/all").then (result => {
                 context.commit("setAllPersons", result.data);
             });
         },
 
         getPersonsByPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get(process.env.BASE_URL + "api/person/by_asset/" + photo.id).then((result) =>{
+                axios.get("/api/person/by_asset/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
         },
         getFacesByPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get(process.env.BASE_URL + "api/face/by_asset/" + photo.id).then((result) =>{
+                axios.get("/api/face/by_asset/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
         },
         getExifForPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get(process.env.BASE_URL + "api/asset/exif/" + photo.id).then((result) =>{
+                axios.get("/api/asset/exif/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
@@ -183,7 +183,7 @@ export const person = {
 
         getGpsForPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get(process.env.BASE_URL + "api/asset/gps/" + photo.id).then((result) =>{
+                axios.get("/api/asset/gps/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
@@ -191,7 +191,7 @@ export const person = {
 
         getThingsForPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get(process.env.BASE_URL + "api/asset/things/" + photo.id).then((result) =>{
+                axios.get("/api/asset/things/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
@@ -200,7 +200,7 @@ export const person = {
         getUnknownFaces(context, index) {
             return new Promise((resolve => {
 
-                axios.get(process.env.BASE_URL + "api/cluster/faces/" + index).then((result) => {
+                axios.get("/api/cluster/faces/" + index).then((result) => {
                     resolve(result.data);
                 })
             }))

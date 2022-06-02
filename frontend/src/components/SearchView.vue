@@ -160,7 +160,7 @@
 
             loadSmartAlbum() {
                 if (this.id)
-                    axios.get(process.env.BASE_URL + `albums/smartalbum/${this.id}`).then(result => {
+                    axios.get(`/albums/smartalbum/${this.id}`).then(result => {
                         this.loadSmartAlbumFromData(result.data);
                     })
             },
@@ -194,7 +194,7 @@
                 params["name"] = this.albumName;
                 params["rating"] = this.rating;
                 params["id"] = this.id;
-                axios.get(process.env.BASE_URL + "albums/create_or_update_smartalbum", config).then(result => {
+                axios.get("/albums/create_or_update_smartalbum", config).then(result => {
                     this.loadSmartAlbumFromData(result.data)    
                 });
                 /*
@@ -222,14 +222,14 @@
                 this.to = val;
             },
             loadData() {
-                axios.get(process.env.BASE_URL + "api/location/countries").then (result => {
+                axios.get("/api/location/countries").then (result => {
                     this.countries = result.data
                 });
-                axios.get(process.env.BASE_URL + "api/location/cities").then (result => {
+                axios.get("/api/location/cities").then (result => {
                     this.cities = result.data
                 });
                 
-                axios.get(process.env.BASE_URL + "api/exif/camera_makes").then (result => {
+                axios.get("/api/exif/camera_makes").then (result => {
                     this.cameras = result.data
                 });
                 

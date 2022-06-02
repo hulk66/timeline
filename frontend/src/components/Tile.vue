@@ -105,7 +105,7 @@
 
         mounted() {
             if (this.isVideo) {
-                this.videoSource = encodeURI(process.env.BASE_URL + "assets/video/preview/" + this.asset.path + ".mp4");
+                this.videoSource = encodeURI(this.$basePath + "/assets/video/preview/" + this.asset.path + ".mp4");
                 this.transcodingStatus = this.asset.video_fullscreen_transcoding_status;
                 if (this.transcodingTriggered)
                     this.timer = setInterval(this.getTranscodingStatus, 10000);
@@ -153,7 +153,7 @@
             },
 
             thumbSrc() {
-                return encodeURI(process.env.BASE_URL + "assets/preview/400/high_res/" + this.asset.path);
+                return encodeURI(this.$basePath +"/assets/preview/400/high_res/" + this.asset.path);
             },
 
             /*
@@ -188,7 +188,7 @@
             getTranscodingStatus() {
                 if (this.transcodingStatus != 'DONE') {
                     console.log("timer active")
-                    axios.get( process.env.BASE_URL + "assets/transcodingstatus/" + this.asset.id).then((result) => {
+                    axios.get( "/assets/transcodingstatus/" + this.asset.id).then((result) => {
                         this.transcodingStatus = result.data;
                     })
 
@@ -229,7 +229,7 @@
                         this.$emit("click-photo", this.index);
                     else {
                         // if not, trigger transcoding task
-                        axios.get(process.env.BASE_URL + "assets/transcode/" + this.asset.id).then( result => {
+                        axios.get("/assets/transcode/" + this.asset.id).then( result => {
                             this.transcodingStatus = result.data;
                         });
                         this.timer = setInterval(this.getTranscodingStatus, 10000);

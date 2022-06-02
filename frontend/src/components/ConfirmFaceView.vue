@@ -53,7 +53,7 @@
         computed: {
             
             src() {
-                return this.face ? process.env.BASE_URL + "api/face/preview/200/" + this.face.id + ".png" : "";
+                return this.face ? this.$basePath + "/api/face/preview/200/" + this.face.id + ".png" : "";
             },
             
         },

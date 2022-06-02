@@ -114,16 +114,16 @@
 
             loadPlaces() {
                 let self = this;
-                axios.get(process.env.BASE_URL + "api/location/countries").then (result => {
+                axios.get("/api/location/countries").then (result => {
                     self.countries = result.data
                 });
-                axios.get(process.env.BASE_URL + "api/location/counties").then (result => {
+                axios.get("/api/location/counties").then (result => {
                     self.counties = result.data
                 });
-                axios.get(process.env.BASE_URL + "api/location/cities").then (result => {
+                axios.get("/api/location/cities").then (result => {
                     self.cities = result.data
                 });
-                axios.get(process.env.BASE_URL + "api/location/states").then (result => {
+                axios.get("/api/location/states").then (result => {
                     self.states = result.data
                 });
 

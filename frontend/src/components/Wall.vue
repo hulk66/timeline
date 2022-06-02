@@ -247,7 +247,7 @@
             },
 
             findSectionForDate(date) {
-                axios.get(process.env.BASE_URL + "api/section/find_by_date/" + date ).then((result) => {
+                axios.get("/api/section/find_by_date/" + date ).then((result) => {
                     self.sections = result.data;
                 });
 
@@ -256,7 +256,7 @@
             jumpToDate() {
                 let selectedDate = this.getDateByPosition(this.currentTick);
                 let self = this;
-                axios.get(process.env.BASE_URL + "api/section/find_by_date/" + selectedDate.format("YYYY-MM-DD") ).then((result) => {
+                axios.get("/api/section/find_by_date/" + selectedDate.format("YYYY-MM-DD") ).then((result) => {
                     let sectionId = result.data;
                     let sectionRef = self.$refs['section' + sectionId][0];
                     // let sectionEl = sectionRef.$el;
@@ -714,7 +714,7 @@
                 params["to"] = this.to;
                 if (!isNaN(this.albumId))
                     params['album_id'] = this.albumId;
-                axios.get(process.env.BASE_URL + "api/section/all", config).then((result) => {
+                axios.get("/api/section/all", config).then((result) => {
                     this.sections = result.data.sections;
                     this.max_date = moment(result.data.max_date);
                     this.min_date = moment(result.data.min_date);

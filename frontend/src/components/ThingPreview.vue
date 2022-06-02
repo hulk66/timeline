@@ -69,9 +69,9 @@
                 if (this.thing) {
                     params['thing_id'] = this.thing.id
                     let config = { params: params};
-                    axios.get(process.env.BASE_URL + "api/things/preview_asset", config).then (result => {
+                    axios.get("/api/things/preview_asset", config).then (result => {
                         self.asset = result.data
-                        self.src = process.env.BASE_URL + "api/asset/preview/200/" + self.asset.id + ".jpg";
+                        self.src = this.$basePath + "/api/asset/preview/200/" + self.asset.id + ".jpg";
                     });
                 } else {
 
@@ -80,9 +80,9 @@
                     params['country'] = this.country;
                     params['state'] = this.state;
                     let config = {params: params};
-                    axios.get(process.env.BASE_URL + "api/things/preview_asset", config).then(result => {
+                    axios.get("/api/things/preview_asset", config).then(result => {
                         self.asset = result.data;
-                        self.src = process.env.BASE_URL + "api/asset/preview/200/" + self.asset.id + ".jpg";
+                        self.src = this.$basePath + "/api/asset/preview/200/" + self.asset.id + ".jpg";
                     });
 
 

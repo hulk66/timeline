@@ -176,7 +176,7 @@
         methods: {
 
             setFacesSeen() {
-                axios.get(process.env.BASE_URL + "api/setFacesSeen");
+                axios.get("/api/setFacesSeen");
                 this.$store.commit("setNewFaces", false);
             },
 
