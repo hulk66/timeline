@@ -89,3 +89,10 @@ SECTION_TARGET_SIZE=300
 # Mac: h264_videotoolbox - don't use it, lousy encoding quality
 # Linux: possibly vdpau or cuda - not tested
 # FFMPEG_HWACCEL=
+
+# Set the basepath where the application will reside, e.g. http://myserver:9090/timeline/....
+# please provide a value here. I need to find a fix in the nginx config for working 
+# without a basepath (baspath empty). The reason for a basepath is to be able to put this behind one other
+# webserver (nginx, caddy) so that it allows it to proxy different applications
+# under one address (e.g. some dynamic dns with nextcloud, darktable ...)
+TIMELINE_BASEPATH=/timeline

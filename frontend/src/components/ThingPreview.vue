@@ -71,7 +71,7 @@
                     let config = { params: params};
                     axios.get("/api/things/preview_asset", config).then (result => {
                         self.asset = result.data
-                        self.src = "/api/asset/preview/200/" + self.asset.id + ".jpg";
+                        self.src = this.$basePath + "/api/asset/preview/200/" + self.asset.id + ".jpg";
                     });
                 } else {
 
@@ -82,7 +82,7 @@
                     let config = {params: params};
                     axios.get("/api/things/preview_asset", config).then(result => {
                         self.asset = result.data;
-                        self.src = "/api/asset/preview/200/" + self.asset.id + ".jpg";
+                        self.src = this.$basePath + "/api/asset/preview/200/" + self.asset.id + ".jpg";
                     });
 
 

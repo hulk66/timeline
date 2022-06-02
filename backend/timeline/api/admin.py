@@ -21,6 +21,7 @@ import flask
 from flask import Blueprint
 from timeline.extensions import celery
 
+
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
 

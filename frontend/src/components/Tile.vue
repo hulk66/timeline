@@ -105,7 +105,7 @@
 
         mounted() {
             if (this.isVideo) {
-                this.videoSource = encodeURI("/assets/video/preview/" + this.asset.path + ".mp4");
+                this.videoSource = encodeURI(this.$basePath + "/assets/video/preview/" + this.asset.path + ".mp4");
                 this.transcodingStatus = this.asset.video_fullscreen_transcoding_status;
                 if (this.transcodingTriggered)
                     this.timer = setInterval(this.getTranscodingStatus, 10000);
@@ -153,7 +153,7 @@
             },
 
             thumbSrc() {
-                return encodeURI("/assets/preview/400/high_res/" + this.asset.path);
+                return encodeURI(this.$basePath +"/assets/preview/400/high_res/" + this.asset.path);
             },
 
             /*

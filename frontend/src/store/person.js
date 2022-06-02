@@ -161,14 +161,14 @@ export const person = {
 
         getPersonsByPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get("/api/person/by_photo/" + photo.id).then((result) =>{
+                axios.get("/api/person/by_asset/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))
         },
         getFacesByPhoto(context, photo) {
             return new Promise((resolve => {
-                axios.get("/api/face/by_photo/" + photo.id).then((result) =>{
+                axios.get("/api/face/by_asset/" + photo.id).then((result) =>{
                     resolve(result.data);
                 })
             }))

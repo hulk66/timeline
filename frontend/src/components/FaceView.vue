@@ -62,7 +62,7 @@
         computed: {
             
             src() {
-                return this.element ? "/api/face/preview/200/" + this.face.id + ".png" : "";
+                return this.element ? this.$basePath + "/api/face/preview/200/" + this.face.id + ".png" : "";
             },
             face() {
                 return this.element ? this.element.face : null;

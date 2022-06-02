@@ -1,7 +1,9 @@
 module.exports = {
- 
-  publicPath: '',
-    
+
+  // publicPath: process.env.TIMELINE_BASEPATH,
+
+  publicPath: './',
+  
   configureWebpack: {
     devtool: "source-map"
   },

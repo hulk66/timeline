@@ -105,7 +105,7 @@
                 let self = this;
                 axios.get("/api/asset/by_face/" + face.id).then( result => {
                     let asset = result.data;
-                    self.parentUrl = encodeURI("/assets/preview/200/" + asset.path);
+                    self.parentUrl = encodeURI(this.$basePath +"/assets/preview/200/" + asset.path);
                     self.showDetail = true;
                 });
                 this.currentX = event.clientX - event.offsetX;
@@ -132,7 +132,7 @@
 
             thumbSrc(face) {
                 if (face)
-                    return "/api/face/preview/200/" + face.id + ".png" ;
+                    return this.$basePath + "/api/face/preview/200/" + face.id + ".png" ;
                 else
                     return null;
             },

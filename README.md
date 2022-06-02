@@ -52,10 +52,13 @@ https://user-images.githubusercontent.com/71876828/149617848-ed456d59-cc71-4eb3-
 ## New 0.95.1
 * Fullscreen videos will now be transcoded on demand (when clicked). A spinner indicates the conversion. This behaviour can be configured (VIDEO_TRANSCODE_ON_DEMAND in env-File)
 
+## New 0.96
+* The basepath of the Web Application is not / anymore but configurable path. Default is /timeline. The reason for a basepath is to be able to put this behind one other webserver (nginx, caddy) so that it allows it to proxy different applications under one domain (e.g. some dynamic dns with nextcloud, darktable ...)
+* Experimental: When all assets are processed, Timeline attempts to find events. These events are identified by a certain amount of photos within a certain timeframe. The is again configurable by EVENT_MIN_SAMPLES and EVENT_HOURS_EPSILON. Again the DBSAN Algorithm is utilised for this. So identified Events will be created as Albums. The Album name will be constructed of a Date and a Location name (City, County ...). The Presentation of Albums clearly needs to be improved.  
+
 ## Next to come
 * Bug fixing
-* Better face assignment for faces where the confidence level is a MAYBE
-* Something like finding events - A close collection of photos taken in a certain period, a certain place or (frequent) faces over time (again ideas shameless taken from Google Photos)
+* Finding co-occurrences of people over time and creating albums of of it
 
 ### General View
 <img src="assets/start_view.jpg" width="400"/>
@@ -107,6 +110,7 @@ The easiest way is to use Docker, resp. docker-compose
    5. `RABBITMQ_DATA`- Same for RabbitMQ which is used as the message broker
    6. `WORKERS_PROCESS`- Number of workers to be used. This depends on the machine you are running Timeline on. For everything below 8GB RAM only 2 or 3 workers are recommended. If you have more RAM then also 4-6 might be ok
    7. `DB_SUPER_USER_PW` - is the password for to access the database (via adminer)
+   8. If you want a different basepath then `timeline` in the URL this can be configured as well. For the timebeing it has to be some path and must not be empty
 
 
    If used with Docker please specify all paths absolute.   
@@ -120,7 +124,7 @@ Given everything is downloaded from Dockerhub (mariaDB, RabbitMQ ...) it may tak
 
 If all containers are up and running you should be able to see some change in the `worker.log` in the specified `LOG_PATH`.
 
-* To access Timeline go to `http://<whereever_it_runs>:9090`. 
+* To access Timeline go to `http://<whereever_it_runs>:9090/timeline`. 
 * In case you are interested in some internals you can also go to `http://<whereever_it_runs>:9091` to reach adminer and have a look into the underlying database. The user is "root" and the password is the one you have specified in the `.env` (example)
 * There is also running the user interface for RabbitMQ under `http://<whereever_it_runs>:15672`. Username and Password is per default guest/guest
 

@@ -110,7 +110,8 @@
             "env": {
                 "FLASK_APP": "timeline.app",
                 "FLASK_ENV": "development",
-                "FLASK_DEBUG": "1"
+                "FLASK_DEBUG": "1",
+                "APPLICATION_ROOT": "/timeline",
             },
             "args": [
                 "run"
@@ -122,7 +123,11 @@
             "name": "Run npm serve",
             "request": "launch",
             "cwd": "${workspaceFolder}/frontend",
-            "type": "node-terminal"
+            "type": "node-terminal",
+            "env": {
+                "TIMELINE_BASEPATH": "/timeline",
+            },
+
         },
         {
             "name": "Python: Debug Current File",

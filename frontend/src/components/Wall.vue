@@ -247,7 +247,7 @@
             },
 
             findSectionForDate(date) {
-                axios.get("/api//section/find_by_date/" + date ).then((result) => {
+                axios.get("/api/section/find_by_date/" + date ).then((result) => {
                     self.sections = result.data;
                 });
 
@@ -580,7 +580,8 @@
             },
 
             getLastSectionElement() {
-                return this.$refs['section' + this.sections.length][0];
+                const lastSectionId = this.getLastSection().id
+                return this.$refs['section' + lastSectionId][0];
             },
             
             getFirstSectionElement() {
