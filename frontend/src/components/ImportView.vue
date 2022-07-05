@@ -62,7 +62,7 @@
 
         methods: {
             thumbSrc(asset) {
-                return encodeURI("/assets/preview/400/high_res/" + asset.path);
+                return encodeURI(this.$basePath +"/assets/preview/400/high_res/" + asset.path);
             }
         }
     }

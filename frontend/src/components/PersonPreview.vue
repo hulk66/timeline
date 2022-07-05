@@ -125,7 +125,7 @@
             if (this.personObject) {
                 axios.get("/api/face/data/by_person/" + this.person.id).then (result => {
                     this.face = result.data;
-                    this.src = "/api/face/preview/200/" + this.face.id + ".png";
+                    this.src = this.$basePath + "/api/face/preview/200/" + this.face.id + ".png";
 
                 });
 

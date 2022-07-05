@@ -508,8 +508,9 @@
 </template>
 
 <script>
-    import axios from "axios";
     import { mapState } from 'vuex'
+    import axios from "axios";
+
     // import moment from "moment";
 
     export default {
@@ -552,7 +553,8 @@
                 uploadDialog: false,
                 uploadFiles: [],
                 uploading: false,
-                uploadCount: 0
+                uploadCount: 0,
+                rootPath: 'timeline'
             };
         },
 
@@ -748,7 +750,7 @@
             p(p, i) {
                 return p + i.toString();
             },
-
+ 
             checkNewFaces() {
                 let self = this;
                 axios.get("/api/checkNewFaces").then ( result => {
@@ -761,6 +763,7 @@
                 if (this.inStatusCheck)
                     return;
                 this.inStatusCheck = true
+                
                 axios.get("/inspect/status", {params: {timestamp:new Date().getTime()}}).then((result) => {
                     if (result.data.active)
                         this.active = result.data.active;

@@ -16,7 +16,7 @@
  */
 <template>
     <div>
-        <div v-text="date" class="caption" ></div>
+        <div v-text="date" class="caption" style="position: absolute; left: -10px; top: -0.75em"></div>
         <div v-for="t in ticks"
              :style="{
                 position:'absolute',
@@ -54,15 +54,22 @@
                 if (this.moment.date() === 1 && this.moment.month() === 0)
                     result =  this.moment.format("YYYY")
                 
-                else
-                    result = this.moment.format("MMM-YY")
+                // else
+                //    result = this.moment.format("MMM-YY")
                 
                 return result;
             },
             ticks() {
                 let result = [];
-                for (let i=25; i<this.h; i+=20)
-                    result.push(i)
+                const distance = 15;
+                const count = Math.floor(this.h / distance);
+                const real_dist = this.h / count
+                console.log(count);
+                let pos = 0;
+                for (let i=0; i<count; i++) {
+                    result.push(pos);
+                    pos += real_dist
+                }
                 return result;
             }
         },

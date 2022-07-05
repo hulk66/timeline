@@ -69,7 +69,7 @@
 
         methods: {
             src(p) {
-                return  encodeURI("/assets/preview/400/high_res/" + p.path);
+                return  encodeURI(this.$basePath +"/assets/preview/400/high_res/" + p.path);
             },
 
             ar() {

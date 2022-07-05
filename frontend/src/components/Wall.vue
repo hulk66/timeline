@@ -64,7 +64,7 @@
                     </div>
                 </div>
                 <div id="tick" :style="cssProps"></div>
-                <div v-if="scrubbing" id="currentDate" :style="cssProps">{{currDate}}</div>
+                <div v-if="scrubbing" id="currentDate" class="rounded-pill text-center" :style="cssProps">{{currDate}}</div>
             </div>
         
         </v-row>
@@ -247,7 +247,7 @@
             },
 
             findSectionForDate(date) {
-                axios.get("/api//section/find_by_date/" + date ).then((result) => {
+                axios.get("/api/section/find_by_date/" + date ).then((result) => {
                     self.sections = result.data;
                 });
 
@@ -580,7 +580,8 @@
             },
 
             getLastSectionElement() {
-                return this.$refs['section' + this.sections.length][0];
+                const lastSectionId = this.getLastSection().id
+                return this.$refs['section' + lastSectionId][0];
             },
             
             getFirstSectionElement() {
@@ -771,7 +772,6 @@
 
     .timelineContainer {
         width: 30px;
-        background: yellow;
     }
 
     #tick {
@@ -788,8 +788,9 @@
         top: var(--current-tick-text);
         width: 80px;
         color: black;
-        background-color:white;
-        transform: translate(-80px, 0px);
+        background-color:var(--v-info-darken1);
+        color: var(--v-info-lighten5);
+        transform: translate(-90px, 0px);
     }
 
 </style>

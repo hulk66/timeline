@@ -22,14 +22,15 @@ import router from './router'
 import VueJustifiedLayout from 'vue-justified-layout'
 import VueLayers from 'vuelayers'
 import 'vuelayers/lib/style.css' // needs css-loader
-// import VueVirtualScroller from 'vue-virtual-scroller'
-// import VirtualList from "vue-virtual-scroll-list"
+import axios from "axios";
 
 Vue.use(VueLayers)
 Vue.use(VueJustifiedLayout);
-// Vue.use(VueVirtualScroller)
 Vue.config.productionTip = false;
-// Vue.use(VirtualList)
+
+
+Vue.prototype.$basePath = window.TIMELINE_BASEPATH ? window.TIMELINE_BASEPATH : process.env.TIMELINE_BASEPATH;
+axios.defaults.baseURL = Vue.prototype.$basePath;
 
 new Vue({
   vuetify,
@@ -37,3 +38,4 @@ new Vue({
   store,
   render: h => h(App)
 }).$mount('#app')
+
