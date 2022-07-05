@@ -38,7 +38,7 @@ class TestCoOccurance(unittest.TestCase):
                 names_lookup[t[0]] = t[1]
 
             asset_ids = Asset.query.join(Face).join(Person).filter(Person.id.in_(ids)).with_entities(Asset.id)
-            with open('occurance2.csv', 'w', newline='') as csvfile:
+            with open('test/occurance2.csv', 'w', newline='') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=names)
                 writer.writeheader()
                 counter = 0

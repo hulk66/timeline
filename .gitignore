@@ -5,3 +5,6 @@ backend/models/facial
 backend/models/thing
 
 **/.DS_Store
+backend/occurance.csv
+.gitignore
+backend/occurance2.csv
