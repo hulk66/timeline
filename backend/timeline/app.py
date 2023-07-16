@@ -16,6 +16,7 @@ GNU General Public License for more details.
 '''
 
 import flask
+from timeline.domain import Album, Status
 from timeline.extensions import db, celery, cache, migrate
 from timeline.api import views, assets, admin, inspect, albums
 import logging
@@ -37,7 +38,11 @@ def create_app(testing=False, cli=False, env=None):
         app.config.from_pyfile(env)
     if testing is True:
         app.config["TESTING"] = True
-
+    print(f"Application config for environment {app.config['ENV']}")
+    print(f"SQLALCHEMY_DATABASE_URI={app.config['SQLALCHEMY_DATABASE_URI']}")
+    print(f"TESTING={app.config['TESTING']}")
+    print(f"DEBUG={app.config['DEBUG']}")
+    print(f"CREATE_DATABASE  ={app.config['CREATE_DATABASE']}")
     # app.config['SQLALCHEMY_ECHO'] = True
     configure_extensions(app, cli)
     register_blueprints(app)
@@ -48,6 +53,33 @@ def create_app(testing=False, cli=False, env=None):
 
     return app
 
+
+def prepare_for_tests(app):
+    create_for_tests = app.config["TESTING"] or False
+    if create_for_tests:
+        db.create_all(app=app)
+        # from .manage import init
+        # init()
+        with app.app_context():
+            status = Status.query.first()
+            if not status:
+                status = Status()
+                status.next_import_is_new = True
+                status.sections_dirty = False
+                status.computing_sections = False
+                status.num_assets_created = False
+
+                album = Album()
+                album.name = "Last Import"
+                status.last_import_album = album
+
+                db.session.add(status)  
+
+                status.sections_dirty = False
+                status.computing_sections = False
+
+                db.session.commit()
+                
 
 def configure_extensions(app, cli):
     """configure flask extensions
@@ -60,7 +92,8 @@ def configure_extensions(app, cli):
     create_db(app)
     db.init_app(app)
     migrate.init_app(app, db)
-    # db.create_all(app=app)
+    prepare_for_tests(app)
+
     celery.init_app(app)
     cache.init_app(app)
 
