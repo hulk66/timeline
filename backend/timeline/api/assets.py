@@ -22,6 +22,7 @@ import io
 from flask import Blueprint, abort
 from timeline.extensions import celery
 
+from timeline.api.util import parse_exif_date
 from timeline.tasks.crud_tasks import create_preview
 from timeline.util.image_ops import exif_transpose
 import logging
@@ -253,7 +254,7 @@ def upload():
 
                 try:
                     # set asset date
-                    dt = datetime.datetime.strptime(str(date_time), "%Y:%m:%d %H:%M:%S")
+                    dt = parse_exif_date(date_time)
                 except ValueError:
                     logger.error("%s can not be parsed as Date for %s",
                                 str(date_time), filename)
