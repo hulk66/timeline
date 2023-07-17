@@ -62,6 +62,7 @@ class Face(db.Model, SerializerMixin):
 
     person_id = db.Column(db.Integer, db.ForeignKey('persons.id'))
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'))
+    asset_stamp = db.Column(db.DateTime)
     encoding = db.Column(NumpyType)
     confidence_level = db.Column(db.Integer, index=True)
     already_clustered = db.Column(db.Boolean)
