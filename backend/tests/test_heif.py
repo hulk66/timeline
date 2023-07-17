@@ -22,11 +22,6 @@ class TestHeif(unittest.TestCase):
     def setUp(self):
         register_heif_opener()      
         self.app = create_app(testing=True, env="../envs/env.test")
-        with self.app.app_context():
-            status = Status()
-            status.last_import_album_id = 1
-            db.session.add(status)
-            db.session.commit()
 
     def tearDown(self):
         with self.app.app_context():

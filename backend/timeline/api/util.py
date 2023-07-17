@@ -15,6 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
+from datetime import datetime
 import flask
 from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
                              asset_thing, Exif, asset_album, Album)
@@ -70,3 +71,21 @@ def assets_from_smart_album(album: Album, q = None):
                 camera = album.camera_make, fromDate = album.start_date, toDate = album.end_date,
                 rating = album.rating)
     return q
+
+
+def parse_exif_date(value:str):
+    if not value:
+        return None
+    # Removing excessive characters from some old exif
+    dateStr = str(value).strip("\x00\r\n ")
+    try:
+        dt = datetime.strptime(str(dateStr), "%Y:%m:%d %H:%M:%S")
+    except ValueError:
+        try:
+            dt = datetime.strptime(str(dateStr), "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                dt = datetime.strptime(str(dateStr), "%Y/%m/%d %H:%M:%S")
+            except ValueError:
+                raise
+    return dt

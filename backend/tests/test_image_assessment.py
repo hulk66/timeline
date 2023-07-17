@@ -18,9 +18,6 @@ from tensorflow.keras.layers import GlobalAveragePooling2D
 class TestImageAssessment(unittest.TestCase):
     def setUp(self):
         self.app = create_app(testing=True, env="../envs/env.test")
-        with self.app.app_context():
-            db.session.add(Status())
-            db.session.commit()
  
     def test_quali(self):
         nima = Nima("MobileNet", weights=None)

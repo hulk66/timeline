@@ -25,6 +25,7 @@ from typing import IO
 from celery import chain
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
+from timeline.api.util import parse_exif_date
 
 from timeline.domain import Album, GPS, Exif, Person, Asset, Section, Status, DateRange, AssetType, TranscodingStatus
 from timeline.extensions import celery, db
@@ -140,7 +141,7 @@ def create_asset(path: str, commit=True):
         dateStr = md.get("QuickTime:MediaCreateDate")
         if dateStr:
             try:
-                dt = datetime.strptime(str(dateStr), "%Y:%m:%d %H:%M:%S")
+                dt = parse_exif_date(dateStr)
                 asset.created = dt
                 asset.no_creation_date = False
             except ValueError:
@@ -225,14 +226,14 @@ def _extract_exif_data(asset, image=None):
                 exif.key, exif.value = key, str(value)
 
         except UnicodeDecodeError:
-            logger.error("%s", img_path)
+            logger.error("%s", asset.path)
 
         # User either DateTimeOriginal or not available any other DateTime
         # or (key.startswith("DateTime") and asset.created is None):
         if key == 'DateTimeOriginal':
             try:
                 # set asset date
-                dt = datetime.strptime(str(value), "%Y:%m:%d %H:%M:%S")
+                dt = parse_exif_date(value)
                 asset.created = dt
                 asset.no_creation_date = False
             except ValueError:
@@ -326,7 +327,7 @@ def delete_asset(asset: Asset):
 
 def _delete_asset_by_path(path):
     for p in Asset.query.filter(Asset.path == path):
-        _delete_asset(p)
+        delete_asset(p)
 
 
 @celery.task(mame="Delete asset")
@@ -443,7 +444,7 @@ def level_date_ranges(start_asset: Asset = None):
 
     status = Status.query.first()
 
-    if not status.sections_dirty and Asset.query.filter(asset.section == None).count() == 0:
+    if not status.sections_dirty and Asset.query.filter(start_asset.section == None).count() == 0:
         logger.debug("Level Date Ranges- nothing to do")
         status.next_import_is_new = True
         db.session.commit()
@@ -732,7 +733,7 @@ def _resync_asset(asset_id):
         # We are out of sync. The database references a asset which does not exist in the filesystem anymore
         logger.debug(
             "asset %s no longer exists. Remove it from the catalog", asset.path)
-        _delete_asset(asset)
+        delete_asset(asset)
     db.session.commit()
 
 
