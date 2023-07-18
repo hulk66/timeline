@@ -26,11 +26,11 @@
                     <v-progress-circular color="primary" indeterminate></v-progress-circular>
                 </v-row>
             </template>
-            <v-container fluid style="background-color: transparent; padding: 3px; text-shadow: 1px 1px #D0D0D0; float:right; text-align: center; vertical-align: bottom; bottom: 0px;position: absolute;">
+            <v-container fluid class="assetStamp">
                 {{assetStamp}}
             </v-container>
         </v-img>
-        <face-name-selector :loaded="loaded" :closestPerson="closestPerson" @update="update" :face="face">Whos is this</face-name-selector>
+        <face-name-selector :loaded="loaded" :closestPerson="closestPerson" :distance="distance" @update="update" :face="face">Whos is this</face-name-selector>
         <!--
         <v-card-subtitle>Closest {{closestPerson.name}} with Distance {{distance}}</v-card-subtitle>
         -->
@@ -107,3 +107,16 @@
         }
     }
 </script>
+
+<style scoped>
+    .assetStamp {
+        background-color: transparent; 
+        padding: 3px; 
+        text-shadow: 1px 1px #D0D0D0; 
+        float:right; 
+        text-align: center; 
+        vertical-align: bottom; 
+        bottom: -5px;
+        position: absolute;
+    }
+</style>
