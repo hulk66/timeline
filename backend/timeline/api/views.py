@@ -508,6 +508,12 @@ def known_persons():
     return flask.jsonify([p.to_dict() for p in persons])
 
 
+@blueprint.route('/person/<int:page>/<int:size>', methods=['GET'])
+def persons(page, size):
+    paginate = Person.query.filter(Person.ignore != True).order_by(Person.name)
+    return jsonify_pagination(paginate, page, size)
+
+
 @blueprint.route('/things/all', methods=['GET'])
 def all_things():
     # things = Thing.query.order_by(Thing.label_en).all()
@@ -576,6 +582,42 @@ def get_persons_by_asset(asset_id):
     persons = Person.query.join(Face, and_(
         Person.ignore != True, Face.asset_id == asset_id, Person.id == Face.person_id))
     return jsonify_items(persons)
+
+
+@blueprint.route('/face/recent/<int:page>/<int:size>', methods=['GET'])
+def faces_recent(page, size):
+    logger.debug("get recent faces up to %i", size)
+    # q = Face.query.join(Person).filter(and_(Face.person_id == Person.id, Face.updated.is_not(None), or_(
+    #     Face.confidence <= distance_safe()))).order_by(
+    #     Face.updated.desc())
+    # return jsonify_pagination(q, 1, size)
+    q = Face.query.filter(Face.updated.is_not(None)).order_by(Face.updated.desc())
+    logger.debug(q)
+    paginate = q.paginate(page=page, per_page=size, error_out=False)
+    known_faces = find_all_classified_faces()
+    
+    list = []
+    for face in paginate.items:
+        result = {}
+        if face.person_id:
+            person = Person.query.get(face.person_id)
+            result = {"person": person.to_dict(), "distance": -1}
+        else:
+            if len(known_faces) > 0:
+                id, distance = find_closest(face, known_faces)
+                nearest = Face.query.get(id).person
+                result = {"person": nearest.to_dict(), "distance": distance.item()}
+
+        result["face"] = face.to_dict()
+        list.append(result)
+
+    result = {
+        "items": list,
+        "pages": paginate.pages,
+        "total": paginate.total
+    }
+    json = flask.jsonify(result)
+    return json    
 
 
 @blueprint.route('/face/by_asset/<int:asset_id>', methods=['GET'])

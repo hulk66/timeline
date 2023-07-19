@@ -2,9 +2,11 @@ import axios from "axios";
 export const person = {
     state: {
         newFaces: false,
+        persons: [],
         allPersons: [],
         knownPersons: [],
         unknownFaces: [],
+        recentFaces: [],
         facesToConfirm: [],
         markMode: false,
         previewHeight: 100,
@@ -19,11 +21,17 @@ export const person = {
         setAllPersons(state, all) {
             state.allPersons = all;
         },
+        setPersons(state, all) {
+            state.persons = all;
+        },
         setKnownPersons(state, known) {
             state.knownPersons = known;
         },
         setUnknownFaces(state, unknown) {
             state.unknownFaces = unknown;
+        },
+        setRecentFaces(state, recent) {
+            state.recentFaces = recent;
         },
         setFacesToConfirm(state, unknown) {
             state.facesToConfirm = unknown;
@@ -94,6 +102,14 @@ export const person = {
             
         },
 
+        getRecentFaces(context, {page, size}) {
+            let url = `/api/face/recent/${page}/${size}`;
+            axios.get(url).then( result => {
+                context.commit("setRecentFaces", result.data);    
+            })
+            
+        },
+
         getFacesToConfirm(context, {page, size}) {
             let url = `/api/face/facesToConfirm/${page}/${size}`;
             axios.get(url).then( result => {
@@ -157,6 +173,13 @@ export const person = {
             axios.get("/api/person/all").then (result => {
                 context.commit("setAllPersons", result.data);
             });
+        },
+
+        getPersons(context, {page, size}) {
+            let url = `/api/person/${page}/${size}`;
+            axios.get(url).then( result => {
+                context.commit("setPersons", result.data);    
+            })
         },
 
         getPersonsByPhoto(context, photo) {
