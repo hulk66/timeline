@@ -651,6 +651,9 @@ def get_unknown_faces_and_closest(page, size):
             nearest = Face.query.get(id).person
             result = {"person": nearest.to_dict(), "distance": distance.item()}
         result["face"] = face.to_dict()
+        asset = Asset.query.get(face.asset_id) 
+        excludes=("-exif", "-gps", "-faces", "-things", "-section")
+        result["photo"] = asset.to_dict(rules=excludes)
         list.append(result)
 
     result = {

@@ -17,7 +17,7 @@
 
 <template>
     <v-card flat>
-        <v-img :src="src" height="200px" contain @load="loaded=true">
+        <v-img :src="src" height="200px" contain @load="loaded=true" @click="clickPhoto" >
             <template v-slot:placeholder>
                 <v-row
                 class="fill-height ma-0"
@@ -34,24 +34,48 @@
         <!--
         <v-card-subtitle>Closest {{closestPerson.name}} with Distance {{distance}}</v-card-subtitle>
         -->
+        <v-dialog
+            v-model="photoFullscreen"
+            fullscreen hide-overlay
+            @keydown="keyboardActionDialog($event)"
+            ref="viewerDialog">
+            <image-viewer :photo="currentPhotoAsset.photo" ref="viewer"
+                            :faceToFocus="currentPhotoAsset.face"
+                            :nextPhoto="null"
+                            v-if="photoFullscreen && currentPhotoAsset"
+                            :prevPhoto="null"
+                            :direction="imageViewerDirection"
+                            @close="closeViewer"
+                            @left="navigate(-1)"
+                            @right="navigate(1)">
+            </image-viewer>
+        </v-dialog>
+
     </v-card>
 </template>
 
 <script>
-    import FaceNameSelector from "./FaceNameSelector"
+    import FaceNameSelector from "./FaceNameSelector";
+    import ImageViewer from "./ImageViewer";
 
     export default {
         name: "FaceView",
 
         components: {
-            FaceNameSelector
+            FaceNameSelector,
+            ImageViewer
         },
 
         props: {
-            element: Object
+            element: Object 
         },
         data() {
             return {
+                photoFullscreen: false,
+                currentPhotoAsset: null,
+                prevPhoto: null,
+                nextPhoto: null,
+                imageViewerDirection: 0,
                 /*
                 closestPerson: Object,
                 distance: 0.0,
@@ -102,8 +126,32 @@
             update() {
                 // there is a better way of doing this with event bus
                 this.$emit("update")
-            }
+            },
 
+            closeViewer() {
+                this.photoFullscreen = false;
+                this.currentPhotoAsset = null;
+            },
+            clickPhoto() {
+                console.log("Click on the face ", this.element.face)
+                this.photoFullscreen = true;
+                this.imageViewerDirection = 0;
+                this.currentPhotoAsset = this.element;
+                this.prevPhoto = null;
+                this.nextPhoto = null;
+            },
+            keyboardActionDialog(event) {
+                // are these values somewhere defined as constants?
+                if (event.code == "ArrowLeft")
+                    this.navigate(-1);
+                else if (event.code == "ArrowRight")
+                    this.navigate(1);
+                else if (event.code == "Escape")
+                    this.closeViewer();
+            },
+            navigate(dir) {
+                console.log("Navigation clicked but not supported", dir)
+            }
         }
     }
 </script>
