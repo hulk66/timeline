@@ -224,6 +224,7 @@
                 });
                 this.$store.dispatch("getPersons", {page: this.page, size: this.size});
                 this.$store.dispatch("getRecentFaces", {page: 1, size: this.size});
+                this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
                 this.$emit("update");
                 this.close();
             }

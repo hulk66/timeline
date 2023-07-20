@@ -67,6 +67,15 @@ export const person = {
             }))
 
         },
+        resetFace(context, face) {
+            let url = `/api/face/reset/${face.id}`;
+            return new Promise((resolve => {
+                axios.get(url).then( result => {
+                    resolve(result.data);
+                })
+            }))
+
+        },
         getClosestPerson(context, face) {
             let url = `/api/face/nearestKnownFaces/${face.id}`
             return new Promise((resolve => {

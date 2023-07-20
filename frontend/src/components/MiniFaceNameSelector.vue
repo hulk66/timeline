@@ -34,7 +34,7 @@
                     </v-combobox>            
             </v-card-text>
             <v-card-actions>
-                <v-btn color="error" icon @click="ignoreFace()"><v-icon>mdi-delete</v-icon></v-btn>
+                <v-btn color="error" icon @click="resetFace()"><v-icon>mdi-cached</v-icon></v-btn>
                 <v-spacer></v-spacer>
                     <v-btn color="primary" icon @click="close()"><v-icon>mdi-close</v-icon></v-btn>
                     <v-btn color="primary" :disabled="!name" icon @click="assignFaceToPerson()"><v-icon>mdi-check</v-icon></v-btn>
@@ -84,8 +84,8 @@
             close() {
                 this.showSelection = false;
             },
-            ignoreFace() {
-                this.$store.dispatch("ignoreFace", this.face).then(() => {
+            resetFace() {
+                this.$store.dispatch("resetFace", this.face).then(() => {
                     this.$emit("update");
                     this.close();
 

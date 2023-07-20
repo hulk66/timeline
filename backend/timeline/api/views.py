@@ -430,6 +430,13 @@ def _ignore_face(face):
     face.distance_to_human_classified = 0
 
 
+def _reset_face(face):
+    face.ignore = False
+    face.person = None
+    face.confidence_level = None
+    face.distance_to_human_classified = 0
+
+
 @blueprint.route('/person/ignore_unknown_person/<int:person_id>', methods=['GET'])
 def ignore_unknonw_person(person_id):
     person = Person.query.get(person_id)
@@ -630,6 +637,13 @@ def get_faces_by_asset(asset_id):
 def ignore_face(face_id):
     face = Face.query.get(face_id)
     _ignore_face(face)
+    db.session.commit()
+    return flask.jsonify(True)
+
+@blueprint.route('/face/reset/<int:face_id>', methods=['GET'])
+def reset_face(face_id):
+    face = Face.query.get(face_id)
+    _reset_face(face)
     db.session.commit()
     return flask.jsonify(True)
 
