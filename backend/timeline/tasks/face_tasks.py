@@ -114,6 +114,7 @@ def find_faces2(asset_id, call_match_tasks = True):
             num_faces += 1
             face = Face()
             face.created = datetime.today()
+            face.asset_stamp = asset.created
             face.ignore = False
             face.already_clustered = False
 
@@ -271,6 +272,7 @@ def find_faces(asset_id, call_match_tasks):
                 num_faces += 1
                 face = Face()
                 face.created = datetime.today()
+                face.asset_stamp = asset.created
                 face.ignore = False
                 face.already_clustered = False
                 x, y, w, h = fbox['box']
