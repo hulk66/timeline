@@ -633,13 +633,14 @@ def schedule_next_compute_sections(minutes=None):
             current_app.config['COMPUTE_SECTIONS_EVERY_MINUTES'])
 
     # compute_sections.apply_async(countdown=compute_sections_schedule*60, queue="beat")
-
-    logger.debug("Scheduling next computing section in %i minutes",
-                 compute_sections_schedule)
-    c = chain(compute_sections.si().set(queue="beat"),
-              schedule_next_compute_sections.si().set(queue="beat"))
-    c.apply_async(countdown=compute_sections_schedule*60)
-
+    if compute_sections_schedule:
+        logger.debug("Scheduling next computing section in %i minutes",
+                    compute_sections_schedule)
+        c = chain(compute_sections.si().set(queue="beat"),
+                schedule_next_compute_sections.si().set(queue="beat"))
+        c.apply_async(countdown=compute_sections_schedule*60)
+    else:
+        logger.debug("Scheduling next computing section in disabled by provided 0 value")
 
 def create_jpg_preview(asset: Asset, max_dim: int, low_res=True):
     full_path = get_full_path(asset.path)

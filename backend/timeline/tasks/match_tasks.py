@@ -179,11 +179,15 @@ def schedule_next_grouping(minutes=None):
         group_schedule = minutes
     else:
         group_schedule = int(current_app.config['GROUP_FACES_EVERY_MINUTES'])
-    logger.debug("Scheduling next face grouping in %i minutes", group_schedule)
-    # task = (group_faces.si() | schedule_next_grouping.si()).apply_async(args=(), countdown=group_schedule * 60, queue="beat")
-    c = chain(group_faces.s().set(queue="beat"),
-              schedule_next_grouping.si().set(queue="beat"))
-    c.apply_async(countdown=group_schedule*60)
+    if group_schedule:
+        logger.debug("Scheduling next face grouping in %i minutes", group_schedule)
+        # task = (group_faces.si() | schedule_next_grouping.si()).apply_async(args=(), countdown=group_schedule * 60, queue="beat")
+        c = chain(group_faces.s().set(queue="beat"),
+                schedule_next_grouping.si().set(queue="beat"))
+        c.apply_async(countdown=group_schedule*60)
+    else:
+        logger.debug("Scheduling next computing section of faces grouping in disabled by provided 0 value")
+        
 
 
 def check_for_face_grouping():
@@ -327,8 +331,13 @@ def do_background_face_tasks():
     match_all_ignored_faces()
     group_faces()
     match_faces_schedule = int(current_app.config['MATCH_FACES_EVERY_MINUTES'])
-    do_background_face_tasks.apply_async(
-        (), queue="beat", countdown=match_faces_schedule*60)
+    if match_faces_schedule:
+        logger.debug("Scheduling next computing section in %i minutes",
+                    match_faces_schedule)
+        do_background_face_tasks.apply_async(
+            (), queue="beat", countdown=match_faces_schedule*60)
+    else:
+        logger.debug("Scheduling next computing section of faces matching in disabled by provided 0 value")
 
 
 def classify_face(distance, found_face, unknown_face):

@@ -89,3 +89,22 @@ def parse_exif_date(value:str):
             except ValueError:
                 raise
     return dt
+
+valid = {'true': True, 't': True, '1': True,
+         'false': False, 'f': False, '0': False,
+         }
+
+def to_bool(value):
+    """Convert string value to boolean."""
+
+    if isinstance(value, bool):
+        return value
+
+    if not isinstance(value, str):
+        raise ValueError('invalid literal for boolean. Not a string.')
+
+    lower_value = value.lower()
+    if lower_value in valid:
+        return valid[lower_value]
+    else:
+        raise ValueError('invalid literal for boolean: "%s"' % value)

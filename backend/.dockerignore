@@ -2,3 +2,8 @@ data
 models/inception_resnet_v2
 models/facial
 models/thing
+/__pycache__/
+/.pytest_cache/
+/tmp
+/ssd.tgz
+/tests/

@@ -101,3 +101,5 @@ ENV/
 
 # ingnore docker data 
 docker/
+/ssd.tgz
+/tmp
