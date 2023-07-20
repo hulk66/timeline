@@ -6,3 +6,4 @@ models/thing
 /.pytest_cache/
 /tmp
 /ssd.tgz
+/tests/
