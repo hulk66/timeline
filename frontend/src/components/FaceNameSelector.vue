@@ -25,6 +25,10 @@
                                 {{closestPerson.name}}
                                  <v-icon right>mdi-check</v-icon>
                             </v-btn>
+                            <v-container fluid class="distance_outer">
+                                <v-container fluid class="distance_value" :style="distanceToPersonCss" >
+                                </v-container>
+                            </v-container>
                     </v-list-item-subtitle>
                 </v-list-item-content>
             </v-list-item>
@@ -73,17 +77,16 @@
         props: {
             face: Object,
             loaded: Boolean,
-            closestPerson: Object
+            closestPerson: Object,
+            distance: Number
         },
 
         data() {
             return {
                 name: "",
                 selectedPerson: null,
-                showSelection: false,
-                distance: 0.0,
+                showSelection: false
                 // closestPerson: null
-
             }
         },
         mounted() {
@@ -97,7 +100,10 @@
         computed: {
             ...mapState({
                 knownPersons: state => state.person.knownPersons
-            })
+            }),
+            distanceToPersonCss() {
+                return "width:" + (100-Math.trunc(Math.min(100, this.distance*100))) + "%";
+            }
         },
         watch: {},
         methods: {
@@ -131,3 +137,20 @@
         }
     }
 </script>
+
+<style scoped>
+    .distance_outer {
+        background-color: #eae3e3; 
+        height:5px; 
+        bottom: 5px; 
+        padding: 0px; 
+        position: absolute;
+    }
+    .distance_value {
+        background-color: #6263ff; 
+        height:3px; 
+        bottom: 2px; 
+        padding: 0px; 
+        position: absolute;
+    }
+</style>
