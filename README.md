@@ -188,7 +188,7 @@ Where should I start?
 * Ability to read also RAW photos
 
 # License
-Copyright © 2020-2021 by Tobias Himstedt. All rights reserved.
+Copyright © 2020-2023 by Tobias Himstedt, Sergii Puliaiev. All rights reserved.
 
 See also <a href="https://www.gnu.org/licenses/gpl.txt">GNU General Public License version 3</a>
 
