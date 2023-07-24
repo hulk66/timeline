@@ -16,6 +16,8 @@ GNU General Public License for more details.
 '''
 
 import flask
+from flask_cors import CORS
+from timeline.api.util import to_bool
 from timeline.domain import Album, Status
 from timeline.extensions import db, celery, cache, migrate
 from timeline.api import views, assets, admin, inspect, albums
@@ -36,14 +38,19 @@ def create_app(testing=False, cli=False, env=None):
     # app.config['APPLICATION_ROOT'] = '/timeline'
     if env:
         app.config.from_pyfile(env)
-    if testing is True:
-        app.config["TESTING"] = True
     print(f"Application config for environment {app.config['ENV']}")
     print(f"SQLALCHEMY_DATABASE_URI={app.config['SQLALCHEMY_DATABASE_URI']}")
     print(f"TESTING={app.config['TESTING']}")
     print(f"DEBUG={app.config['DEBUG']}")
-    print(f"CREATE_DATABASE  ={app.config['CREATE_DATABASE']}")
+    print(f"CREATE_DATABASE={app.config['CREATE_DATABASE']}")
     # app.config['SQLALCHEMY_ECHO'] = True
+
+    if testing is True:
+        app.config["TESTING"] = True
+    if to_bool(app.config.get("FLASK_CORS")):
+        print("Activating CORS for Developer purposes")
+        cors = CORS(app)
+    
     configure_extensions(app, cli)
     register_blueprints(app)
     
@@ -137,7 +144,7 @@ def setup_logging(package, app, logfile_name):
 
 def create_db(app):
     create = app.config["CREATE_DATABASE"]
-    if create:
+    if to_bool(create):
         db_host = app.config["DB_HOST"]
         db_pw = app.config["DB_SUPER_USER"]
         engine = sqlalchemy.create_engine("mysql+pymysql://root:" + db_pw + "@" + db_host)

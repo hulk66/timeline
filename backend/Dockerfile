@@ -1,9 +1,6 @@
-FROM python:3.8
+FROM python:3.9
 
-RUN wget -O ssd.tgz https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1?tf-hub-format=compressed && \
-    mkdir -p /tmp/myapp/models/thing/ssd && \
-    tar -xzf ssd.tgz -C /tmp/myapp/models/thing/ssd && \
-    rm ssd.tgz 
+ADD ssd.tgz /tmp/myapp/models/thing
 
 RUN apt update && apt -y install cmake ffmpeg exiftool
 

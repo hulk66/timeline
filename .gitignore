@@ -7,3 +7,5 @@ backend/models/thing
 **/.DS_Store
 backend/occurance2.csv
 backend/occurance.csv
+.history/
+/*.session.sql
