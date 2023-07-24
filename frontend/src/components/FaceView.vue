@@ -23,9 +23,12 @@
                 class="fill-height ma-0"
                 align="center"
                 justify="center">
-                <v-progress-circular color="primary" indeterminate></v-progress-circular>
-        </v-row>
-      </template>
+                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                </v-row>
+            </template>
+            <v-container fluid style="background-color: transparent; padding: 3px; text-shadow: 1px 1px #D0D0D0; float:right; text-align: center; vertical-align: bottom; bottom: 0px;position: absolute;">
+                {{assetStamp}}
+            </v-container>
         </v-img>
         <face-name-selector :loaded="loaded" :closestPerson="closestPerson" @update="update" :face="face">Whos is this</face-name-selector>
         <!--
@@ -74,6 +77,10 @@
 
             distance() {
                 return this.element ? this.element.distance : null;
+            },
+
+            assetStamp() {
+                return (this.element && this.element.face && this.element.face.asset_stamp) ? this.element.face.asset_stamp.split(" ")[0] : "";
             }
             
         },
