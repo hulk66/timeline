@@ -267,6 +267,7 @@
             photo: Object,
             nextPhoto: Object,
             direction: Number,
+            faceToFocus: Object
         },
 
         data() {

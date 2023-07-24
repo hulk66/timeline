@@ -2,9 +2,11 @@ import axios from "axios";
 export const person = {
     state: {
         newFaces: false,
+        persons: [],
         allPersons: [],
         knownPersons: [],
         unknownFaces: [],
+        recentFaces: [],
         facesToConfirm: [],
         markMode: false,
         previewHeight: 100,
@@ -19,11 +21,17 @@ export const person = {
         setAllPersons(state, all) {
             state.allPersons = all;
         },
+        setPersons(state, all) {
+            state.persons = all;
+        },
         setKnownPersons(state, known) {
             state.knownPersons = known;
         },
         setUnknownFaces(state, unknown) {
             state.unknownFaces = unknown;
+        },
+        setRecentFaces(state, recent) {
+            state.recentFaces = recent;
         },
         setFacesToConfirm(state, unknown) {
             state.facesToConfirm = unknown;
@@ -52,6 +60,15 @@ export const person = {
 
         ignoreFace(context, face) {
             let url = `/api/face/ignore/${face.id}`;
+            return new Promise((resolve => {
+                axios.get(url).then( result => {
+                    resolve(result.data);
+                })
+            }))
+
+        },
+        resetFace(context, face) {
+            let url = `/api/face/reset/${face.id}`;
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -90,6 +107,14 @@ export const person = {
             let url = `/api/face/allUnknownAndClosest/${page}/${size}`;
             axios.get(url).then( result => {
                 context.commit("setUnknownFaces", result.data);    
+            })
+            
+        },
+
+        getRecentFaces(context, {page, size}) {
+            let url = `/api/face/recent/${page}/${size}`;
+            axios.get(url).then( result => {
+                context.commit("setRecentFaces", result.data);    
             })
             
         },
@@ -157,6 +182,13 @@ export const person = {
             axios.get("/api/person/all").then (result => {
                 context.commit("setAllPersons", result.data);
             });
+        },
+
+        getPersons(context, {page, size}) {
+            let url = `/api/person/${page}/${size}`;
+            axios.get(url).then( result => {
+                context.commit("setPersons", result.data);    
+            })
         },
 
         getPersonsByPhoto(context, photo) {
