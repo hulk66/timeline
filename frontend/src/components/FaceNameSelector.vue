@@ -25,7 +25,7 @@
                                 {{closestPerson.name}}
                                  <v-icon right>mdi-check</v-icon>
                             </v-btn>
-                            <v-container fluid class="distance_outer">
+                            <v-container fluid class="distance_outer" v-if="showDistance">
                                 <v-container fluid class="distance_value" :style="distanceToPersonCss" >
                                 </v-container>
                             </v-container>
@@ -78,7 +78,7 @@
             face: Object,
             loaded: Boolean,
             closestPerson: Object,
-            distance: Number
+            showDistance: Boolean
         },
 
         data() {
@@ -102,8 +102,12 @@
                 knownPersons: state => state.person.knownPersons
             }),
             distanceToPersonCss() {
-                return "width:" + (100-Math.trunc(Math.min(100, this.distance*100))) + "%";
+                return "width:" + (100-Math.trunc(Math.min(100, this.face.distance*100))) + "%";
+            },
+            displayDistance() {
+                return this.face.distance != null && this.showDistance;
             }
+
         },
         watch: {},
         methods: {
@@ -114,7 +118,6 @@
                 this.$store.dispatch("ignoreFace", this.face).then(() => {
                     this.$emit("update");
                     this.close();
-
                 })
 
             },

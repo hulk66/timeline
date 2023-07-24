@@ -605,17 +605,22 @@ def faces_recent(page, size):
     
     list = []
     for face in paginate.items:
-        result = {}
+        result = face.to_dict()
+        asset = Asset.query.get(face.asset_id) 
+        excludes=("-exif", "-gps", "-faces", "-things", "-section")
+        result["photo"] = asset.to_dict(rules=excludes)
+        
         if face.person_id:
             person = Person.query.get(face.person_id)
-            result = {"person": person.to_dict(), "distance": -1}
+            result["person"] = person.to_dict()
+            result["distance"] = -1
         else:
             if len(known_faces) > 0:
                 id, distance = find_closest(face, known_faces)
                 nearest = Face.query.get(id).person
-                result = {"person": nearest.to_dict(), "distance": distance.item()}
+                result["person"] =  nearest.to_dict()
+                result["distance"] = distance.item()
 
-        result["face"] = face.to_dict()
         list.append(result)
 
     result = {
@@ -659,12 +664,12 @@ def get_unknown_faces_and_closest(page, size):
 
     list = []
     for face in paginate.items:
-        result = {}
+        result = face.to_dict()
         if len(known_faces) > 0:
             id, distance = find_closest(face, known_faces)
             nearest = Face.query.get(id).person
-            result = {"person": nearest.to_dict(), "distance": distance.item()}
-        result["face"] = face.to_dict()
+            result["person"] = nearest.to_dict()
+            result["distance"] = distance.item()
         asset = Asset.query.get(face.asset_id) 
         excludes=("-exif", "-gps", "-faces", "-things", "-section")
         result["photo"] = asset.to_dict(rules=excludes)
@@ -686,7 +691,21 @@ def get_faces_to_confirm(page, size):
             Face.person_id != None,
             Face.confidence_level == Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE))
     logger.debug(q)
-    return jsonify_pagination(q, size=size, page=page)
+    paginate = q.paginate(page=page, per_page=size, error_out=False)
+    list = []
+    for face in paginate.items:
+        result = face.to_dict()
+        asset = Asset.query.get(face.asset_id) 
+        excludes=("-exif", "-gps", "-faces", "-things", "-section")
+        result["photo"] = asset.to_dict(rules=excludes)
+        list.append(result)
+    result = {
+        "items": list,
+        "pages": paginate.pages,
+        "total": paginate.total
+    }
+    json = flask.jsonify(result)
+    return json
 
 
 @blueprint.route('/face/all_unknown/<int:page>/<int:size>', methods=['GET'])

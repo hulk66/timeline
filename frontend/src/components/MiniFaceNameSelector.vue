@@ -60,10 +60,8 @@
             return {
                 name: "",
                 selectedPerson: null,
-                showSelection: false,
-                distance: 0.0,
+                showSelection: false
                 // closestPerson: null
-
             }
         },
         mounted() {
@@ -88,7 +86,6 @@
                 this.$store.dispatch("resetFace", this.face).then(() => {
                     this.$emit("update");
                     this.close();
-
                 })
 
             },
@@ -111,6 +108,7 @@
         }
     }
 </script>
+
 <style scoped>
 .currentName{
     display: block;
