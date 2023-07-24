@@ -609,7 +609,7 @@ def faces_recent(page, size):
         asset = Asset.query.get(face.asset_id) 
         excludes=("-exif", "-gps", "-faces", "-things", "-section")
         result["photo"] = asset.to_dict(rules=excludes)
-        
+
         if face.person_id:
             person = Person.query.get(face.person_id)
             result["person"] = person.to_dict()
