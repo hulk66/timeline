@@ -21,8 +21,11 @@
             <v-col style="position: relative" fill-height>
                 <transition-group tag="div" class="img-slider" :name="transition">
                     <div :key="photo.id" :id="photo.id" class="img-cont"> 
-                        <img :src="photoUrl(photo)" v-if="isPhoto">
-                        <span v-else >
+                        <img :src="photoUrl(photo)" v-if="isPhoto" id="fullImage">
+                        <div id="fullImageCanvasHolder">
+                            <canvas id="faceOutlineCanvas" ></canvas>
+                        </div>
+                        <span v-if="!isPhoto" >
                             <v-icon v-if="videoMode == 'pause' && mousemove" style="z-index: 20; position: absolute; top: 50%; left: 50%;"  x-large @click="playVideo(true)">
                                 mdi-play-circle
                             </v-icon>
@@ -100,7 +103,9 @@
                                     <div class="font-weight-bold">People</div>
                                 
                                 <v-list-item  v-for="face in photo_faces" :key="face.id" two-line>
-                                    <v-list-item-avatar size="60">
+                                    <v-list-item-avatar size="60"                                 
+                                        @mouseover="outlineFace(face)"
+                                        @mouseleave="clearFaceOutline()">
                                         <v-img :src="faceUrl(face.id)"></v-img>
                                     </v-list-item-avatar>
                                     <v-list-item-content>
@@ -294,6 +299,10 @@
                 // fullscreen: false
                 videoMode: 'pause',
 
+                // Face Blink
+                faceOutlineBlinkInterval: null,
+                // change stage every 500 ms
+                faceOutlineBlinkPeriod: 500
             }
         },
 
@@ -309,7 +318,6 @@
                     return "slideback";
                 else
                     return "fade-transition";
-
             },
 
             videoSource() {
@@ -321,9 +329,9 @@
                 return this.photo.asset_type == 'jpg' || this.photo.asset_type == 'heic';
             }
         },
+
         watch: {
             photo(p) {
-
                 if (this.info)
                     this.loadData(p);
             },            
@@ -364,9 +372,11 @@
                     document.exitFullscreen();
             },
             */
+
             ratePhoto(value) {
                 this.$emit("set-rating", value);
-            },                
+            },
+
             mouseMove() {
                 if (this.timedFunction)
                     clearInterval(this.timedFunction);
@@ -382,8 +392,8 @@
                     this.newPerson = face.person;
                 } else
                     this.newPerson = null;
-
             },
+
             setPerson() {
                 this.$store.dispatch("assignFaceToPerson", {
                     person:this.newPerson, 
@@ -399,6 +409,7 @@
                 this.videoSource = "/404.mp4";
                 this.$refs.video.load();
             },
+
             loadData(p) {
                 let self = this;
                 this.gps = null;
@@ -409,7 +420,6 @@
                 this.$store.dispatch("getExifForPhoto", p).then((exif => {
                     self.exif = exif;
                     self.size = parseInt(exif.ExifImageWidth) * parseInt(exif.ExifImageHeight) / 1e6
-
                 }));
                 if (p.gps_id) {
                     this.$store.dispatch("getGpsForPhoto", p).then((gps => {
@@ -438,9 +448,11 @@
             date(d) {
                 return moment(d).format("DD.MM.YYYY");
             },
+
             time(d) {
                 return moment(d).format("dddd, H:mm");
             },
+
             photoUrl(photo) {
                 if (photo)
                     if (photo.asset_type == "mp4" || photo.asset_type == "mov")
@@ -448,6 +460,7 @@
                     else
                         return encodeURI(this.$basePath +"/assets/full/" + photo.path);
             },
+
             faceUrl(id) {
                 return this.$basePath + "/api/face/preview/80/" + id + ".png";
             },
@@ -459,12 +472,96 @@
             right() {
                 this.$emit('right')
             },
-            close() {
 
+            close() {
                 if (this.photo.asset_type == 'mov' || this.photo.asset_type =='mp4')
                     this.$refs.video.pause();
                 this.$emit('close')
             },
+            
+            clearFaceOutline() {
+                console.log("Clear face outline")
+                var c = document.getElementById("faceOutlineCanvas");
+                var context = c.getContext('2d');
+                context.clearRect(0, 0, c.width, c.height);
+                c.width = this.photo.width;
+                c.height = this.photo.height;
+                if (this.faceOutlineBlinkInterval) {
+                    clearInterval(this.faceOutlineBlinkInterval);
+                }
+            },
+            outlineFace(faceToOutline) {
+                if (!faceToOutline) {
+                    faceToOutline = this.faceToFocus;
+                }
+                console.log("Start face outline")
+                var c = document.getElementById("faceOutlineCanvas");
+                var context = c.getContext('2d');
+                context.clearRect(0, 0, c.width, c.height);
+                c.width = this.photo.width;
+                c.height = this.photo.height;
+
+                this.period = 500;
+                var self = this; // This is to pass the reference into setInterval
+                if (this.faceOutlineBlinkInterval) {
+                    clearInterval(this.faceOutlineBlinkInterval);
+                }
+                this.faceOutlineBlinkInterval = setInterval(function() { self.doBlink(); }, this.faceOutlineBlinkPeriod);
+                this.doBlink = function()
+                {
+                    var c = document.getElementById("faceOutlineCanvas");
+                    var i = document.getElementById("fullImage");
+                    var context = c.getContext('2d');
+                    context.clearRect(0, 0, c.width, c.height);
+                    let facesOutlines = [
+                        {dash: [ 5,  5], color: 'black' },
+                        {dash: [ 5,  5], color: 'white' },
+                        {dash: [10, 10], color: 'black' },
+                        {dash: [10, 10], color: 'white' }
+                    ];
+
+                    let face = faceToOutline;
+                    if (face) {
+                        if (self.faceOutlineStage == null || self.faceOutlineStage >= facesOutlines.length-1) {
+                            self.faceOutlineStage = 0;
+                        } else {
+                            self.faceOutlineStage++;
+                        }
+
+                        var xScale = this.photo.width/(i.width);
+                        var yScale = this.photo.height/(i.height);
+                        var xOff = ((i.parentNode.clientWidth-i.clientWidth)/2);
+                        var xOffScaled = xOff*xScale;
+                        var yOff = ((i.parentNode.clientHeight-i.clientHeight)/2);
+                        var yOffScaled = yOff*yScale;
+                        // console.log(`Scaling ${xScale} : ${yScale}`)
+                        // console.log(" picture offsets "+xOff+" => "+xOffScaled+" , "+yOff+" => "+yOffScaled);
+
+                        c.width = this.photo.width+xOff*2*xScale;
+                        c.height = this.photo.height+yOff*2*yScale;
+
+                        // Draw rectangle over the scaled picture
+                        // context.setLineDash([]);
+                        // context.strokeStyle = 'yellow';
+                        // context.beginPath();
+                        // context.rect(xOffScaled, yOffScaled, this.photo.width, this.photo.height);
+                        // context.lineWidth = 7;
+                        // context.stroke();
+
+                        // Face rect
+                        context.setLineDash(facesOutlines[self.faceOutlineStage].dash);
+                        context.lineDashOffset = self.faceOutlineStage*2;
+                        context.strokeStyle = facesOutlines[self.faceOutlineStage].color;
+                        context.beginPath();
+                        context.rect(face.x+xOffScaled, face.y+yOffScaled, face.w, face.h);
+                        context.lineWidth = 6;
+                        context.stroke();
+                        // console.log("face outline "+self.faceToFocus.id+" stage "+self.faceOutlineStage+" color "+context.strokeStyle);
+                    } else {
+                        self.clearFaceOutline();
+                    }
+                };
+            }
            
         }
 
@@ -539,5 +636,14 @@ img {
     transform: translateY(-50%) translateX(-50%);
 }
 
-
+#faceOutlineCanvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+#fullImageCanvasHolder {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
 </style>
