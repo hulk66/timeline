@@ -22,6 +22,7 @@
         <v-tab key="known">Known ({{knownPersons.length}})</v-tab>
         <v-tab key="confirm">To be confirmed ({{facesToConfirm.total}})</v-tab>
         <v-tab key="unknown">Unknown ({{unknownFaces.total}})</v-tab>
+        <v-tab key="recent">Recent faces({{recentFaces.total}})</v-tab>
     </v-tabs>
     <v-tabs-items v-model="tab">
         <v-tab-item key="known">
@@ -105,9 +106,9 @@
                     <v-container class="d-flex child-flex col recentFaces" id="recentFaces">
                         <v-row dence>
                             <v-col
-                                v-for="faceInfo in recentFaces.items" :key="faceInfo.id" class="d-flex child-flex"
+                                v-for="face in mostRecentFaces.items" :key="face.id" class="d-flex child-flex"
                                 xs="3" md="2" lg="1" xl="1">
-                                <face-view @update="updateUnknownFaces" :face="faceInfo" 
+                                <face-view @update="updateUnknownFaces" :face="face" 
                                     :showAssetStamp="false" :showDistance="false" :miniVersion="true"></face-view>
                             </v-col>
                         </v-row>
@@ -115,7 +116,6 @@
                 </v-col>
             </v-row>
             <v-row dense id="unknownFacesList">
-            
                 <v-col :class="{ 'on-hover': hoverIgnoreAll }"
                     v-for="element in unknownFaces.items" :key="element.id" class="d-flex child-flex unknownFace"
                     xs="3" md="2" lg="2" xl="1">
@@ -133,7 +133,37 @@
             </v-row>
             </v-container>
         </v-tab-item>
-
+        <v-tab-item key="recent">
+            <v-container fluid >
+            <v-row>
+                <v-col>
+                    <v-card flat>
+                        <v-card-title>Recently processed faces</v-card-title>
+                        <v-card-text>
+                            <div class="text-caption">{{recentFaces.total}} faces were processed</div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col
+                    v-for="face in recentFaces.items" :key="face.id" class="d-flex child-flex"
+                    xs="3" md="2" lg="2" xl="1">
+                    <face-view @update="updateRecentFaces" :face="face" 
+                        :showAssetStamp="false" :showDistance="false" :miniVersion="true"></face-view>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <v-pagination
+                        v-model="pageRecent"
+                        :length="recentFaces.pages"
+                        
+                    ></v-pagination>
+                </v-col>
+            </v-row>
+            </v-container>
+        </v-tab-item>
     </v-tabs-items>
 
     </v-card>
@@ -161,6 +191,8 @@
                 page: 1,
                 sizeConfirm: 24,
                 pageConfirm: 1,
+                sizeRecent: 48,
+                pageRecent: 1,
                 hoverIgnoreAll: false
             };
         },
@@ -172,6 +204,7 @@
             this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
             this.$store.dispatch("getFacesToConfirm", {page: this.page, size: this.size});
             this.$store.dispatch("getRecentFaces", {page: 1, size: this.size});
+            this.$store.dispatch("getMostRecentFaces", {size: this.size});
             this.setFacesSeen();
         },
 
@@ -181,6 +214,9 @@
             }, 
             pageConfirm(val) {
                 this.$store.dispatch("getFacesToConfirm", {page: val, size: this.sizeConfirm});
+            }, 
+            pageRecent(val) {
+                this.$store.dispatch("getRecentFaces", {page: val, size: this.sizeRecent});
             }, 
 
             tab(v) {
@@ -196,6 +232,7 @@
                 knownPersons: state => state.person.knownPersons,
                 unknownFaces: state => state.person.unknownFaces,
                 recentFaces: state => state.person.recentFaces,
+                mostRecentFaces: state => state.person.mostRecentFaces,
                 facesToConfirm: state => state.person.facesToConfirm
             }),
         },
@@ -210,11 +247,15 @@
                 this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
                 this.$store.dispatch("getAllPersons");
                 this.$store.dispatch("getPersons", {page: this.page, size: this.size});
-                this.$store.dispatch("getRecentFaces", {page: 1, size: this.size});
+                this.$store.dispatch("getMostRecentFaces", {size: this.size});
             },
 
             updateFacesToConfirm() {
                 this.$store.dispatch("getFacesToConfirm", {page: this.pageConfirm, size: this.sizeConfirm});
+            },
+            
+            updateRecentFaces() {
+                this.$store.dispatch("getRecentFaces", {page: this.pageRecent, size: this.sizeRecent});
             },
             
             ignoreAllOnPage() {
@@ -223,7 +264,7 @@
                     this.$store.dispatch("ignoreFace", faceInfo);
                 });
                 this.$store.dispatch("getPersons", {page: this.page, size: this.size});
-                this.$store.dispatch("getRecentFaces", {page: 1, size: this.size});
+                this.$store.dispatch("getMostRecentFaces", {size: this.size});
                 this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
                 this.$emit("update");
                 this.close();
