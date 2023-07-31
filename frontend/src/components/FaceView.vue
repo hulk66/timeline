@@ -17,7 +17,7 @@
 
 <template>
     <v-card flat>
-        <v-img :src="src" height="200px" contain @load="loaded=true" @click="clickPhoto" >
+        <v-img :src="src" :height="tileHeight" contain @load="loaded=true" @click="clickPhoto" >
             <template v-slot:placeholder>
                 <v-row
                 class="fill-height ma-0"
@@ -26,13 +26,14 @@
                     <v-progress-circular color="primary" indeterminate></v-progress-circular>
                 </v-row>
             </template>
-            <v-container fluid class="assetStamp">
+            <v-container fluid class="assetStamp" v-if="showAssetStamp">
                 {{assetStamp}}
             </v-container>
         </v-img>
-        <face-name-selector :loaded="loaded" :closestPerson="closestPerson" :distance="distance" @update="update" :face="face">Whos is this</face-name-selector>
+        <face-name-selector :loaded="loaded" :closestPerson="face.person" @update="update" :face="face" :showDistance="showDistance" v-if="!miniVersion">{{selectorTextValue}}</face-name-selector>
+        <mini-face-name-selector :loaded="loaded" :closestPerson="face.person" @update="update" :face="face"  v-if="miniVersion" :currentName="selectorTextValue">{{selectorTextValue}}</mini-face-name-selector>
         <!--
-        <v-card-subtitle>Closest {{closestPerson.name}} with Distance {{distance}}</v-card-subtitle>
+        <v-card-subtitle>Closest {{face.person.name}} with Distance {{distance}}</v-card-subtitle>
         -->
         <v-dialog
             v-model="photoFullscreen"
@@ -40,9 +41,9 @@
             @keydown="keyboardActionDialog($event)"
             ref="viewerDialog">
             <image-viewer :photo="currentPhotoAsset.photo" ref="viewer"
-                            :faceToFocus="currentPhotoAsset.face"
+                            :faceToFocus="currentPhotoAsset"
                             :nextPhoto="null"
-                            v-if="photoFullscreen && currentPhotoAsset"
+                            v-if="photoFullscreen && currentPhotoAsset.photo"
                             :prevPhoto="null"
                             :direction="imageViewerDirection"
                             @close="closeViewer"
@@ -56,6 +57,7 @@
 
 <script>
     import FaceNameSelector from "./FaceNameSelector";
+    import MiniFaceNameSelector from "./MiniFaceNameSelector";
     import ImageViewer from "./ImageViewer";
 
     export default {
@@ -63,12 +65,18 @@
 
         components: {
             FaceNameSelector,
+            MiniFaceNameSelector,
             ImageViewer
         },
 
         props: {
-            element: Object 
+            face: Object,
+            showAssetStamp: Boolean,
+            showDistance: Boolean,
+            selectorText: String,
+            miniVersion: Boolean
         },
+
         data() {
             return {
                 photoFullscreen: false,
@@ -76,11 +84,6 @@
                 prevPhoto: null,
                 nextPhoto: null,
                 imageViewerDirection: 0,
-                /*
-                closestPerson: Object,
-                distance: 0.0,
-                face: Object,
-                */
                 loaded: false
             };
         },
@@ -89,22 +92,25 @@
         computed: {
             
             src() {
-                return this.element ? this.$basePath + "/api/face/preview/200/" + this.face.id + ".png" : "";
-            },
-            face() {
-                return this.element ? this.element.face : null;
+                return this.face ? this.$basePath + "/api/face/preview/200/" + this.face.id + ".png" : "";
             },
 
-            closestPerson() {
-                return this.element ? this.element.person: null;
-            },
-
-            distance() {
-                return this.element ? this.element.distance : null;
+            tileHeight() {
+                return this.miniVersion ? "100px" : "200px";
             },
 
             assetStamp() {
-                return (this.element && this.element.face && this.element.face.asset_stamp) ? this.element.face.asset_stamp.split(" ")[0] : "";
+                return (this.face && this.face.asset_stamp) ? this.face.asset_stamp.split(" ")[0] : "";
+            },
+
+            selectorTextValue() {
+                if (this.selectorText) {
+                    return this.selectorText;
+                }
+                if (this.face.distance == -1 && this.face.person) {
+                    return this.face.person.name;
+                }
+                return "-----";
             }
             
         },
@@ -133,10 +139,10 @@
                 this.currentPhotoAsset = null;
             },
             clickPhoto() {
-                console.log("Click on the face ", this.element.face)
+                console.log("Click on the face ", this.face)
                 this.photoFullscreen = true;
                 this.imageViewerDirection = 0;
-                this.currentPhotoAsset = this.element;
+                this.currentPhotoAsset = this.face;
                 this.prevPhoto = null;
                 this.nextPhoto = null;
             },
