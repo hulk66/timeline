@@ -47,7 +47,7 @@
             <v-row>
                 <v-col>
                     <v-pagination
-                        v-model="pageConfirm"
+                        v-model="pageKnown"
                         :length="persons.pages"
                     ></v-pagination>
                 </v-col>
@@ -71,7 +71,7 @@
                 <v-col
                     v-for="face in facesToConfirm.items" :key="face.id" class="d-flex child-flex"
                     xs="3" md="2" lg="2" xl="1">
-                    <face-view @update="updateFacesToConfirm" :face="face" :selectorText="'Correct?'"></face-view>
+                    <face-view @update="updateFacesToConfirm" :face="face" :selectorText="'Correct?'" :showAssetStamp="true" :showDistance="true"></face-view>
                 </v-col>
             </v-row>
             <v-row>
@@ -125,7 +125,7 @@
             <v-row>
                 <v-col>
                     <v-pagination
-                        v-model="page"
+                        v-model="pageUnknown"
                         :length="unknownFaces.pages"
                         
                     ></v-pagination>
@@ -187,10 +187,12 @@
         data() {
             return {
                 tab: 'groups',
-                size: 24,
-                page: 1,
+                sizeKnown: 24,
+                pageKnown: 1,
                 sizeConfirm: 24,
                 pageConfirm: 1,
+                sizeUnknown: 24,
+                pageUnknown: 1,
                 sizeRecent: 48,
                 pageRecent: 1,
                 hoverIgnoreAll: false
@@ -199,18 +201,21 @@
 
         mounted() {
             this.$store.dispatch("getAllPersons");
-            this.$store.dispatch("getPersons", {page: this.page, size: this.size});
+            this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
             this.$store.dispatch("getKnownPersons");
-            this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
-            this.$store.dispatch("getFacesToConfirm", {page: this.page, size: this.size});
-            this.$store.dispatch("getRecentFaces", {page: 1, size: this.size});
-            this.$store.dispatch("getMostRecentFaces", {size: this.size});
+            this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
+            this.$store.dispatch("getFacesToConfirm", {page: this.pageConfirm, size: this.sizeConfirm});
+            this.$store.dispatch("getRecentFaces", {page: 1, size: this.sizeRecent});
+            this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
             this.setFacesSeen();
         },
 
         watch: {
-            page(val) {
-                this.$store.dispatch("getAllUnknownFaces", {page: val, size: this.size});
+            pageKnown(val) {
+                this.$store.dispatch("getPersons", {page: val, size: this.sizeKnown});
+            }, 
+            pageUnknown(val) {
+                this.$store.dispatch("getAllUnknownFaces", {page: val, size: this.sizeUnknown});
             }, 
             pageConfirm(val) {
                 this.$store.dispatch("getFacesToConfirm", {page: val, size: this.sizeConfirm});
@@ -221,7 +226,7 @@
 
             tab(v) {
                 if (v == "unknown")
-                    this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
+                    this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
             }
 
         },
@@ -244,10 +249,10 @@
             },
 
             updateUnknownFaces() {
-                this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
+                this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
                 this.$store.dispatch("getAllPersons");
-                this.$store.dispatch("getPersons", {page: this.page, size: this.size});
-                this.$store.dispatch("getMostRecentFaces", {size: this.size});
+                this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
+                this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
             },
 
             updateFacesToConfirm() {
@@ -263,9 +268,9 @@
                 this.unknownFaces.items.forEach( faceInfo => {
                     this.$store.dispatch("ignoreFace", faceInfo);
                 });
-                this.$store.dispatch("getPersons", {page: this.page, size: this.size});
-                this.$store.dispatch("getMostRecentFaces", {size: this.size});
-                this.$store.dispatch("getAllUnknownFaces", {page: this.page, size: this.size});
+                this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
+                this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
+                this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
                 this.$emit("update");
                 this.close();
             }
