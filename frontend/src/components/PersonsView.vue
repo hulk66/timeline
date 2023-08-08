@@ -70,7 +70,7 @@
                 <v-col
                     v-for="face in facesToConfirm.items" :key="face.id" class="d-flex child-flex"
                     xs="3" md="2" lg="2" xl="1">
-                    <confirm-face-view @update="updateFacesToConfirm" :face="face"></confirm-face-view>
+                    <face-view @update="updateFacesToConfirm" :face="face" :selectorText="'Correct?'"></face-view>
                 </v-col>
             </v-row>
             <v-row>
@@ -91,32 +91,35 @@
                     <v-card flat>
                         <v-card-title>Unknown faces</v-card-title>
                         <v-card-text>
-                            <div class="text-caption">{{unknownFaces.total}} unnamed Faces 1</div>
-                            <v-btn @click="ignoreAllOnPage()" block text color="primary">
+                            <div class="text-caption">{{unknownFaces.total}} unnamed Faces</div>
+                            <v-btn @click="ignoreAllOnPage()" block text color="primary" 
+                                @mouseover="hoverIgnoreAll = true"
+                                @mouseleave="hoverIgnoreAll = false">
                                 Ignore All On Page
-                                 <v-icon right>mdi-close</v-icon>
+                                <v-icon right>mdi-close</v-icon>
                             </v-btn>
                         </v-card-text>
                     </v-card>
                 </v-col>
                 <v-col>
-                    <v-container class="d-flex child-flex col recentFaces">
+                    <v-container class="d-flex child-flex col recentFaces" id="recentFaces">
                         <v-row dence>
                             <v-col
-                                v-for="faceInfo in recentFaces.items" :key="faceInfo.face.id" class="d-flex child-flex"
+                                v-for="faceInfo in recentFaces.items" :key="faceInfo.id" class="d-flex child-flex"
                                 xs="3" md="2" lg="1" xl="1">
-                                <mini-face-view @update="updateUnknownFaces" :element="faceInfo"></mini-face-view>
+                                <face-view @update="updateUnknownFaces" :face="faceInfo" 
+                                    :showAssetStamp="false" :showDistance="false" :miniVersion="true"></face-view>
                             </v-col>
                         </v-row>
                     </v-container>
                 </v-col>
             </v-row>
-            <v-row dense>
+            <v-row dense id="unknownFacesList">
             
-                <v-col
-                    v-for="element in unknownFaces.items" :key="element.face.id" class="d-flex child-flex"
+                <v-col :class="{ 'on-hover': hoverIgnoreAll }"
+                    v-for="element in unknownFaces.items" :key="element.id" class="d-flex child-flex unknownFace"
                     xs="3" md="2" lg="2" xl="1">
-                    <face-view @update="updateUnknownFaces" :element="element"></face-view>
+                    <face-view @update="updateUnknownFaces" :face="element" :showAssetStamp="true" :showDistance="true" :selectorText="'Whos is this'" ></face-view>
                 </v-col>
             </v-row>
             <v-row>
@@ -141,16 +144,12 @@
     import PersonPreview from "./PersonPreview";
     import { mapState } from 'vuex'
     import FaceView from './FaceView.vue';
-    import ConfirmFaceView from './ConfirmFaceView'
-    import MiniFaceView from './MiniFaceView.vue';
     export default {
         name: "PersonsView",
 
         components: {
             PersonPreview,
-            FaceView,
-            ConfirmFaceView,
-            MiniFaceView
+            FaceView
         },
 
         props: {
@@ -161,7 +160,8 @@
                 size: 24,
                 page: 1,
                 sizeConfirm: 24,
-                pageConfirm: 1
+                pageConfirm: 1,
+                hoverIgnoreAll: false
             };
         },
 
@@ -220,7 +220,7 @@
             ignoreAllOnPage() {
                 console.log("Ignoring all the faces: ", this.unknownFaces);
                 this.unknownFaces.items.forEach( faceInfo => {
-                    this.$store.dispatch("ignoreFace", faceInfo.face);
+                    this.$store.dispatch("ignoreFace", faceInfo);
                 });
                 this.$store.dispatch("getPersons", {page: this.page, size: this.size});
                 this.$store.dispatch("getRecentFaces", {page: 1, size: this.size});
@@ -236,5 +236,8 @@
 .recentFaces {
     border: 1px solid #D0D0D0;
     border-radius: 10px;
+}
+.on-hover > div{
+    background-color: #D0D0D0 !important;
 }
 </style>
