@@ -29,6 +29,9 @@
             <v-container fluid class="assetStamp" v-if="showAssetStamp">
                 {{assetStamp}}
             </v-container>
+            <v-container fluid :class="faceConfidence.class" v-if="showFaceConfidence">
+                <v-icon :color="faceConfidence.color" >{{faceConfidence.icon}}</v-icon>{{ face.confidence_level }}
+            </v-container>
         </v-img>
         <face-name-selector :loaded="loaded" :closestPerson="face.person" @update="update" :face="face" :showDistance="showDistance" v-if="!miniVersion">{{selectorTextValue}}</face-name-selector>
         <mini-face-name-selector :loaded="loaded" :closestPerson="face.person" @update="update" :face="face"  v-if="miniVersion" :currentName="selectorTextValue">{{selectorTextValue}}</mini-face-name-selector>
@@ -72,6 +75,7 @@
         props: {
             face: Object,
             showAssetStamp: Boolean,
+            showFaceConfidence: Boolean,
             showDistance: Boolean,
             selectorText: String,
             miniVersion: Boolean
@@ -101,6 +105,61 @@
 
             assetStamp() {
                 return (this.face && this.face.asset_stamp) ? this.face.asset_stamp.split(" ")[0] : "";
+            },
+
+            faceConfidence() {
+                switch(this.face.confidence_level) {
+                    case 0: { // "None"
+                        return {
+                            class: "faceConfidence",
+                            icon: "mdi-eye-circle",
+                            color: "warning"
+                        };
+                    }
+                    case 1: { // "MayBe"
+                        return {
+                            class: "faceConfidence fc_none",
+                            icon: "mdi-help-circle",
+                            color: "info"
+                        };
+                    }
+                    case 2: { // "Safe"
+                        return {
+                            class: "faceConfidence",
+                            icon: "mdi-leaf-circle",
+                            color: "info"
+                        };
+                    }
+                    case 3: { // "Very Safe"
+                        return {
+                            class: "faceConfidence",
+                            icon: "mdi-star-circle",
+                            color: "info"
+                        };
+                    }
+                    case 4: { // "Confirmed"
+                        return {
+                            class: "faceConfidence",
+                            icon: "mdi-check-circle",
+                            color: "success"
+                        };
+                    }
+                    default: {
+                        if (this.face.confidence_level === null) {
+                            return {
+                                class: "faceConfidence",
+                                icon: "mdi-circle-outline",
+                                color: "grey-lighten-2"
+                            };
+                        } else {
+                            return {
+                                class: "faceConfidence",
+                                icon: "mdi-alert",
+                                color: "error"
+                            };
+                        }
+                    }
+                }
             },
 
             selectorTextValue() {
@@ -173,4 +232,15 @@
         bottom: -5px;
         position: absolute;
     }
+    .faceConfidence {
+        background-color: transparent; 
+        padding: 3px; 
+        text-shadow: 1px 1px #D0D0D0; 
+        float:right; 
+        text-align: right; 
+        vertical-align: bottom; 
+        bottom: -5px;
+        position: absolute;
+    }
+
 </style>
