@@ -28,7 +28,6 @@
         v-model="date"
         :label="title"
         prepend-icon="mdi-calendar"
-        readonly
         clearable
         v-bind="attrs"
         v-on="on"

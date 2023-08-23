@@ -162,15 +162,18 @@
                             <div>
                                 <v-card-text>
                                     <div class="font-weight-bold">Details</div>
-                                <v-list-item two-line>
+                                <v-list-item three-line>
                                     <v-list-item-avatar>
-                                        <v-icon>mdi-calendar</v-icon>
+                                        <v-icon>mdi-folder</v-icon>
                                     </v-list-item-avatar>
                                     <v-list-item-content>
                                         <v-list-item-title v-html="date(photo.created)"></v-list-item-title>
                                         <v-list-item-subtitle v-html="time(photo.created)"></v-list-item-subtitle>
                                     </v-list-item-content>
-                                </v-list-item>
+                                    <v-list-item-subtitle class="d-flex text-wrap">
+                                        {{photo.directory}}
+                                    </v-list-item-subtitle>
+                            </v-list-item>
                                 <!-- repair this; information is also available for Videos but not as exif -->
                                 <v-list-item two-line v-if="isPhoto">
                                     <v-list-item-avatar>
