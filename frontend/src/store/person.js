@@ -7,6 +7,7 @@ export const person = {
         knownPersons: [],
         unknownFaces: [],
         recentFaces: [],
+        mostRecentFaces: [],
         facesToConfirm: [],
         markMode: false,
         previewHeight: 100,
@@ -32,6 +33,9 @@ export const person = {
         },
         setRecentFaces(state, recent) {
             state.recentFaces = recent;
+        },
+        setMostRecentFaces(state, recent) {
+            state.mostRecentFaces = recent;
         },
         setFacesToConfirm(state, unknown) {
             state.facesToConfirm = unknown;
@@ -115,6 +119,14 @@ export const person = {
             let url = `/api/face/recent/${page}/${size}`;
             axios.get(url).then( result => {
                 context.commit("setRecentFaces", result.data);    
+            })
+            
+        },
+
+        getMostRecentFaces(context, {size}) {
+            let url = `/api/face/recent/1/${size}`;
+            axios.get(url).then( result => {
+                context.commit("setMostRecentFaces", result.data);    
             })
             
         },
