@@ -17,7 +17,7 @@
 <template>
     <v-container fluid>
     <v-card flat>
-    <v-tabs v-model="tab">
+    <v-tabs v-model="tab" @change="changeTab">
         <v-tabs-slider></v-tabs-slider>
         <v-tab key="known">Known ({{knownPersons.length}})</v-tab>
         <v-tab key="confirm">To be confirmed ({{facesToConfirm.total}})</v-tab>
@@ -43,6 +43,9 @@
                     xs="3" md="2" lg="1" xl="1">
                     <person-preview :person="person"></person-preview>
                 </v-col>
+                <div class="persons-loading query-loading-spinner" visibility='hidden'>
+                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                </div>
             </v-row>
             <v-row>
                 <v-col>
@@ -73,6 +76,9 @@
                     xs="3" md="2" lg="2" xl="1">
                     <face-view @update="updateFacesToConfirm" :face="face" :selectorText="'Correct?'" :showAssetStamp="true" :showDistance="true"></face-view>
                 </v-col>
+                <div class="confirmFaces-loading query-loading-spinner" visibility='hidden'>
+                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                </div>
             </v-row>
             <v-row>
                 <v-col>
@@ -112,6 +118,9 @@
                                     :showAssetStamp="false" :showDistance="false" :miniVersion="true"></face-view>
                             </v-col>
                         </v-row>
+                        <div class="mostRecentFaces-loading query-loading-spinner" visibility='hidden'>
+                            <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                        </div>
                     </v-container>
                 </v-col>
             </v-row>
@@ -121,6 +130,9 @@
                     xs="3" md="2" lg="2" xl="1">
                     <face-view @update="updateUnknownFaces" :face="element" :showAssetStamp="true" :showDistance="true" :selectorText="'Whos is this'" ></face-view>
                 </v-col>
+                <div class="unknownFaces-loading query-loading-spinner" visibility='hidden'>
+                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                </div>
             </v-row>
             <v-row>
                 <v-col>
@@ -152,6 +164,9 @@
                     <face-view @update="updateRecentFaces" :face="face" 
                         :showAssetStamp="false" :showDistance="false" :miniVersion="true"></face-view>
                 </v-col>
+                <div class="recentFaces-loading query-loading-spinner" visibility='hidden'>
+                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                </div>
             </v-row>
             <v-row>
                 <v-col>
@@ -238,7 +253,7 @@
                 unknownFaces: state => state.person.unknownFaces,
                 recentFaces: state => state.person.recentFaces,
                 mostRecentFaces: state => state.person.mostRecentFaces,
-                facesToConfirm: state => state.person.facesToConfirm
+                facesToConfirm: state => state.person.facesToConfirm,
             }),
         },
         methods: {
@@ -273,7 +288,35 @@
                 this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
                 this.$emit("update");
                 this.close();
-            }
+            },
+
+            changeTab(tabIndex) {
+                console.log("Changing tab to ", tabIndex);
+                window.axios_api_cache.clear_cache();
+                switch(tabIndex) {
+                    case 0: { // "known"
+                        this.$store.dispatch("getAllPersons");
+                        this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
+                        this.$store.dispatch("getKnownPersons");
+                        break;                        
+                    }
+                    case 1: { // "confirm"
+                        this.$store.dispatch("getFacesToConfirm", {page: this.pageConfirm, size: this.sizeConfirm});
+                        break;                        
+                    }
+                    case 2: { // "unknown"
+                        this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
+                        this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
+                        break;                        
+                    }
+                    case 3: { //"recent"
+                        this.$store.dispatch("getRecentFaces", {page: this.pageRecent, size: this.sizeRecent});
+                        break;                        
+                    }
+                }
+                this.setFacesSeen();
+            },
+
         }
     }
 </script>
@@ -285,5 +328,8 @@
 }
 .on-hover > div{
     background-color: #D0D0D0 !important;
+}
+.query-loading-spinner {
+    position: absolute;
 }
 </style>

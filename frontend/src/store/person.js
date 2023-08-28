@@ -1,4 +1,6 @@
 import axios from "axios";
+import { url_utils } from "../utils/url_utils"
+
 export const person = {
     state: {
         newFaces: false,
@@ -109,32 +111,42 @@ export const person = {
 
         getAllUnknownFaces(context, {page, size}) {
             let url = `/api/face/allUnknownAndClosest/${page}/${size}`;
+            url_utils.elementVisibility('.unknownFaces-loading', true);
             axios.get(url).then( result => {
                 context.commit("setUnknownFaces", result.data);    
-            })
-            
+            }).finally( () => {
+                url_utils.elementVisibility('.unknownFaces-loading', false);
+            });
         },
 
         getRecentFaces(context, {page, size}) {
+            url_utils.elementVisibility('.recentFaces-loading', true);
             let url = `/api/face/recent/${page}/${size}`;
             axios.get(url).then( result => {
                 context.commit("setRecentFaces", result.data);    
+            }).finally(  () => {
+                url_utils.elementVisibility('.recentFaces-loading', false);
             })
             
         },
 
         getMostRecentFaces(context, {size}) {
+            url_utils.elementVisibility('.mostRecentFaces-loading', true);
             let url = `/api/face/recent/1/${size}`;
             axios.get(url).then( result => {
                 context.commit("setMostRecentFaces", result.data);    
-            })
-            
+            }).finally( () => {
+                url_utils.elementVisibility('.mostRecentFaces-loading', false);
+            })           
         },
 
         getFacesToConfirm(context, {page, size}) {
             let url = `/api/face/facesToConfirm/${page}/${size}`;
+            url_utils.elementVisibility('.confirmFaces-loading', true);
             axios.get(url).then( result => {
                 context.commit("setFacesToConfirm", result.data);    
+            }).finally( () => {
+                url_utils.elementVisibility('.confirmFaces-loading', false);
             })
         },
 
@@ -197,9 +209,12 @@ export const person = {
         },
 
         getPersons(context, {page, size}) {
+            url_utils.elementVisibility('.persons-loading', true);
             let url = `/api/person/${page}/${size}`;
             axios.get(url).then( result => {
-                context.commit("setPersons", result.data);    
+                context.commit("setPersons", result.data);
+            }).finally( () => {
+                url_utils.elementVisibility('.persons-loading', false);
             })
         },
 
