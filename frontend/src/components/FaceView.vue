@@ -30,7 +30,7 @@
                 {{assetStamp}}
             </v-container>
             <v-container fluid :class="faceConfidence.class" v-if="showFaceConfidence">
-                <v-icon :color="faceConfidence.color" >{{faceConfidence.icon}}</v-icon>{{ face.confidence_level }}
+                <v-icon :color="faceConfidence.color" >{{faceConfidence.icon}}</v-icon>
             </v-container>
         </v-img>
         <face-name-selector :loaded="loaded" :closestPerson="face.person" @update="update" :face="face" :showDistance="showDistance" v-if="!miniVersion">{{selectorTextValue}}</face-name-selector>
