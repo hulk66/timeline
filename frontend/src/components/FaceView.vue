@@ -50,6 +50,7 @@
                             :prevPhoto="null"
                             :direction="imageViewerDirection"
                             @close="closeViewer"
+                            @set-rating="setRating"
                             @left="navigate(-1)"
                             @right="navigate(1)">
             </image-viewer>
@@ -216,7 +217,13 @@
             },
             navigate(dir) {
                 console.log("Navigation clicked but not supported", dir)
-            }
+            },
+            setRating(value) {
+                this.$store.dispatch("setRating", {photo: this.currentPhotoAsset.photo, stars: value}).then( result => {
+                    this.$store.commit("currentPhotoAsset.photo", result);
+                });
+            },
+
         }
     }
 </script>
