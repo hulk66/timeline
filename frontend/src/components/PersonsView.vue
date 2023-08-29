@@ -114,7 +114,7 @@
                             <v-col
                                 v-for="face in mostRecentFaces.items" :key="face.id" class="d-flex child-flex"
                                 xs="3" md="2" lg="1" xl="1">
-                                <face-view @update="updateUnknownFaces" :face="face" 
+                                <face-view @update="updateUnknownFaces" :face="face"  :showFaceConfidence="true"
                                     :showAssetStamp="false" :showDistance="false" :miniVersion="true"></face-view>
                             </v-col>
                         </v-row>
@@ -128,7 +128,9 @@
                 <v-col :class="{ 'on-hover': hoverIgnoreAll }"
                     v-for="element in unknownFaces.items" :key="element.id" class="d-flex child-flex unknownFace"
                     xs="3" md="2" lg="2" xl="1">
-                    <face-view @update="updateUnknownFaces" :face="element" :showAssetStamp="true" :showDistance="true" :selectorText="'Whos is this'" ></face-view>
+                    <face-view @update="updateUnknownFaces" :face="element" :showAssetStamp="true" :showDistance="true"
+                                :showFaceConfidence="true"
+                                :selectorText="'Whos is this'" ></face-view>
                 </v-col>
                 <div class="unknownFaces-loading query-loading-spinner" visibility='hidden'>
                     <v-progress-circular color="primary" indeterminate></v-progress-circular>
@@ -161,7 +163,7 @@
                 <v-col
                     v-for="face in recentFaces.items" :key="face.id" class="d-flex child-flex"
                     xs="3" md="2" lg="2" xl="1">
-                    <face-view @update="updateRecentFaces" :face="face" 
+                    <face-view @update="updateRecentFaces" :face="face" :showFaceConfidence="true"
                         :showAssetStamp="false" :showDistance="false" :miniVersion="true"></face-view>
                 </v-col>
                 <div class="recentFaces-loading query-loading-spinner" visibility='hidden'>
