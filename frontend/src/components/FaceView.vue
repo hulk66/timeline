@@ -119,7 +119,7 @@
                     }
                     case 1: { // "MayBe"
                         return {
-                            class: "faceConfidence fc_none",
+                            class: "faceConfidence",
                             icon: "mdi-help-circle",
                             color: "info"
                         };

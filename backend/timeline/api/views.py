@@ -517,7 +517,14 @@ def known_persons():
 
 @blueprint.route('/person/<int:page>/<int:size>', methods=['GET'])
 def persons(page, size):
-    paginate = Person.query.filter(Person.ignore != True).order_by(Person.name)
+    filters = [ Person.ignore != True ]
+    person_id = request.args.get("filter.person_id")
+    if person_id:
+        filters.append( Person.id == person_id )
+    person_name = request.args.get("filter.person_name")
+    if person_name:
+        filters.append( Person.name.contains(person_name) )
+    paginate = Person.query.filter(and_(*filters)).order_by(Person.name)
     return jsonify_pagination(paginate, page, size)
 
 
