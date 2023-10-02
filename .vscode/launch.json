@@ -119,6 +119,40 @@
             "jinja": false
         },
         {
+            "name": "Webapp - Secondary",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
+            "module": "flask",
+            "env": {
+                "FLASK_APP": "timeline.app",
+                "FLASK_ENV": "development",
+                "FLASK_DEBUG": "1",
+                "APPLICATION_ROOT": "/timeline",
+                "FLASK_RUN_PORT": "5001",
+                "BE_PORT": "5001",
+                "SECRET_KEY": "changeme",
+                "SQLALCHEMY_DATABASE_URI": "mysql+pymysql://timeline:timeline@localhost:3306/timeline",
+                "CELERY_BROKER_URL": "pyamqp://guest:guest@localhost:5672",
+                "CELERY_RESULT_BACKEND": "rpc://",
+                "DB_HOST": "localhost:3306",
+                "DB_SUPER_USER": "root",
+                "DB_SUPER_USER_PW": "toor",
+                "COMPUTE_SECTIONS_EVERY_MINUTES": "0",
+                "MATCH_FACES_EVERY_MINUTES":"0",
+                "GROUP_FACES_EVERY_MINUTES":"0",
+                "OBJECT_DETECTION_MODEL_PATH": "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1",
+                "REDIS_HOST": "localhost",
+                "FLASK_CORS": "True"
+            },
+
+            "args": [
+                "run"
+            ],
+            "jinja": false
+        },
+        {
             "command": "npm run serve",
             "name": "Run npm serve",
             "request": "launch",
@@ -126,6 +160,25 @@
             "type": "node-terminal",
             "env": {
                 "TIMELINE_BASEPATH": "/timeline",
+            },
+
+        },        
+        {
+            "command": "npm run serve",
+            "name": "Run npm serve - Secondary",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "type": "node-terminal",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "TIMELINE_BASEPATH": "http://192.168.0.81:5001/timeline",
+                "BE_HOST": "192.168.0.81",
+                "BE_PORT": "5001",
+                "VUE_APP_TIMELINE_BASEPATH": "http://192.168.0.81:5001/timeline",
+                "WAIT_HOSTS": "localhost:5001",
+                "WAIT_HOSTS_TIMEOUT": "180",
+                "WAIT_SLEEP_INTERVAL": "3",
+                "WAIT_AFTER_HOSTS": "2",
             },
 
         },

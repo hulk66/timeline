@@ -29,7 +29,7 @@ Vue.use(VueJustifiedLayout);
 Vue.config.productionTip = false;
 
 console.log("Configuring axios")
-Vue.prototype.$basePath = window.TIMELINE_BASEPATH ? window.TIMELINE_BASEPATH : process.env.TIMELINE_BASEPATH;
+Vue.prototype.$basePath = (window.TIMELINE_BASEPATH ? window.TIMELINE_BASEPATH : process.env.VUE_APP_TIMELINE_BASEPATH) || "";
 axios.defaults.baseURL = Vue.prototype.$basePath;
 console.log("Configuring axios URL="+axios.defaults.baseURL)
 
