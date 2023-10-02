@@ -30,7 +30,7 @@
                 {{assetStamp}}
             </v-container>
             <v-container fluid :class="faceConfidence.class" v-if="showFaceConfidence">
-                <v-icon :color="faceConfidence.color" >{{faceConfidence.icon}}</v-icon>
+                <v-icon :color="faceConfidence.color" >{{faceConfidence.icon}}</v-icon>{{ face.confidence_level }}
             </v-container>
         </v-img>
         <face-name-selector :loaded="loaded" :closestPerson="face.person" @update="update" :face="face" :showDistance="showDistance" v-if="!miniVersion">{{selectorTextValue}}</face-name-selector>
@@ -240,12 +240,12 @@
         position: absolute;
     }
     .faceConfidence {
-        background-color: transparent; 
-        padding: 3px; 
-        text-shadow: 1px 1px #D0D0D0; 
-        float:right; 
-        text-align: right; 
-        vertical-align: bottom; 
+        background-color: transparent;
+        padding: 3px;
+        text-shadow: 1px 1px #D0D0D0;
+        float:right;
+        text-align: right;
+        vertical-align: bottom;
         bottom: -5px;
         position: absolute;
     }
