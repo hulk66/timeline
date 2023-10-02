@@ -218,7 +218,7 @@ export const person = {
             });
         },
 
-        getPersons(context, {page, sizee, filters}) {
+        getPersons(context, {page, size, filters}) {
             url_utils.elementVisibility('.persons-loading', true);
             let url = `/api/person/${page}/${size}`;
             let args = "";
