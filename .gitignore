@@ -9,3 +9,5 @@ backend/occurance2.csv
 backend/occurance.csv
 .history/
 /*.session.sql
+/ssd.tgz
+/package-lock.json
