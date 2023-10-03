@@ -171,6 +171,15 @@ def asset_preview(id, max_dim):
     return send_image(image, False)
 
 
+@blueprint.route('/asset/setFacesAllIdentified/<int:asset_id>/<string:all_identified>', methods=['GET'])
+def set_assert_all_faces_identified(asset_id, all_identified):
+    asset = Asset.query.get(asset_id)
+    asset.faces_all_identified = 'true' == all_identified
+    db.session.commit()
+    excludes=("-exif", "-gps", "-faces", "-things", "-section")
+    return flask.jsonify(asset.to_dict(rules=excludes))
+
+
 @blueprint.route('/asset/gps/<int:id>', methods=['GET'])
 def get_gps(id):
     asset = Asset.query.get(id)
