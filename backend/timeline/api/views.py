@@ -33,7 +33,6 @@ from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, 
                                         distance_safe,
-                                        find_all_classified_faces, 
                                         find_all_classified_known_faces,
                                         find_closest, group_faces,
                                         match_all_unknown_faces)
@@ -625,7 +624,8 @@ def faces_recent(page, size):
     show_query(q)
     paginate = q.paginate(page=page, per_page=size, error_out=False)
     
-    known_faces = find_all_classified_faces()
+    max_faces = int(current_app.config['FACE_CLUSTER_MAX_FACES'])    
+    known_faces = find_all_classified_known_faces(max_faces) # find_all_classified_faces()
     
     list = []
     for face in paginate.items:
@@ -684,7 +684,8 @@ def get_unknown_faces_and_closest(page, size):
         Face.person_id == None))
     logger.debug(q)
     paginate = q.paginate(page=page, per_page=size, error_out=False)
-    known_faces = find_all_classified_faces()
+    max_faces = int(current_app.config['FACE_CLUSTER_MAX_FACES'])
+    known_faces = find_all_classified_known_faces(max_faces) # find_all_classified_faces()
 
     list = []
     for face in paginate.items:
