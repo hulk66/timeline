@@ -280,6 +280,13 @@ export const person = {
             }))
         },
 
+        updateAllFacesIdentified(context, {photo, facesAllIdentified}) {
+            let url = `/api/asset/setFacesAllIdentified/${photo.id}/${facesAllIdentified}`;
+            axios_api_cache.get(url).then( result => {
+              console.log(`Marking ${photo.id} as all faces identified = ${facesAllIdentified} with result ${result} `)  
+            })
+        },
+
     }
 }
   

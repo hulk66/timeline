@@ -221,6 +221,7 @@ class Asset(db.Model, SerializerMixin):
     ignore = db.Column(db.Boolean, index=True)
     faces = db.relationship("Face", back_populates="asset",
                             cascade="all, delete, delete-orphan")
+    faces_all_identified = db.Column(db.Boolean)
     exif = db.relationship("Exif", cascade="all, delete, delete-orphan")
     added = db.Column(db.DateTime, index=True)
     created = db.Column(db.DateTime, index=True)
