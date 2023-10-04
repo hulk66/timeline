@@ -106,11 +106,15 @@ export const person = {
                 axios.get(url).then( result => {
                     resolve(result.data);
                 })
-            }))
+            }));
         },
 
-        getAllUnknownFaces(context, {page, size}) {
+        getAllUnknownFaces(context, {page, size, filters}) {
             let url = `/api/face/allUnknownAndClosest/${page}/${size}`;
+            let args = "";
+            if (filters) {
+                args = url_utils.generateFilterArgs(filters);
+            }
             url_utils.elementVisibility('.unknownFaces-loading', true);
             axios.get(url).then( result => {
                 context.commit("setUnknownFaces", result.data);    
@@ -119,9 +123,13 @@ export const person = {
             });
         },
 
-        getRecentFaces(context, {page, size}) {
+        getRecentFaces(context, {page, size, filters}) {
             url_utils.elementVisibility('.recentFaces-loading', true);
             let url = `/api/face/recent/${page}/${size}`;
+            let args = "";
+            if (filters) {
+                args = url_utils.generateFilterArgs(filters);
+            }
             axios.get(url).then( result => {
                 context.commit("setRecentFaces", result.data);    
             }).finally(  () => {
@@ -137,7 +145,7 @@ export const person = {
                 context.commit("setMostRecentFaces", result.data);    
             }).finally( () => {
                 url_utils.elementVisibility('.mostRecentFaces-loading', false);
-            })           
+            });
         },
 
         getFacesToConfirm(context, {page, size}) {
@@ -211,7 +219,12 @@ export const person = {
         getPersons(context, {page, size}) {
             url_utils.elementVisibility('.persons-loading', true);
             let url = `/api/person/${page}/${size}`;
-            axios.get(url).then( result => {
+            let args = "";
+            if (filters) {
+                args = url_utils.generateFilterArgs(filters);
+            }
+            url_utils.elementVisibility('.persons-loading', true);
+            axios.get(url+args).then( result => {
                 context.commit("setPersons", result.data);
             }).finally( () => {
                 url_utils.elementVisibility('.persons-loading', false);

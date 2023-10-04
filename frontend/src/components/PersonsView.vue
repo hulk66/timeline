@@ -28,7 +28,7 @@
         <v-tab-item key="known">
             <v-container fluid >
                 <v-row>
-                    <v-col>
+                    <v-col class="d-flex child-flex" cols="2">
                         <v-card flat>
                             <v-card-title>Persons</v-card-title>
                             <v-card-text>
@@ -36,25 +36,29 @@
                             </v-card-text>
                         </v-card>
                     </v-col>
+                    <v-col>
+                        <filter-box :knownPersons="knownPersons" @applyFilters="applyFiltersKnown" :showPersonFilter="true" :showConfidenceFilter="false"></filter-box>
+                    </v-col>
                 </v-row>
-            <v-row dense>
-                <v-col
-                    v-for="person in persons.items" :key="person.id" class="d-flex child-flex"
-                    xs="3" md="2" lg="1" xl="1">
-                    <person-preview :person="person"></person-preview>
-                </v-col>
-                <div class="persons-loading query-loading-spinner" visibility='hidden'>
-                    <v-progress-circular color="primary" indeterminate></v-progress-circular>
-                </div>
-            </v-row>
-            <v-row>
-                <v-col>
-                    <v-pagination
-                        v-model="pageKnown"
-                        :length="persons.pages"
-                    ></v-pagination>
-                </v-col>
-            </v-row>                
+
+                <v-row dense>
+                    <v-col
+                        v-for="person in persons.items" :key="person.id" class="d-flex child-flex"
+                        xs="3" md="2" lg="1" xl="1">
+                        <person-preview :person="person"></person-preview>
+                    </v-col>
+                    <div class="persons-loading query-loading-spinner" visibility='hidden'>
+                        <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                    </div>
+                </v-row>
+                <v-row>
+                    <v-col>
+                        <v-pagination
+                            v-model="knownPersonTab.page"
+                            :length="persons.pages"
+                        ></v-pagination>
+                    </v-col>
+                </v-row>
             </v-container>
         </v-tab-item>
 
@@ -83,7 +87,7 @@
             <v-row>
                 <v-col>
                     <v-pagination
-                        v-model="pageConfirm"
+                        v-model="confirmFacesTab.page"
                         :length="facesToConfirm.pages"
                         
                     ></v-pagination>
@@ -104,6 +108,10 @@
                                 @mouseleave="hoverIgnoreAll = false">
                                 Ignore All On Page
                                 <v-icon right>mdi-close</v-icon>
+                            </v-btn>
+                            <v-btn @click="changeTab(2);" block text color="primary" >
+                                Refresh
+                                <v-icon right>mdi-refresh</v-icon>
                             </v-btn>
                         </v-card-text>
                     </v-card>
@@ -139,7 +147,7 @@
             <v-row>
                 <v-col>
                     <v-pagination
-                        v-model="pageUnknown"
+                        v-model="unknownFacesTab.page"
                         :length="unknownFaces.pages"
                         
                     ></v-pagination>
@@ -151,12 +159,17 @@
             <v-container fluid >
             <v-row>
                 <v-col>
-                    <v-card flat>
-                        <v-card-title>Recently processed faces</v-card-title>
-                        <v-card-text>
-                            <div class="text-caption">{{recentFaces.total}} faces were processed</div>
-                        </v-card-text>
-                    </v-card>
+                    <v-col class="d-flex child-flex" cols="2">
+                        <v-card flat>
+                            <v-card-title>Recently processed faces</v-card-title>
+                            <v-card-text>
+                                <div class="text-caption">{{recentFaces.total}} faces were processed</div>
+                            </v-card-text>
+                            </v-card>
+                    </v-col>
+                    <v-col>
+                        <filter-box :knownPersons="knownPersons" @applyFilters="applyFiltersRecent" :showPersonFilter="true" :showConfidenceFilter="true"></filter-box>
+                    </v-col>
                 </v-col>
             </v-row>
             <v-row>
@@ -173,7 +186,7 @@
             <v-row>
                 <v-col>
                     <v-pagination
-                        v-model="pageRecent"
+                        v-model="recentFacesTab.page"
                         :length="recentFaces.pages"
                         
                     ></v-pagination>
@@ -191,12 +204,14 @@
     import PersonPreview from "./PersonPreview";
     import { mapState } from 'vuex'
     import FaceView from './FaceView.vue';
+    import FilterBox from './FilterBox.vue';
     export default {
         name: "PersonsView",
 
         components: {
             PersonPreview,
-            FaceView
+            FaceView,
+            FilterBox
         },
 
         props: {
@@ -204,46 +219,92 @@
         data() {
             return {
                 tab: 'groups',
-                sizeKnown: 24,
-                pageKnown: 1,
-                sizeConfirm: 24,
-                pageConfirm: 1,
-                sizeUnknown: 24,
-                pageUnknown: 1,
-                sizeRecent: 48,
-                pageRecent: 1,
-                hoverIgnoreAll: false
+                hoverIgnoreAll: false,
+                recentMostFacesQuery: false,
+                knownPersonTab: {
+                    size: 24,
+                    page: 1,
+                    filters: {
+                        person: null,
+                        switchNone: true,
+                        switchMayBe: true,
+                        switchSafe: true,
+                        switchVerySafe: true,
+                        switchConfirmed: true,
+                    }
+                },
+                unknownFacesTab: {
+                    size: 24,
+                    page: 1,
+                    filters: {
+                        person: null,
+                        switchNone: true,
+                        switchMayBe: true,
+                        switchSafe: true,
+                        switchVerySafe: true,
+                        switchConfirmed: true,
+                    }
+                },
+                recentFacesTab: {
+                    size: 24,
+                    page: 1,
+                    filters: {
+                        person: null,
+                        switchNone: true,
+                        switchMayBe: true,
+                        switchSafe: true,
+                        switchVerySafe: true,
+                        switchConfirmed: true,
+                    }
+                },
+                confirmFacesTab: {
+                    size: 24,
+                    page: 1,
+                    filters: {
+                        person: null,
+                        switchNone: true,
+                        switchMayBe: true,
+                        switchSafe: true,
+                        switchVerySafe: true,
+                        switchConfirmed: true,
+                    }
+                },
             };
         },
 
         mounted() {
             this.$store.dispatch("getAllPersons");
-            this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
+            this.$store.dispatch("getPersons", {
+                    page: this.knownPersonTab.page,
+                    size: this.knownPersonTab.size,
+                    filters: this.knownPersonTab.filters,
+                });
+
             this.$store.dispatch("getKnownPersons");
-            this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
-            this.$store.dispatch("getFacesToConfirm", {page: this.pageConfirm, size: this.sizeConfirm});
-            this.$store.dispatch("getRecentFaces", {page: 1, size: this.sizeRecent});
-            this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
             this.setFacesSeen();
         },
 
         watch: {
-            pageKnown(val) {
-                this.$store.dispatch("getPersons", {page: val, size: this.sizeKnown});
+            'knownPersonTab.page': function (val){
+                this.$store.dispatch("getPersons", {
+                    page: val,
+                    size: this.knownPersonTab.size,
+                    filters: this.knownPersonTab.filters
+                });
+            },
+            'unknownFacesTab.page': function (val){
+                this.$store.dispatch("getAllUnknownFaces", {page: val, size: this.unknownFacesTab.size, filters: this.unknownFacesTab.filters});
+            },
+            'confirmFacesTab.page': function (val){
+                this.$store.dispatch("getFacesToConfirm", {page: val, size: this.confirmFacesTab.size});
             }, 
-            pageUnknown(val) {
-                this.$store.dispatch("getAllUnknownFaces", {page: val, size: this.sizeUnknown});
-            }, 
-            pageConfirm(val) {
-                this.$store.dispatch("getFacesToConfirm", {page: val, size: this.sizeConfirm});
-            }, 
-            pageRecent(val) {
-                this.$store.dispatch("getRecentFaces", {page: val, size: this.sizeRecent});
+            'recentFacesTab.page': function (val){
+                this.$store.dispatch("getRecentFaces", {page: val, size: this.recentFacesTab.size, filters: this.recentFacesTab.filters});
             }, 
 
             tab(v) {
                 if (v == "unknown")
-                    this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
+                    this.$store.dispatch("getAllUnknownFaces", {page: this.unknownFacesTab.page, size: this.unknownFacesTab.size, filters: this.unknownFacesTab.filters});
             }
 
         },
@@ -266,18 +327,22 @@
             },
 
             updateUnknownFaces() {
-                this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
+                this.$store.dispatch("getAllUnknownFaces", {page: this.unknownFacesTab.page, size: this.unknownFacesTab.size, filters: this.unknownFacesTab.filters});
                 this.$store.dispatch("getAllPersons");
-                this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
-                this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
+                this.$store.dispatch("getPersons", {
+                    page: this.knownPersonTab.page,
+                    size: this.knownPersonTab.size,
+                    filters: this.knownPersonTab.filters,
+                });
+                this.$store.dispatch("getMostRecentFaces", {size: this.recentFacesTab.size});
             },
 
             updateFacesToConfirm() {
-                this.$store.dispatch("getFacesToConfirm", {page: this.pageConfirm, size: this.sizeConfirm});
+                this.$store.dispatch("getFacesToConfirm", {page: this.confirmFacesTab.page, size: this.confirmFacesTab.size});
             },
             
             updateRecentFaces() {
-                this.$store.dispatch("getRecentFaces", {page: this.pageRecent, size: this.sizeRecent});
+                this.$store.dispatch("getRecentFaces", {page: this.recentFacesTab.page, size: this.recentFacesTab.size, filters: this.recentFacesTab.filters});
             },
             
             ignoreAllOnPage() {
@@ -285,11 +350,15 @@
                 this.unknownFaces.items.forEach( faceInfo => {
                     this.$store.dispatch("ignoreFace", faceInfo);
                 });
-                this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
-                this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
-                this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
+                this.$store.dispatch("getPersons", {
+                    page: this.knownPersonTab.page,
+                    size: this.knownPersonTab.size,
+                    filters: this.knownPersonTab.filters,
+                });
+
+                this.$store.dispatch("getMostRecentFaces", {size: this.recentFacesTab.size});
+                this.$store.dispatch("getAllUnknownFaces", {page: this.unknownFacesTab.page, size: this.unknownFacesTab.size, filters: this.unknownFacesTab.filters});
                 this.$emit("update");
-                this.close();
             },
 
             changeTab(tabIndex) {
@@ -298,25 +367,44 @@
                 switch(tabIndex) {
                     case 0: { // "known"
                         this.$store.dispatch("getAllPersons");
-                        this.$store.dispatch("getPersons", {page: this.pageKnown, size: this.sizeKnown});
+                        this.$store.dispatch("getPersons", {
+                            page: this.knownPersonTab.page,
+                            size: this.knownPersonTab.size,
+                            filters: this.knownPersonTab.filters,
+                        });
                         this.$store.dispatch("getKnownPersons");
                         break;                        
                     }
                     case 1: { // "confirm"
-                        this.$store.dispatch("getFacesToConfirm", {page: this.pageConfirm, size: this.sizeConfirm});
+                        this.$store.dispatch("getFacesToConfirm", {page: this.confirmFacesTab.page, size: this.confirmFacesTab.size});
                         break;                        
                     }
                     case 2: { // "unknown"
-                        this.$store.dispatch("getAllUnknownFaces", {page: this.pageUnknown, size: this.sizeUnknown});
-                        this.$store.dispatch("getMostRecentFaces", {size: this.sizeRecent});
+                        this.$store.dispatch("getAllUnknownFaces", {page: this.unknownFacesTab.page, size: this.unknownFacesTab.size, filters: this.unknownFacesTab.filters});
+                        this.$store.dispatch("getMostRecentFaces", {size: this.recentFacesTab.size});
                         break;                        
                     }
                     case 3: { //"recent"
-                        this.$store.dispatch("getRecentFaces", {page: this.pageRecent, size: this.sizeRecent});
+                        this.$store.dispatch("getRecentFaces", {page: 1, size: this.recentFacesTab.size, filters: this.recentFacesTab.filters});
                         break;                        
                     }
                 }
                 this.setFacesSeen();
+            },
+
+            applyFiltersKnown(filters) {
+                this.knownPersonTab.filters = filters;
+                this.changeTab(0);
+            },
+
+            applyFiltersUnknown(filters) {
+                this.unknownFacesTab.filters = filters;
+                this.changeTab(2);
+            },
+
+            applyFiltersRecent(filters) {
+                this.recentFacesTab.filters = filters;
+                this.changeTab(3);
             },
 
         }
@@ -325,6 +413,11 @@
 
 <style scoped>
 .recentFaces {
+    border: 1px solid #D0D0D0;
+    border-radius: 10px;
+    min-height: 264px;
+}
+.filtersBox {
     border: 1px solid #D0D0D0;
     border-radius: 10px;
 }
