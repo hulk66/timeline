@@ -1,6 +1,10 @@
-module.exports = {
+let apiHost= process.env.BE_HOST || '127.0.0.1'
+let apiPort= process.env.BE_PORT || '5000'
+let apiUrl= 'http://'+apiHost+':'+apiPort+"/timeline"
 
-  // publicPath: process.env.TIMELINE_BASEPATH,
+console.log(`Configuring Vue, apiURL:${apiUrl}`)
+
+module.exports = {
 
   publicPath: './',
   
@@ -12,35 +16,35 @@ module.exports = {
     disableHostCheck: true,
     proxy: {
       '/albums': {
-        target: 'http://127.0.0.1:5000',
+        target: apiUrl,
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/assets': {
-        target: 'http://127.0.0.1:5000',
+        target: apiUrl,
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/admin': {
-        target: 'http://127.0.0.1:5000',
+        target: apiUrl,
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/inspect': {
-        target: 'http://127.0.0.1:5000',
+        target: apiUrl,
         ws: false,
         changeOrigin: true,
         autoRewrite: true
       },
 
       '/api': {
-        target: 'http://127.0.0.1:5000',
+        target: apiUrl,
         ws: false,
         changeOrigin: true,
         autoRewrite: true,
