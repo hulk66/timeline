@@ -16,7 +16,7 @@
  */
 
 <template>
-    <v-card flat>
+    <v-card flat class="face_card" :face_id="face.id" :person_id="face.person_id" :asset_id="face.asset_id">
         <v-img :src="src" :height="tileHeight" contain @load="loaded=true" @click="clickPhoto" >
             <template v-slot:placeholder>
                 <v-row

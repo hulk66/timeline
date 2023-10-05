@@ -115,7 +115,7 @@
                 this.showSelection = false;
             },
             ignoreFace() {
-                this.$store.dispatch("ignoreFace", this.face).then(() => {
+                this.$store.dispatch("ignoreFace", this.face.id).then(() => {
                     this.$emit("update");
                     this.close();
                 })

@@ -26,10 +26,11 @@ import ffmpeg
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
+from timeline.util.tags_util import parse_tags, find_new_tags
 from timeline.api.assets import send_image
 from timeline.api.util import list_as_json, refine_query, assets_from_smart_album
 from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
-                             asset_thing, Exif, asset_album, Album, AlbumType)
+                             asset_thing, Exif, asset_album, Album, AlbumType, Tag)
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, 
                                         distance_safe,
@@ -138,6 +139,45 @@ def face_by_person(id):
     faces = Face.query.join(Person).filter(and_(Face.person_id == Person.id, Person.id == id, or_(
         Face.confidence <= distance_safe(), Person.confirmed == False))).all()
     return jsonify_items(faces)
+
+
+@blueprint.route('/tags', methods=['GET'])
+def get_all_tags():
+    return jsonify_items(Tag.query.all())
+
+
+@blueprint.route("/asset/tags/<int:asset_id>/<string:tags_str>", methods=["PUT"])
+def add_tags(asset_id, tags_str):
+    excludes = ("-exif", "-gps", "-faces", "-things", "-section")
+    asset = Asset.query.get(asset_id)
+    tags_to_add = parse_tags(tags_str)
+    (new_tags, tags_to_create, registered_tags) = find_new_tags(tags_to_add, asset.tags, Tag.query.all())
+    created_tags = []
+    for tag_name in tags_to_create:
+        tag = Tag()
+        tag.name = tag_name
+        tag.created = datetime.today()
+        db.session.add(tag)
+        created_tags.append(tag)
+    for tag in registered_tags:
+        asset.tags.append(tag)
+    for tag in created_tags:
+        asset.tags.append(tag)
+    db.session.commit()
+    return flask.jsonify(asset.to_dict(rules=excludes))
+
+
+@blueprint.route("/asset/tags/<int:asset_id>/<string:tags_str>", methods=["DELETE"])
+def remove_tags(asset_id, tags_str):
+    excludes = ("-exif", "-gps", "-faces", "-things", "-section")
+    asset = Asset.query.get(asset_id)
+    tags_to_remove = parse_tags(tags_str)
+    created_tags = []
+    for tag in asset.tags:
+        if tag.name in tags_to_remove:
+            asset.tags.remove(tag)
+    db.session.commit()
+    return flask.jsonify(asset.to_dict(rules=excludes))
 
 
 @blueprint.route('/asset/setRating/<int:asset_id>/<int:rating>', methods=['GET'])
@@ -671,10 +711,13 @@ def get_faces_by_asset(asset_id):
     return jsonify_items(faces)
 
 
-@blueprint.route('/face/ignore/<int:face_id>', methods=['GET'])
-def ignore_face(face_id):
-    face = Face.query.get(face_id)
-    _ignore_face(face)
+@blueprint.route('/face/ignore/<string:face_ids_str>', methods=['GET'])
+def ignore_face(face_ids_str):
+    face_ids = face_ids_str.split(",")
+    for face_id in face_ids:
+        if face_id:
+            face = Face.query.get(face_id)
+            _ignore_face(face)
     db.session.commit()
     return flask.jsonify(True)
 

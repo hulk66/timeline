@@ -150,22 +150,49 @@
 
                             </div>
 
+                            <div>
+                                <v-card-text>
+                                    <div class="font-weight-bold">Tags</div>
+                                    <v-list-item>
+                                        <v-list-item-content >
+                                            <v-container>
+                                                <v-row align="center" justify="start">
+                                                  <v-col cols="auto" class="py-1 pe-0"
+                                                    v-for="(tag, index) in photo.tags" :key="tag.id" :index="index" >
+                                                    <v-chip close size="small"
+                                                      :tag_id="tag.id"
+                                                      @click:close="removeTag(tag.name)"
+                                                    >
+                                                      <v-icon
+                                                        :icon="tag.name"
+                                                        start
+                                                      ></v-icon>
+                                                        {{tag.name}}
+                                                    </v-chip>
+                                                  </v-col>
+                                                </v-row>
+                                              </v-container>
+                                        </v-list-item-content>
+                                    </v-list-item>
+                                </v-card-text>
+                            </div>
+
                             <div v-if="things.length > 0">
                                 <v-card-text>
                                     <div class="font-weight-bold">Things</div>
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-subtitle> 
-                                            <span v-for="(thing, index) in things" :key="index">
-                                                {{thing.label_en}}
-                                                <span v-if="index != things.length - 1">, </span>
-                                            </span>    
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
+                                    <v-list-item>
+                                        <v-list-item-content>
+                                            <v-list-item-subtitle> 
+                                                <span v-for="(thing, index) in things" :key="index">
+                                                    {{thing.label_en}}
+                                                    <span v-if="index != things.length - 1">, </span>
+                                                </span>    
+                                            </v-list-item-subtitle>
+                                        </v-list-item-content>
+                                    </v-list-item>
                                 </v-card-text>
-
                             </div>
+
                             <div>
                                 <v-card-text>
                                     <div class="font-weight-bold">Details</div>
@@ -295,6 +322,7 @@
                 photo_persons: [],
                 photo_faces: [],
                 things: [],
+                tags: [],
                 exif: [],
                 gps: Object,
                 info: false,
@@ -374,6 +402,27 @@
         },
 
         methods: {
+            removeTag(tagName) {
+                console.log("RemoveTag "+tagName);
+                this.$store.dispatch("removeTagsFromAsset", {
+                    assetId: this.photo.id,
+                    tagNames: tagName
+                }).then(( (result) => {
+                    self.photo = result;
+                }));        
+            },
+
+            addTagsToAssetemoveTag(tagName) {
+                console.log("AddTag "+tagName);
+                const self = this;
+                this.$store.dispatch("addTagsToAsset", {
+                    assetId: this.photo.id,
+                    tagNames: tagName
+                }).then(( (result) => {
+                    self.photo = result;        
+                    this.$store.dispatch("getAllTags");
+                }));
+            },
 
             playVideo(mode) {
                 if (mode)
@@ -451,6 +500,9 @@
                 }
                 this.$store.dispatch("getThingsForPhoto", p).then((things => {
                     self.things = things;
+                }));
+                this.$store.dispatch("getAllTags").then((tags => {
+                    self.tags = tags;
                 }));
                 this.getKnownPersons(p);
             },
