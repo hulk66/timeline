@@ -219,8 +219,9 @@
                 console.log("Navigation clicked but not supported", dir)
             },
             setRating(value) {
+                let self = this;
                 this.$store.dispatch("setRating", {photo: this.currentPhotoAsset.photo, stars: value}).then( result => {
-                    this.$store.commit("currentPhotoAsset.photo", result);
+                    self.currentPhotoAsset.photo =  result;
                 });
             },
 

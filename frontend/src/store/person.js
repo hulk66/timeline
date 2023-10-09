@@ -291,9 +291,15 @@ export const person = {
                 });
             }));
         },
-        addTagsToAsset(context, { assetId, tagNames }) {
+        setAssetTags(context, { assetId, tagNames }) {
+            let url = `/api/asset/tags/${assetId}/`;
+            if (Array.isArray(tagNames)) {
+                url += `${tagNames.join(",")}`
+            } else {
+                url += `${tagNames}`;
+            }           
             return new Promise((resolve => {
-                axios.put(`/api/asset/tags/${assetId}/${tagNames}`).then((result) =>{
+                axios.put(url).then((result) =>{
                     resolve(result.data);
                 });
             }));

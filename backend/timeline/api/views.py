@@ -147,11 +147,13 @@ def get_all_tags():
 
 
 @blueprint.route("/asset/tags/<int:asset_id>/<string:tags_str>", methods=["PUT"])
-def add_tags(asset_id, tags_str):
+def set_tags(asset_id, tags_str):
     excludes = ("-exif", "-gps", "-faces", "-things", "-section")
     asset = Asset.query.get(asset_id)
-    tags_to_add = parse_tags(tags_str)
-    (new_tags, tags_to_create, registered_tags) = find_new_tags(tags_to_add, asset.tags, Tag.query.all())
+    tags_to_set = parse_tags(tags_str)
+    (new_tags, tags_to_create, available_tags) = find_new_tags(
+        tags_to_set, asset.tags, Tag.query.all()
+    )
     created_tags = []
     for tag_name in tags_to_create:
         tag = Tag()
@@ -159,7 +161,7 @@ def add_tags(asset_id, tags_str):
         tag.created = datetime.today()
         db.session.add(tag)
         created_tags.append(tag)
-    for tag in registered_tags:
+    for tag in available_tags:
         asset.tags.append(tag)
     for tag in created_tags:
         asset.tags.append(tag)
@@ -172,7 +174,6 @@ def remove_tags(asset_id, tags_str):
     excludes = ("-exif", "-gps", "-faces", "-things", "-section")
     asset = Asset.query.get(asset_id)
     tags_to_remove = parse_tags(tags_str)
-    created_tags = []
     for tag in asset.tags:
         if tag.name in tags_to_remove:
             asset.tags.remove(tag)
