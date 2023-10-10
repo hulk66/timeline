@@ -117,47 +117,50 @@
                                             </v-col>                                            
                                         </v-row>
                                     </v-container>
-                                
-                                <v-list-item  v-for="face in photo_faces" :key="face.id" two-line>
-                                    <v-list-item-avatar size="60"                                 
-                                        @mouseover="outlineFace(face)"
-                                        @mouseleave="clearFaceOutline()">
-                                        <v-img :src="faceUrl(face.id)"></v-img>
-                                    </v-list-item-avatar>
-                                    <v-list-item-content>
-                                        <span v-if="editId == face.id">
-                                            <v-combobox  :search-input.sync="faceName"
-                                                :items="knownPersons"
-                                                item-text="name"
-                                                item-value="id"
-                                                v-model="newPerson">
-                                            </v-combobox>
-                                        </span> 
-                                        <span v-else>
-                                            <span v-if="face.person && face.person.confirmed">
-                                                <v-list-item-title  
-                                                    v-html="face.person.name">
-                                                </v-list-item-title>
-                                                <v-list-item-subtitle class="font-italic">{{face.classified_by}} ({{face.confidence}})</v-list-item-subtitle>
-                                                <v-list-item-subtitle class="font-italic">{{face.emotion}} ({{face.emotion_confidence}})</v-list-item-subtitle>
-                                            </span>
-                                            <v-list-item-subtitle v-else>Unknown</v-list-item-subtitle>
-                                        </span>
-                                    </v-list-item-content>
-                                    <v-list-item-action>
-                                    
-                                        <v-btn v-if="editId != face.id" icon @click="edit(face)">
-                                            <v-icon>mdi-pencil</v-icon>
-                                        </v-btn>
-                                        <v-btn v-else icon @click="setPerson">
-                                            <v-icon>mdi-check</v-icon>
-                                        </v-btn>
-                                        <v-btn icon @click="reset(face)">
-                                            <v-icon>mdi-delete</v-icon>
-                                        </v-btn>
-                                    </v-list-item-action>
+                                    <v-list density="compact" dense>
+                                        <v-list-item  v-for="face in photo_faces" :key="face.id" density="compact" dense>
+                                            <v-list-item-avatar size="60"
+                                                @mouseover="outlineFace(face)"
+                                                @mouseleave="clearFaceOutline()">
+                                                <v-img :src="faceUrl(face.id)"></v-img>
+                                            </v-list-item-avatar>
+                                            <v-list-item-content dense>
+                                                <span v-if="editId == face.id">
+                                                    <v-combobox  :search-input.sync="faceName"
+                                                        :items="knownPersons"
+                                                        item-text="name"
+                                                        item-value="id"
+                                                        v-model="newPerson">
+                                                    </v-combobox>
+                                                </span> 
+                                                <span v-else>
+                                                    <span v-if="face.person && face.person.confirmed">
+                                                        <v-list-item-title  
+                                                            v-html="face.person.name">
+                                                        </v-list-item-title>
+                                                        <v-list-item-subtitle class="font-italic">{{face.classified_by}} ({{face.confidence}})</v-list-item-subtitle>
+                                                        <v-list-item-subtitle class="font-italic">{{face.emotion}} ({{face.emotion_confidence}})</v-list-item-subtitle>
+                                                    </span>
+                                                    <v-list-item-subtitle v-else>Unknown</v-list-item-subtitle>
+                                                </span>
+                                            </v-list-item-content>
+                                            <v-list-item-action class="no-wrap flex-nowrap flex-sm-nowrap flex-row align-center" dense>
+                                                <v-btn v-if="editId != face.id" icon @click="edit(face)" dense>
+                                                    <v-icon>mdi-pencil</v-icon>
+                                                </v-btn>
+                                                <v-btn v-else icon @click="setPerson">
+                                                    <v-icon>mdi-check</v-icon>
+                                                </v-btn>
+                                                <v-btn icon @click="reset(face)">
+                                                    <v-icon>mdi-delete</v-icon>
+                                                </v-btn>
+                                                <v-btn icon @click="clickFace(face)" v-if="face.person_id">
+                                                    <v-icon>mdi-image-search</v-icon>
+                                                </v-btn>
+                                            </v-list-item-action>
 
-                                </v-list-item>
+                                        </v-list-item>
+                                    </v-list>
                                 </v-card-text>
 
                             </div>
@@ -488,6 +491,10 @@
                 this.$store.dispatch("resetFace", face).then(() => {
                     this.getFacesByPhoto(this.photo);                     
                 })
+            },
+
+            clickFace(face) {
+                this.$router.push({name:'wall', query:{ person_id: face.person_id}});
             },
 
             setPerson() {
