@@ -151,7 +151,7 @@ def set_tags(asset_id, tags_str):
     excludes = ("-exif", "-gps", "-faces", "-things", "-section")
     asset = Asset.query.get(asset_id)
     tags_to_set = parse_tags(tags_str)
-    (new_tags, tags_to_create, available_tags) = find_new_tags(
+    (new_tags, tags_to_create, tags_to_set) = find_new_tags(
         tags_to_set, asset.tags, Tag.query.all()
     )
     created_tags = []
@@ -161,7 +161,8 @@ def set_tags(asset_id, tags_str):
         tag.created = datetime.today()
         db.session.add(tag)
         created_tags.append(tag)
-    for tag in available_tags:
+    asset.tags = []
+    for tag in tags_to_set:
         asset.tags.append(tag)
     for tag in created_tags:
         asset.tags.append(tag)

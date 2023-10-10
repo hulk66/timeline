@@ -152,6 +152,9 @@
                                         <v-btn v-else icon @click="setPerson">
                                             <v-icon>mdi-check</v-icon>
                                         </v-btn>
+                                        <v-btn icon @click="reset(face)">
+                                            <v-icon>mdi-delete</v-icon>
+                                        </v-btn>
                                     </v-list-item-action>
 
                                 </v-list-item>
@@ -479,6 +482,12 @@
                     this.newPerson = face.person;
                 } else
                     this.newPerson = null;
+            },
+
+            reset(face) {
+                this.$store.dispatch("resetFace", face).then(() => {
+                    this.getFacesByPhoto(this.photo);                     
+                })
             },
 
             setPerson() {
