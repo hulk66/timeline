@@ -66,8 +66,14 @@ export const person = {
 
         },
 
-        ignoreFace(context, face) {
-            let url = `/api/face/ignore/${face.id}`;
+        ignoreFace(context, faceIds) {
+            let url = '/api/face/ignore/';
+            if (Array.isArray(faceIds)) {
+                url += `${faceIds.join(",")}`
+            } else {
+                url += `${faceIds}`;
+            }           
+            
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -271,6 +277,34 @@ export const person = {
             }))
         },
 
+        getAllTags() { //context
+            return new Promise((resolve => {
+                axios.get("/api/tags").then((result) =>{
+                    resolve(result.data);
+                })
+            }))
+        },
+        removeTagsFromAsset(context, { assetId, tagNames }) {
+            return new Promise((resolve => {
+                axios.delete(`/api/asset/tags/${assetId}/${tagNames}`).then((result) =>{
+                    resolve(result.data);
+                });
+            }));
+        },
+        setAssetTags(context, { assetId, tagNames }) {
+            let url = `/api/asset/tags/${assetId}/`;
+            if (Array.isArray(tagNames)) {
+                url += `${tagNames.join(",")}`
+            } else {
+                url += `${tagNames}`;
+            }           
+            return new Promise((resolve => {
+                axios.put(url).then((result) =>{
+                    resolve(result.data);
+                });
+            }));
+        },
+        
         getUnknownFaces(context, index) {
             return new Promise((resolve => {
 

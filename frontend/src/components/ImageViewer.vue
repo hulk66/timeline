@@ -20,7 +20,7 @@
         <v-row no-gutters style="min-height: 100vh">
             <v-col style="position: relative" fill-height>
                 <transition-group tag="div" class="img-slider" :name="transition">
-                    <div :key="photo.id" :id="photo.id" class="img-cont"> 
+                    <div :key="photo.id" :id="photo.id" class="img-cont" :asset_id="photo.id"> 
                         <img :src="photoUrl(photo)" v-if="isPhoto" id="fullImage">
                         <div id="fullImageCanvasHolder">
                             <canvas id="faceOutlineCanvas" ></canvas>
@@ -100,14 +100,23 @@
                             </v-card-title>
                             <div v-if="photo_faces.length > 0">
                                 <v-card-text>
-                                    <div class="font-weight-bold">People
-                                        <v-switch
-                                            color="info"
-                                            v-model="photo.faces_all_identified"
-                                            label="All identified">
-                                            <v-icon color="info" >mdi-check</v-icon>
-                                        </v-switch>
-                                    </div>
+                                    <v-container>
+                                        <v-row dense no-gutters>
+                                            <v-col cols="3">
+                                                <div class="font-weight-bold">
+                                                    People    
+                                                </div>
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-switch
+                                                    color="info"
+                                                    v-model="photo.faces_all_identified"
+                                                    label="Done">
+                                                        <v-icon color="info" >mdi-check</v-icon>
+                                                </v-switch>
+                                            </v-col>                                            
+                                        </v-row>
+                                    </v-container>
                                 
                                 <v-list-item  v-for="face in photo_faces" :key="face.id" two-line>
                                     <v-list-item-avatar size="60"                                 
@@ -143,6 +152,9 @@
                                         <v-btn v-else icon @click="setPerson">
                                             <v-icon>mdi-check</v-icon>
                                         </v-btn>
+                                        <v-btn icon @click="reset(face)">
+                                            <v-icon>mdi-delete</v-icon>
+                                        </v-btn>
                                     </v-list-item-action>
 
                                 </v-list-item>
@@ -150,22 +162,41 @@
 
                             </div>
 
+                            <div>
+                                <v-card-text>
+                                    <div class="font-weight-bold">
+                                        Tags
+                                        <v-combobox  
+                                            chips
+                                            multiple
+                                            deletable-chips
+                                            dense
+                                                :items="tags"
+                                                item-text="name"
+                                                item-value="id"
+                                                v-model="assetTags">
+                                                variant="underlined"
+                                            </v-combobox>
+                                    </div>
+                                </v-card-text>
+                            </div>
+
                             <div v-if="things.length > 0">
                                 <v-card-text>
                                     <div class="font-weight-bold">Things</div>
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-subtitle> 
-                                            <span v-for="(thing, index) in things" :key="index">
-                                                {{thing.label_en}}
-                                                <span v-if="index != things.length - 1">, </span>
-                                            </span>    
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
+                                    <v-list-item>
+                                        <v-list-item-content>
+                                            <v-list-item-subtitle> 
+                                                <span v-for="(thing, index) in things" :key="index">
+                                                    {{thing.label_en}}
+                                                    <span v-if="index != things.length - 1">, </span>
+                                                </span>    
+                                            </v-list-item-subtitle>
+                                        </v-list-item-content>
+                                    </v-list-item>
                                 </v-card-text>
-
                             </div>
+
                             <div>
                                 <v-card-text>
                                     <div class="font-weight-bold">Details</div>
@@ -295,6 +326,7 @@
                 photo_persons: [],
                 photo_faces: [],
                 things: [],
+                tags: [],
                 exif: [],
                 gps: Object,
                 info: false,
@@ -321,6 +353,13 @@
             }
         },
 
+        mounted() {
+            this.$store.dispatch("getAllTags")
+            .then((tags => {
+                this.tags = tags;
+            }));
+        },
+
         computed: {
             ...mapState({
                 knownPersons: state => state.person.allPersons
@@ -342,7 +381,21 @@
 
             isPhoto() {
                 return this.photo.asset_type == 'jpg' || this.photo.asset_type == 'heic';
-            }
+            },
+
+            assetTags: {
+                set(v) {
+                    console.log(`Tag Set:`, v)
+                    this.setAssetTags(v);
+                },
+                get() {
+                    if (this.photo.tags) {
+                        return this.photo.tags.map( (tag) => tag.name );    
+                    } else {
+                        return [];
+                    }
+                }
+            },
         },
 
         watch: {
@@ -374,6 +427,21 @@
         },
 
         methods: {
+            setAssetTags(tagsList) {
+                console.log("SetTags ", tagsList);
+                let tagNames = tagsList.map( (tag) => tag.name ? tag.name : tag );
+                const self = this;
+                this.$store.dispatch("setAssetTags", {
+                    assetId: this.photo.id,
+                    tagNames: tagNames
+                }).then(( (result) => {
+                    self.photo = result;
+                    console.log(`Asset tags sent for ${result.id}`)
+                    this.$store.dispatch("getAllTags").then((tags => {
+                        self.tags = tags;
+                    }));
+                }));
+            },
 
             playVideo(mode) {
                 if (mode)
@@ -416,6 +484,12 @@
                     this.newPerson = null;
             },
 
+            reset(face) {
+                this.$store.dispatch("resetFace", face).then(() => {
+                    this.getFacesByPhoto(this.photo);                     
+                })
+            },
+
             setPerson() {
                 this.$store.dispatch("assignFaceToPerson", {
                     person:this.newPerson, 
@@ -451,6 +525,9 @@
                 }
                 this.$store.dispatch("getThingsForPhoto", p).then((things => {
                     self.things = things;
+                }));
+                this.$store.dispatch("getAllTags").then((tags => {
+                    self.tags = tags;
                 }));
                 this.getKnownPersons(p);
             },

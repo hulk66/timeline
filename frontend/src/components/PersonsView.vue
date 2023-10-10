@@ -78,7 +78,7 @@
                 <v-col
                     v-for="face in facesToConfirm.items" :key="face.id" class="d-flex child-flex"
                     xs="3" md="2" lg="2" xl="1">
-                    <face-view @update="updateFacesToConfirm" :face="face" :selectorText="'Correct?'" :showAssetStamp="true" :showDistance="true"></face-view>
+                    <face-view @update="updateFacesToConfirm" :face="face" :selectorText="'Correct?'" :showAssetStamp="true" :showDistance="true" :showFaceConfidence="true"></face-view>
                 </v-col>
                 <div class="confirmFaces-loading query-loading-spinner" visibility='hidden'>
                     <v-progress-circular color="primary" indeterminate></v-progress-circular>
@@ -347,18 +347,22 @@
             
             ignoreAllOnPage() {
                 console.log("Ignoring all the faces: ", this.unknownFaces);
+                let facesToIgnore = []
                 this.unknownFaces.items.forEach( faceInfo => {
-                    this.$store.dispatch("ignoreFace", faceInfo);
+                    facesToIgnore.push(faceInfo.id);
                 });
-                this.$store.dispatch("getPersons", {
-                    page: this.knownPersonTab.page,
-                    size: this.knownPersonTab.size,
-                    filters: this.knownPersonTab.filters,
-                });
+                this.$store.dispatch("ignoreFace", facesToIgnore).then(result => {
+                    console.log("Ignored the faces result: "+result);
+                    this.$store.dispatch("getPersons", {
+                        page: this.knownPersonTab.page,
+                        size: this.knownPersonTab.size,
+                        filters: this.knownPersonTab.filters,
+                    });
 
-                this.$store.dispatch("getMostRecentFaces", {size: this.recentFacesTab.size});
-                this.$store.dispatch("getAllUnknownFaces", {page: this.unknownFacesTab.page, size: this.unknownFacesTab.size, filters: this.unknownFacesTab.filters});
-                this.$emit("update");
+                    this.$store.dispatch("getMostRecentFaces", {size: this.recentFacesTab.size});
+                    this.$store.dispatch("getAllUnknownFaces", {page: this.unknownFacesTab.page, size: this.unknownFacesTab.size, filters: this.unknownFacesTab.filters});
+                    this.$emit("update");
+                });
             },
 
             changeTab(tabIndex) {

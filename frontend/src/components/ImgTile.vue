@@ -17,7 +17,7 @@
  */ 
 
  <template>
-    <img :src="src"/>
+    <img :src="src" :asset_id="asset.id"/>
 </template>
  <script>
  
