@@ -16,7 +16,7 @@
  */
 
 <template>
-    <v-card flat>
+    <v-card flat class="face_card" :face_id="face.id" :person_id="face.person_id" :asset_id="face.asset_id">
         <v-img :src="src" :height="tileHeight" contain @load="loaded=true" @click="clickPhoto" >
             <template v-slot:placeholder>
                 <v-row
@@ -219,8 +219,9 @@
                 console.log("Navigation clicked but not supported", dir)
             },
             setRating(value) {
+                let self = this;
                 this.$store.dispatch("setRating", {photo: this.currentPhotoAsset.photo, stars: value}).then( result => {
-                    this.$store.commit("currentPhotoAsset.photo", result);
+                    self.currentPhotoAsset.photo =  result;
                 });
             },
 

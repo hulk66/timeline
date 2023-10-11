@@ -26,14 +26,14 @@ import ffmpeg
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
+from timeline.util.tags_util import parse_tags, find_new_tags
 from timeline.api.assets import send_image
 from timeline.api.util import list_as_json, refine_query, assets_from_smart_album
 from timeline.domain import (GPS, Face, Person, Asset, Section, Status, Thing,
-                             asset_thing, Exif, asset_album, Album, AlbumType)
+                             asset_thing, Exif, asset_album, Album, AlbumType, Tag)
 from timeline.extensions import db
 from timeline.tasks.match_tasks import (assign_new_person, 
                                         distance_safe,
-                                        find_all_classified_faces, 
                                         find_all_classified_known_faces,
                                         find_closest, group_faces,
                                         match_all_unknown_faces)
@@ -141,6 +141,47 @@ def face_by_person(id):
     return jsonify_items(faces)
 
 
+@blueprint.route('/tags', methods=['GET'])
+def get_all_tags():
+    return jsonify_items(Tag.query.all())
+
+
+@blueprint.route("/asset/tags/<int:asset_id>/<string:tags_str>", methods=["PUT"])
+def set_tags(asset_id, tags_str):
+    excludes = ("-exif", "-gps", "-faces", "-things", "-section")
+    asset = Asset.query.get(asset_id)
+    tags_to_set = parse_tags(tags_str)
+    (new_tags, tags_to_create, tags_to_set) = find_new_tags(
+        tags_to_set, asset.tags, Tag.query.all()
+    )
+    created_tags = []
+    for tag_name in tags_to_create:
+        tag = Tag()
+        tag.name = tag_name
+        tag.created = datetime.today()
+        db.session.add(tag)
+        created_tags.append(tag)
+    asset.tags = []
+    for tag in tags_to_set:
+        asset.tags.append(tag)
+    for tag in created_tags:
+        asset.tags.append(tag)
+    db.session.commit()
+    return flask.jsonify(asset.to_dict(rules=excludes))
+
+
+@blueprint.route("/asset/tags/<int:asset_id>/<string:tags_str>", methods=["DELETE"])
+def remove_tags(asset_id, tags_str):
+    excludes = ("-exif", "-gps", "-faces", "-things", "-section")
+    asset = Asset.query.get(asset_id)
+    tags_to_remove = parse_tags(tags_str)
+    for tag in asset.tags:
+        if tag.name in tags_to_remove:
+            asset.tags.remove(tag)
+    db.session.commit()
+    return flask.jsonify(asset.to_dict(rules=excludes))
+
+
 @blueprint.route('/asset/setRating/<int:asset_id>/<int:rating>', methods=['GET'])
 def set_rating(asset_id, rating):
     excludes=("-exif", "-gps", "-faces", "-things", "-section")
@@ -170,6 +211,15 @@ def asset_preview(id, max_dim):
             ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1, movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
         image = Image.open(preview_path) 
     return send_image(image, False)
+
+
+@blueprint.route('/asset/setFacesAllIdentified/<int:asset_id>/<string:all_identified>', methods=['GET'])
+def set_assert_all_faces_identified(asset_id, all_identified):
+    asset = Asset.query.get(asset_id)
+    asset.faces_all_identified = 'true' == all_identified
+    db.session.commit()
+    excludes=("-exif", "-gps", "-faces", "-things", "-section")
+    return flask.jsonify(asset.to_dict(rules=excludes))
 
 
 @blueprint.route('/asset/gps/<int:id>', methods=['GET'])
@@ -601,14 +651,32 @@ def get_persons_by_asset(asset_id):
 @blueprint.route('/face/recent/<int:page>/<int:size>', methods=['GET'])
 def faces_recent(page, size):
     logger.debug("get recent faces up to %i", size)
-    # q = Face.query.join(Person).filter(and_(Face.person_id == Person.id, Face.updated.is_not(None), or_(
-    #     Face.confidence <= distance_safe()))).order_by(
-    #     Face.updated.desc())
-    # return jsonify_pagination(q, 1, size)
-    q = Face.query.filter(Face.updated.is_not(None)).order_by(Face.updated.desc())
-    logger.debug(q)
+    filters = [ Face.updated.is_not(None), Face.person_id == Person.id ]
+    person_id = request.args.get("filter.person_id")
+    if person_id:
+        filters.append( Face.person_id == person_id )
+    person_name = request.args.get("filter.person_name")
+    if person_name:
+        filters.append( Person.name.contains(person_name) )
+        
+    if request.args.get("filter.switchNone") == 'false':
+        filters.append( Face.confidence_level != Face.CLASSIFICATION_CONFIDENCE_NONE )
+    if request.args.get("filter.switchMayBe") == 'false':
+        filters.append( Face.confidence_level != Face.CLASSIFICATION_CONFIDENCE_LEVEL_MAYBE )
+    if request.args.get("filter.switchSafe") == 'false':
+        filters.append( Face.confidence_level != Face.CLASSIFICATION_CONFIDENCE_LEVEL_SAFE )
+    if request.args.get("filter.switchVerySafe") == 'false':
+        filters.append( Face.confidence_level != Face.CLASSIFICATION_CONFIDENCE_LEVEL_VERY_SAFE )
+    if request.args.get("filter.switchConfirmed") == 'false':
+        filters.append( Face.confidence_level != Face.CLASSIFICATION_CONFIDENCE_LEVEL_CONFIRMED )
+      
+    q = Face.query.join(Person).filter(and_(*filters)).order_by(Face.updated.desc())
+    from timeline.util.db import show_query
+    show_query(q)
     paginate = q.paginate(page=page, per_page=size, error_out=False)
-    known_faces = find_all_classified_faces()
+    
+    max_faces = int(current_app.config['FACE_CLUSTER_MAX_FACES'])    
+    known_faces = find_all_classified_known_faces(max_faces) # find_all_classified_faces()
     
     list = []
     for face in paginate.items:
@@ -645,10 +713,13 @@ def get_faces_by_asset(asset_id):
     return jsonify_items(faces)
 
 
-@blueprint.route('/face/ignore/<int:face_id>', methods=['GET'])
-def ignore_face(face_id):
-    face = Face.query.get(face_id)
-    _ignore_face(face)
+@blueprint.route('/face/ignore/<string:face_ids_str>', methods=['GET'])
+def ignore_face(face_ids_str):
+    face_ids = face_ids_str.split(",")
+    for face_id in face_ids:
+        if face_id:
+            face = Face.query.get(face_id)
+            _ignore_face(face)
     db.session.commit()
     return flask.jsonify(True)
 
@@ -667,7 +738,8 @@ def get_unknown_faces_and_closest(page, size):
         Face.person_id == None))
     logger.debug(q)
     paginate = q.paginate(page=page, per_page=size, error_out=False)
-    known_faces = find_all_classified_faces()
+    max_faces = int(current_app.config['FACE_CLUSTER_MAX_FACES'])
+    known_faces = find_all_classified_known_faces(max_faces) # find_all_classified_faces()
 
     list = []
     for face in paginate.items:

@@ -210,6 +210,22 @@ class TranscodingStatus(enum.Enum):
     DONE = "DONE"
 
 
+asset_tag = db.Table('asset_tag', db.Model.metadata,
+                       db.Column('asset_id', db.ForeignKey(
+                           'assets.id'), primary_key=True),
+                       db.Column('tag_id', db.ForeignKey(
+                           'tags.id'), primary_key=True)
+                       )
+class Tag(db.Model, SerializerMixin):
+    __tablename__ = 'tags'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(100), unique=True)
+    description = db.Column(db.String(512))
+    created = db.Column(db.DateTime)
+    assets = db.relationship(
+        'Asset', secondary=asset_tag, back_populates='tags')
+    serialize_rules = ('-assets',)    
+
 class Asset(db.Model, SerializerMixin):
     __tablename__ = 'assets'
 
@@ -221,6 +237,7 @@ class Asset(db.Model, SerializerMixin):
     ignore = db.Column(db.Boolean, index=True)
     faces = db.relationship("Face", back_populates="asset",
                             cascade="all, delete, delete-orphan")
+    faces_all_identified = db.Column(db.Boolean)
     exif = db.relationship("Exif", cascade="all, delete, delete-orphan")
     added = db.Column(db.DateTime, index=True)
     created = db.Column(db.DateTime, index=True)
@@ -243,7 +260,8 @@ class Asset(db.Model, SerializerMixin):
         'Thing', secondary=asset_thing, back_populates='assets')
     albums = db.relationship(
         'Album', secondary=asset_album, back_populates='assets')
-
+    tags = db.relationship(
+        'Tag', secondary=asset_tag, back_populates='assets')
     section_id = db.Column(db.Integer, db.ForeignKey('section.id'))
     section = db.relationship("Section", back_populates="assets")
     no_creation_date = db.Column(db.Boolean)

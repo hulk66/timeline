@@ -1,5 +1,8 @@
 import axios from "axios";
-import { url_utils } from "../utils/url_utils"
+import { url_utils, axios_api_cache } from "../utils/url_utils"
+
+axios_api_cache.configure_axios(axios, true);
+window.axios_api_cache = axios_api_cache;
 
 export const person = {
     state: {
@@ -13,7 +16,6 @@ export const person = {
         facesToConfirm: [],
         markMode: false,
         previewHeight: 100,
-
     },
 
     mutations: {
@@ -64,8 +66,14 @@ export const person = {
 
         },
 
-        ignoreFace(context, face) {
-            let url = `/api/face/ignore/${face.id}`;
+        ignoreFace(context, faceIds) {
+            let url = '/api/face/ignore/';
+            if (Array.isArray(faceIds)) {
+                url += `${faceIds.join(",")}`
+            } else {
+                url += `${faceIds}`;
+            }           
+            
             return new Promise((resolve => {
                 axios.get(url).then( result => {
                     resolve(result.data);
@@ -116,7 +124,7 @@ export const person = {
                 args = url_utils.generateFilterArgs(filters);
             }
             url_utils.elementVisibility('.unknownFaces-loading', true);
-            axios.get(url).then( result => {
+            axios_api_cache.get(url+args).then( result => {
                 context.commit("setUnknownFaces", result.data);    
             }).finally( () => {
                 url_utils.elementVisibility('.unknownFaces-loading', false);
@@ -130,7 +138,7 @@ export const person = {
             if (filters) {
                 args = url_utils.generateFilterArgs(filters);
             }
-            axios.get(url).then( result => {
+            axios_api_cache.get(url+args).then( result => {
                 context.commit("setRecentFaces", result.data);    
             }).finally(  () => {
                 url_utils.elementVisibility('.recentFaces-loading', false);
@@ -141,17 +149,17 @@ export const person = {
         getMostRecentFaces(context, {size}) {
             url_utils.elementVisibility('.mostRecentFaces-loading', true);
             let url = `/api/face/recent/1/${size}`;
-            axios.get(url).then( result => {
+            axios_api_cache.get(url).then( result => {
                 context.commit("setMostRecentFaces", result.data);    
             }).finally( () => {
                 url_utils.elementVisibility('.mostRecentFaces-loading', false);
-            });
+            })
         },
 
         getFacesToConfirm(context, {page, size}) {
             let url = `/api/face/facesToConfirm/${page}/${size}`;
             url_utils.elementVisibility('.confirmFaces-loading', true);
-            axios.get(url).then( result => {
+            axios_api_cache.get(url).then( result => {
                 context.commit("setFacesToConfirm", result.data);    
             }).finally( () => {
                 url_utils.elementVisibility('.confirmFaces-loading', false);
@@ -205,18 +213,18 @@ export const person = {
         },
         */
         getKnownPersons(context) {
-            axios.get("/api/person/known").then (result => {
+            axios_api_cache.get("/api/person/known").then (result => {
                 context.commit("setKnownPersons", result.data);    
             });
         },
 
         getAllPersons(context) {
-            axios.get("/api/person/all").then (result => {
+            axios_api_cache.get("/api/person/all").then (result => {
                 context.commit("setAllPersons", result.data);
             });
         },
 
-        getPersons(context, {page, size}) {
+        getPersons(context, {page, size, filters}) {
             url_utils.elementVisibility('.persons-loading', true);
             let url = `/api/person/${page}/${size}`;
             let args = "";
@@ -224,7 +232,7 @@ export const person = {
                 args = url_utils.generateFilterArgs(filters);
             }
             url_utils.elementVisibility('.persons-loading', true);
-            axios.get(url+args).then( result => {
+            axios_api_cache.get(url+args).then( result => {
                 context.commit("setPersons", result.data);
             }).finally( () => {
                 url_utils.elementVisibility('.persons-loading', false);
@@ -269,6 +277,34 @@ export const person = {
             }))
         },
 
+        getAllTags() { //context
+            return new Promise((resolve => {
+                axios.get("/api/tags").then((result) =>{
+                    resolve(result.data);
+                })
+            }))
+        },
+        removeTagsFromAsset(context, { assetId, tagNames }) {
+            return new Promise((resolve => {
+                axios.delete(`/api/asset/tags/${assetId}/${tagNames}`).then((result) =>{
+                    resolve(result.data);
+                });
+            }));
+        },
+        setAssetTags(context, { assetId, tagNames }) {
+            let url = `/api/asset/tags/${assetId}/`;
+            if (Array.isArray(tagNames)) {
+                url += `${tagNames.join(",")}`
+            } else {
+                url += `${tagNames}`;
+            }           
+            return new Promise((resolve => {
+                axios.put(url).then((result) =>{
+                    resolve(result.data);
+                });
+            }));
+        },
+        
         getUnknownFaces(context, index) {
             return new Promise((resolve => {
 
@@ -276,6 +312,13 @@ export const person = {
                     resolve(result.data);
                 })
             }))
+        },
+
+        updateAllFacesIdentified(context, {photo, facesAllIdentified}) {
+            let url = `/api/asset/setFacesAllIdentified/${photo.id}/${facesAllIdentified}`;
+            axios_api_cache.get(url).then( result => {
+              console.log(`Marking ${photo.id} as all faces identified = ${facesAllIdentified} with result ${result} `)  
+            })
         },
 
     }
