@@ -153,7 +153,7 @@ export const person = {
                 context.commit("setMostRecentFaces", result.data);    
             }).finally( () => {
                 url_utils.elementVisibility('.mostRecentFaces-loading', false);
-            })
+            });
         },
 
         getFacesToConfirm(context, {page, size}) {
