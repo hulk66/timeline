@@ -70,9 +70,11 @@ export const person = {
             let url = '/api/face/ignore/';
             if (Array.isArray(faceIds)) {
                 url += `${faceIds.join(",")}`
-            } else {
-                url += `${faceIds}`;
-            }           
+            } else if (faceIds.id) {
+                    url += `${faceIds.id}`;
+                } else {
+                    url += `${faceIds}`;
+                }           
             
             return new Promise((resolve => {
                 axios.get(url).then( result => {
@@ -317,7 +319,7 @@ export const person = {
         updateAllFacesIdentified(context, {photo, facesAllIdentified}) {
             let url = `/api/asset/setFacesAllIdentified/${photo.id}/${facesAllIdentified}`;
             axios_api_cache.get(url).then( result => {
-              console.log(`Marking ${photo.id} as all faces identified = ${facesAllIdentified} with result ${result} `)  
+              console.log(`Marking ${photo.id} as all faces identified = ${facesAllIdentified} with result`, result)
             })
         },
 
