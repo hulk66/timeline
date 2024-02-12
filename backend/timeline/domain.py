@@ -250,6 +250,10 @@ class Asset(db.Model, SerializerMixin):
     video_preview_generated = db.Column(db.Boolean)
     video_fullscreen_transcoding_status = db.Column(db.Enum(TranscodingStatus))
     video_fullscreen_generated_progress = db.Column(db.Integer) 
+    version = db.Column(db.Integer)
+    file_size = db.Column(db.Integer)
+    checksum = db.Column(db.String(32))
+    checksum_type = db.Column(db.String(10))
 
     gps = db.relationship(
         "GPS", uselist=False, cascade="all, delete, delete-orphan", 

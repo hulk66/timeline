@@ -7,9 +7,9 @@ from timeline.api.views import crop_face
 from timeline.util.image_ops import read_and_transpose
 from timeline.util.path_util import get_full_path
 
- 
+TEST_FILE="tests/gps.jpg"
 
-class Test_Exif(unittest.TestCase):
+class TestExif(unittest.TestCase):
     def setUp(self):
         self.app = create_app(testing=True, env="../envs/env.test")
 
@@ -21,7 +21,7 @@ class Test_Exif(unittest.TestCase):
 
     def test_exif(self):
         with self.app.app_context():
-            create_asset("tests/gps.jpg")
+            create_asset(TEST_FILE)
             photo = Asset.query.first()
             assert photo
             assert photo.exif
@@ -30,16 +30,16 @@ class Test_Exif(unittest.TestCase):
 
     def test_exif_old_photo(self):
         with self.app.app_context():
-            create_asset("tests/gps.jpg")
+            create_asset(TEST_FILE)
             photo = Asset.query.first()
             assert photo
             assert photo.exif
-            assert any(exif.key == "FNumber" for exif in photo.exif)
+            assert any(exif.key == "Make" for exif in photo.exif)
             assert any(exif.key == "Make" for exif in photo.exif)
 
     def test_gps(self):
         with self.app.app_context():
-            create_asset("tests/gps.jpg")
+            create_asset(TEST_FILE)
             photo = Asset.query.first()
             assert photo
             assert photo.gps

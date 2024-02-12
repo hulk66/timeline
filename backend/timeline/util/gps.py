@@ -157,7 +157,7 @@ def get_labeled_exif(exif):
                     data = data.decode()
                 labeled[tag] = data
             except UnicodeDecodeError:
-                logger.debug("Can not decode Exif data, Omitting value")
+                logger.debug("Can not decode Exif data, Omitting value for tag %s", tag)
 
         for (key, val) in exif.get_ifd(0x8769).items():
             label = TAGS.get(key)
