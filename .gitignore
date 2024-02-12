@@ -1,6 +1,7 @@
 data
 .env
 .idea
+.history/
 backend/models/facial
 backend/models/thing
 

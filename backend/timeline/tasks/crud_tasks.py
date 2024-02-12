@@ -82,7 +82,7 @@ def create_asset(path: str, commit=True):
         return None
 
     if not os.path.exists(path):
-        logger.error("File not found: %s")
+        logger.error("File not found: %s", path)
         return None
 
     asset = Asset()
@@ -109,7 +109,7 @@ def create_asset(path: str, commit=True):
             logger.error("Invalid Image Format for %s", path)
             return None
         except FileNotFoundError:
-            logger.error("File not found: %s")
+            logger.error("File not found: %s", path)
             return None
 
         # this does not seem to be correct, there has to be a more elegant way
@@ -202,7 +202,7 @@ def _extract_exif_data(asset, image=None):
             logger.error("Invalid Image Format for %s", path)
             return None
         except FileNotFoundError:
-            logger.error("File not found: %s")
+            logger.error("File not found: %s", path)
             return None
 
     exif_raw = image.getexif()
@@ -345,7 +345,7 @@ def delete_asset_by_path(img_path, commit=True):
 def modify_asset(img_path):
     logger.debug("Modify asset %s", img_path)
 
-    delete_asset(img_path, commit=False)
+    delete_asset(img_path)
     create_asset(img_path, commit=False)
     db.session.commit()
 
@@ -366,7 +366,7 @@ def sort_asset_into_date_range_task(asset_id):
     asset = Asset.query.get(asset_id)
     if not asset:
         logger.error(
-            "Something is wrong. asset with id %d not found. Deleted already?")
+            "Something is wrong. asset with id %d not found. Deleted already?", asset_id)
         return
     sort_asset_into_date_range(asset, commit=True)
 
@@ -500,15 +500,13 @@ def sort_old_assets():
         return
 
     oldest_asset = Asset.query.filter(
-        Asset.ignore == False).order_by(Asset.created.asc()).first()
+        and_(Asset.ignore == False, Asset.created != None)).order_by(Asset.created.asc()).first()
     if not oldest_asset:
         return
     min_date = oldest_asset.created - timedelta(days=1)
     assets = Asset.query.filter(Asset.no_creation_date == True)
 
     for asset in assets:
-        # logger.debug("asset %i", asset.id)
-        # logger.debug(min_date)
         asset.created = min_date
         min_date -= timedelta(seconds=1)
 

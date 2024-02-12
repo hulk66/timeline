@@ -510,9 +510,12 @@ def find_all_ignored_faces():
                     .with_entities(Face.id, Face.encoding).all()
         expire_seconds = int(len(result)/1000 * 60)
         if expire_seconds > 0:
-            cache.set("ignored_faces", result, timeout = expire_seconds)
+            try:
+                cache.set("ignored_faces", result, timeout = expire_seconds)
+            except Exception as exc:
+                logger.exception("Can't save into cache ignored faces of size %d in %d seconds: %s", len(result), expire_seconds, str(exc))
     else:
-        logger.debug("Using cached result")
+        logger.debug("Using cached result of size %d", len(result))
     return result
 
 
@@ -548,9 +551,12 @@ def find_all_classified_known_faces(limit=None):
 
         expire_seconds = int(len(result)/1000 * 60)
         if expire_seconds > 0:
-            cache.set("all_classified_known_faces", result, timeout=expire_seconds)
+            try:
+                cache.set("all_classified_known_faces", result, timeout=expire_seconds)
+            except Exception as exc:
+                logger.exception("Can't save into cache ignored faces of size %d in %d seconds : %s", len(result), expire_seconds, str(exc))
     else:
-        logger.debug("Using cached result")
+        logger.debug("Using cached result of size %d", len(result))
     return result
 
 
