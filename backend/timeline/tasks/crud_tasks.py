@@ -53,7 +53,7 @@ def create_asset(path: str, commit=True):
         if asset.version >= CURRENT_VERSION:
             logger.info("asset already exists %s. Skipping", img_path)
         else:
-            logger.info(f"asset already exists %s, but version is lower than current supported ${asset.version} < ${CURRENT_VERSION}", img_path)
+            logger.info(f"asset already exists %s, but version is lower than current supported {asset.version} < {CURRENT_VERSION}", img_path)
         return None
 
     if not os.path.exists(path):
