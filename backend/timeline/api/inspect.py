@@ -144,17 +144,18 @@ def status():
     # logger.debug("Getting Status")
     inspect = celery.control.inspect()
     active = inspect.active()
-    numFaces = Face.query.count()
-    numThings = Asset.query.filter(Asset.things != None).count()
+    num_faces = Face.query.count()
+    num_things = Asset.query.filter(Asset.things != None).count()
+    num_assets = Asset.query.count()
 
     result = {
         "process": get_queue_len("beat"),
         "analyze": get_queue_len("analyze"),
         "geo": get_queue_len("geo"),
         "transcode": get_queue_len("transcode_prio") + get_queue_len("transcode") ,
-        "totalFaces": numFaces,
-        "totalThings": numThings,
-        "totalassets": Asset.query.count()
+        "totalFaces": num_faces,
+        "totalThings": num_things,
+        "totalassets": num_assets
 
     }
 
