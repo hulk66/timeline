@@ -194,8 +194,10 @@ def get_exif_value(key, raw_value):
     if key == "ExposureTime":
         n = float(raw_value.numerator)
         d = float(raw_value.denominator)
-        sec = round(d/n)
-
+        if n != 0:
+            sec = round(d/n)
+        else:
+            sec = d
         v = "1/" + str(sec)
     elif key in ("FNumber", "FocalLength", "ExposureBiasValue"):
         v = round(float(raw_value.numerator) / float(raw_value.denominator))

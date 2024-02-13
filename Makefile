@@ -5,6 +5,13 @@ install:
 	cd backend && make install
 	cd frontend && make install
 
+backup:
+	docker compose down worker transcoder watchdog webapp frontend
+	cd data/backups/db && \
+	set -o allexport; source .env; set +o allexport && \
+	NOW_DATE=$(date +"%Y-%m-%d %T") NOW_DATE_FN=$(echo $NOW_DATE |  tr '[: ]' '_') \
+	mysqldump timeline --result-file="timeline-${NOW_DATE_FN}-dump.sql" --host=localhost --port 3306 --user=root$DB_SUPER_USER --password=$DB_SUPER_USER_PW
+	docker compose up -d
 
 clean: 
 	read -p "Warning - it will remove all the previews, database and logs. ARE YOU SURE? " -n 1 -r

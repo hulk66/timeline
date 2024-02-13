@@ -96,3 +96,9 @@ SECTION_TARGET_SIZE=300
 # webserver (nginx, caddy) so that it allows it to proxy different applications
 # under one address (e.g. some dynamic dns with nextcloud, darktable ...)
 TIMELINE_BASEPATH=/timeline
+
+# Customizations
+# optimize the pull - for huge datasets default value of 10 is not enough
+SQLALCHEMY_ENGINE_OPTIONS=pool_size=100,max_overflow=100
+# For NodeJS 17 there is an issue https://stackoverflow.com/questions/69692842/error-message-error0308010cdigital-envelope-routinesunsupported
+NODE_OPTIONS=--openssl-legacy-provider
