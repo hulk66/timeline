@@ -6,12 +6,7 @@ install:
 	cd frontend && make install
 
 backup:
-	docker compose down worker transcoder watchdog webapp frontend
-	cd data/backups/db && \
-	set -o allexport; source .env; set +o allexport && \
-	NOW_DATE=$(date +"%Y-%m-%d %T") NOW_DATE_FN=$(echo $NOW_DATE |  tr '[: ]' '_') \
-	mysqldump timeline --result-file="timeline-${NOW_DATE_FN}-dump.sql" --host=localhost --port 3306 --user=root$DB_SUPER_USER --password=$DB_SUPER_USER_PW
-	docker compose up -d
+	scripts/backup-db.sh
 
 clean: 
 	read -p "Warning - it will remove all the previews, database and logs. ARE YOU SURE? " -n 1 -r
@@ -26,12 +21,18 @@ build:
 	cd backend && make build
 	cd frontend && make build
 
+rebuild:
+	docker compose down worker frontend transcoder watchdog webapp
+	cd backend && make build
+	cd frontend && make build
+	docker compose up -d
+
 push:	
 	cd backend && make push
 	cd frontend && make push
 
 run-dev-support:
-	docker compose up -d redis db adminer rabbitmq transcoder
+	docker compose up -d redis db adminer rabbitmq
 
 run-dev-worker:
 	docker compose up -d worker
@@ -41,6 +42,9 @@ down:
 
 up:
 	docker compose up -d
+
+up-storage:
+	docker compose up -d redis db adminer rabbitmq
 
 download-model:
 	# this is only required if you want to develop locally and only once in the beginning
@@ -56,3 +60,6 @@ download-model:
 
 	wget https://github.com/serengil/deepface_models/releases/download/v1.0/facial_expression_model_weights.h5
 	mv facial_expression_model_weights.h5 backend/models/facial/
+
+make-dev-dirs:
+	scripts/setup-dev-dirs.sh
