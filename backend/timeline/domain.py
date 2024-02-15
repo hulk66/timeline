@@ -231,7 +231,7 @@ class Asset(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(512), unique=True)            
-    filename = db.Column(db.String(100))
+    filename = db.Column(db.String(100), index = True)
 
     directory = db.Column(db.String(512))
     ignore = db.Column(db.Boolean, index=True)
@@ -252,9 +252,9 @@ class Asset(db.Model, SerializerMixin):
     video_fullscreen_generated_progress = db.Column(db.Integer) 
     version = db.Column(db.Integer)
     file_size = db.Column(db.Integer)
-    checksum = db.Column(db.String(32))
+    checksum = db.Column(db.String(32), index = True)
     checksum_type = db.Column(db.String(10))
-
+    
     gps = db.relationship(
         "GPS", uselist=False, cascade="all, delete, delete-orphan", 
         single_parent=True)

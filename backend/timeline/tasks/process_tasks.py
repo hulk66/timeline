@@ -19,6 +19,7 @@ import logging
 from timeline.domain import Asset
 from timeline.extensions import celery
 from timeline.tasks.crud_tasks import create_asset, create_preview
+from timeline.util.asset_creation_result import AssetCreationResult
 from pymysql.err import InternalError, OperationalError
 from celery import signature
 logger = logging.getLogger(__name__)
@@ -31,16 +32,17 @@ def new_asset(path):
         logger.debug(
             "Not taking %s into account as this is some QNAP or Synology related file", path)
     else:
-        # logger.debug("Start processing asset %s", path)
-        asset_id = create_asset(path)
-        if asset_id:
-            asset = Asset.query.get(asset_id)
-            create_preview(asset_id)
-            celery.send_task("Check GPS", (asset_id,), queue="geo")
+        logger.debug("Start processing new asset %s", path)
+        result : AssetCreationResult = create_asset(path)
+        if result.asset_id and result.created_in_db:
+            logger.debug("Scheduling consequent tasks for asset %s", path)
+            asset = Asset.query.get(result.asset_id)
+            create_preview(result.asset_id)
+            celery.send_task("Check GPS", (result.asset_id,), queue="geo")
             if asset.is_photo():
-                celery.send_task("Face Detection", (asset_id,), queue="analyze")
-                celery.send_task("Object Detection", (asset_id,), queue="analyze")
-                celery.send_task("Quality Assessment", (asset_id,), queue="analyze")
+                celery.send_task("Face Detection", (result.asset_id,), queue="analyze")
+                celery.send_task("Object Detection", (result.asset_id,), queue="analyze")
+                celery.send_task("Quality Assessment", (result.asset_id,), queue="analyze")
 
             # celery.send_task("timeline.tasks.iq_tasks.brisque_score", (asset_id,), queue="iq")
 
