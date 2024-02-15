@@ -26,8 +26,9 @@ services:
       - 9091:8080
 
   rabbitmq:
-    #image: rabbitmq
-    image: rabbitmq:management
+    image: hulk66/timeline_rabbitmq:${IMAGE_VERSION}
+    build: config/rabbitmq
+    # image: rabbitmq:management
     hostname: rabbitmq
     restart: always
     ports:

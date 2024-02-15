@@ -31,7 +31,7 @@ from timeline.util.image_ops import read_and_transpose
 from timeline.util.path_util import (get_full_path, get_preview_path,
                                      get_rel_path)
 from timeline.util.asset_creation_result import AssetCreationResult
-from timeline.util.asset_utils import CURRENT_VERSION, _extract_image_exif_data, populate_asset
+from timeline.util.asset_utils import CURRENT_VERSION, _extract_image_exif_data, dedup_header, populate_asset
 from sqlalchemy import and_
 from celery import signature
 from celery import chain
@@ -569,10 +569,10 @@ def create_preview(asset_id: int):
         create_jpg_preview(asset, 2160, False)
         create_jpg_preview(asset, 400, True)
     elif asset.is_video():
-        celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode")
+        celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode", headers=dedup_header(asset.path, "transcode-video-preview"))
         video_create_on_demand = bool(strtobool(current_app.config['VIDEO_TRANSCODE_ON_DEMAND']))
         if not video_create_on_demand:
-            celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode")
+            celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode", headers=dedup_header(asset.path, "transcode-video-full"))
 
         # create_preview_video.apply_async( (asset_id, 400), queue="transcode")
         # create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
