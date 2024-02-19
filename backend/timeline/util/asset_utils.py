@@ -118,7 +118,7 @@ def populate_asset_v2(asset: Asset, result: AssetCreationResult):
     asset.checksum_type = 'MD5'
 
 
-def _extract_video_exif_data(asset):
+def _extract_video_exif_data(asset, result: AssetCreationResult):
     logger.debug("Extract Video Exif Data for asset %s", asset.path)
     path = get_full_path(asset.path)
     md = exiftool.get_metadata(path)
@@ -218,11 +218,11 @@ def _extract_image_exif_data(asset: Asset, result: AssetCreationResult):
         else:
             asset.no_creation_date = False
 
-def dedup_header(asset: Asset, queue_name: str):
+def dedup_header(id: str, queue_name: str):
     # RabbitMQ Deduplication plugin
     # https://github.com/noxdafox/rabbitmq-message-deduplication/tree/main
     
     return {
-        "x-deduplication-header": f"{queue_name}:{asset.path}"
+        "x-deduplication-header": f"{queue_name}:{id}"
     }
     

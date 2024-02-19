@@ -24,6 +24,8 @@ from pathlib import Path
 from celery import chain
 from flask import current_app
 from PIL import Image
+from timeline.api.inspect import get_queue_len
+from timeline.config import PROCESSING_QUEUE_SECTIONING_TRESHOLD
 
 from timeline.domain import Album, Person, Asset, Section, Status, DateRange, AssetType
 from timeline.extensions import celery, db
@@ -53,7 +55,6 @@ def create_asset(path: str, commit=True) -> AssetCreationResult:
     img_path = get_rel_path(path)
 
     asset = Asset.query.filter(Asset.path == img_path).first()
-    result.asset = asset
     result.exists_in_db = asset != None
     if asset:
         result.version_in_db = asset.version
@@ -67,6 +68,7 @@ def create_asset(path: str, commit=True) -> AssetCreationResult:
         logger.debug("Asset is new %s. Processing", path)
     if not os.path.exists(path):
         logger.error("File not found: %s", path)
+        result.file_present = False
         return result
 
     # db.session.rollback()
@@ -77,7 +79,9 @@ def create_asset(path: str, commit=True) -> AssetCreationResult:
     # sort_asset_into_date_range(asset, commit = False)
     if new_asset:
         db.session.add(asset)
-        add_to_last_import(asset)
+        # Doing the reverse assignment, as assets list in the album is much bigger than the reverse - so it's faster
+        album = get_last_import()
+        asset.albums.append(album)
         if commit:
             # perform already a commit, so that in case a parallel worker inserts something in
             # the section and we get a duplicate error, the photo is already there
@@ -89,6 +93,7 @@ def create_asset(path: str, commit=True) -> AssetCreationResult:
         db.session.commit()
 
     result.asset_id = asset.id
+    result.asset = asset
     return result
 
 
@@ -172,6 +177,25 @@ def add_to_last_import(asset):
         status.next_import_is_new = False
 
     album.assets.append(asset)
+
+def get_last_import():
+    status = Status.query.first()
+    status.sections_dirty = True
+    status.find_events_needed = True
+    album = Album.query.get(status.last_import_album_id)
+
+    if album is None:
+        album = Album()
+        album.name = "Last Import"
+        db.session.add(album)
+        db.commit()
+        status.last_import_album_id = album.id
+
+    if status.next_import_is_new:
+        album.assets = []
+        status.next_import_is_new = False
+
+    return album
 
 # def update_sections(asset):
 #
@@ -410,6 +434,12 @@ def compute_sections():
         # if there is nothing new it is a good point to start the event finder
         celery.send_task("Find Events", queue="beat")        
         return
+    
+    process_queue_len = get_queue_len("beat")
+    if process_queue_len > PROCESSING_QUEUE_SECTIONING_TRESHOLD:
+        logger.debug("Processing queue is greater than treshold %d . Skipping sectioning for now.", PROCESSING_QUEUE_SECTIONING_TRESHOLD)
+        return
+    
     sort_old_assets()
 
     status.in_sectioning = True
@@ -421,6 +451,12 @@ def compute_sections():
     assets = Asset.query.filter(Asset.ignore == False).order_by(
         Asset.created.desc()).limit(batch_size).all()
     while len(assets) > 0:
+        process_queue_len = get_queue_len("beat")
+        if process_queue_len > PROCESSING_QUEUE_SECTIONING_TRESHOLD:
+            logger.debug("Processing queue is greater than treshold %d . Stopping sectioning for now.", PROCESSING_QUEUE_SECTIONING_TRESHOLD)
+            status.in_sectioning = False
+            db.session.commit()
+            return
         section = Section.query.get(current_section)
         if not section:
             logger.debug("Creating new Section")
@@ -452,6 +488,12 @@ def compute_sections():
     previous_section = None
     for section in sections:
         logger.debug("Finetuning section %d", section.id)
+        process_queue_len = get_queue_len("beat")
+        if process_queue_len > PROCESSING_QUEUE_SECTIONING_TRESHOLD:
+            logger.debug("Processing queue is greater than treshold %d . Stopping sectioning for now.", PROCESSING_QUEUE_SECTIONING_TRESHOLD)
+            status.in_sectioning = False
+            db.session.commit()
+            return
 
         # get all assets from current section that are taken on the same day as the last one of the previous section
         if last_day_of_prev_section:
@@ -471,9 +513,16 @@ def compute_sections():
     current_section = 1
     sections = Section.query.order_by(Section.id.asc()).all()
     for section in sections:
+        process_queue_len = get_queue_len("beat")
+        if process_queue_len > PROCESSING_QUEUE_SECTIONING_TRESHOLD:
+            logger.debug("Processing queue is greater than treshold %d . Stopping sectioning for now.", PROCESSING_QUEUE_SECTIONING_TRESHOLD)
+            status.in_sectioning = False
+            db.session.commit()
+            return
         # print(Asset.query.filter(Asset.section == section).order_by(Asset.created.desc()))
         assets = Asset.query.filter(Asset.section == section).order_by(Asset.created.desc()).all()
         if len(assets) > 0:
+            logger.debug("Cleaning empty section %d", section.id)
             if current_section != section.id:
                 new_section = Section()
                 new_section.id = current_section
@@ -565,21 +614,31 @@ def create_jpg_preview(asset: Asset, max_dim: int, low_res=True):
 def create_preview(asset_id: int):
     logger.debug("Create Preview for %s", asset_id)
     asset = Asset.query.get(asset_id)
-    if asset.is_photo():
-        create_jpg_preview(asset, 2160, False)
-        create_jpg_preview(asset, 400, True)
-    elif asset.is_video():
-        celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode", headers=dedup_header(asset.path, "transcode-video-preview"))
-        video_create_on_demand = bool(strtobool(current_app.config['VIDEO_TRANSCODE_ON_DEMAND']))
-        if not video_create_on_demand:
-            celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode", headers=dedup_header(asset.path, "transcode-video-full"))
+    if not asset:
+        logger.error("Asset {asset_id} is not found")
+        return
+    path = get_full_path(asset.path)
+    if not os.path.exists(path):
+        logger.error("Asset {asst_id} file not found: %s", path)
+        return
+    try:
+        if asset.is_photo():
+            create_jpg_preview(asset, 2160, False)
+            create_jpg_preview(asset, 400, True)
+        elif asset.is_video():
+            celery.send_task("Create Preview Video", (asset_id, 400), queue="transcode", headers=dedup_header(asset.path, "transcode-video-preview"))
+            video_create_on_demand = bool(strtobool(current_app.config['VIDEO_TRANSCODE_ON_DEMAND']))
+            if not video_create_on_demand:
+                celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode", headers=dedup_header(asset.path, "transcode-video-full"))
 
-        # create_preview_video.apply_async( (asset_id, 400), queue="transcode")
-        # create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
-    else:
-        logger.error(
-            "create_preview: Something went wrong. Should be a photo or a video")
-    logger.debug("Create Preview for %s is done", asset_id)
+            # create_preview_video.apply_async( (asset_id, 400), queue="transcode")
+            # create_fullscreen_video.apply_async( (asset_id,), queue="transcode")
+        else:
+            logger.error(
+                "create_preview: Something went wrong. Should be a photo or a video")
+        logger.debug("Create Preview for %s is done", asset_id)
+    except Exception:
+        logger.error(f"Failed to create previews for asset {asset.path} id={asset_id}")
 
 
 @celery.task(name="Recreate Previews")
@@ -604,15 +663,17 @@ def _resync_asset(asset_id):
     logger.debug(f"Resync asset {asset_id}")
     asset = Asset.query.get(asset_id)
     if not asset:
-        logger.error(
-            "Something is wrong. asset with id %d not found. Deleted already?", asset_id)
+        logger.error("Asset {asset_id} is not found")
         return
     path = get_full_path(asset.path)
     if not os.path.exists(path):
-        # We are out of sync. The database references a asset which does not exist in the filesystem anymore
-        logger.debug(
-            "asset %s no longer exists. Remove it from the catalog", asset.path)
-        delete_asset(asset)
+        logger.error("Asset {asst_id} file not found: %s", path)
+        return
+    # if not os.path.exists(path):
+    #     # We are out of sync. The database references a asset which does not exist in the filesystem anymore
+    #     logger.debug(
+    #         "asset %s no longer exists. Remove it from the catalog", asset.path)
+    #     delete_asset(asset)
     db.session.commit()
     logger.debug(f"Resync asset {asset_id} is done")
 
