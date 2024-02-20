@@ -380,10 +380,12 @@ def asset_by_section(id):
 
     q = amend_query(request, q)
     assets = q.filter(Asset.section_id == id).order_by(Asset.created.desc())
-    return list_as_json(
+    result = list_as_json(
             assets, 
             excludes=("-exif", "-gps", "-faces", 
             "-things", "-section", "-albums"))
+    logger.debug("Get section %i is done", id)
+    return result
 
 
 def face_assigned_by_human(face):
