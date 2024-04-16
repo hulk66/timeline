@@ -64,7 +64,71 @@ def create_asset(path: str, commit=True) -> AssetCreationResult:
 
     if not os.path.exists(path):
         logger.error("File not found: %s", path)
-        return result
+        return None
+
+    asset = Asset()
+    asset.added = datetime.today()
+    asset.ignore = False
+    asset.exif = []
+    asset.path = img_path
+    asset.directory, asset.filename = os.path.split(img_path)
+    _, ext = os.path.splitext(asset.filename)
+    ext = ext[1:].lower()
+    if ext in ("jpg", "jpeg"):
+        asset.asset_type = AssetType.jpg_photo
+    elif ext == "heic":
+        asset.asset_type = AssetType.heic_photo
+    elif ext == "mov":
+        asset.asset_type = AssetType.mov_video
+    elif ext == "mp4":
+        asset.asset_type = AssetType.mp4_video
+
+    if asset.is_photo():
+        try:
+            image = Image.open(path)
+        except UnidentifiedImageError:
+            logger.error("Invalid Image Format for %s", path)
+            return None
+        except FileNotFoundError:
+            logger.error("File not found: %s", path)
+            return None
+
+        # this does not seem to be correct, there has to be a more elegant way
+        if asset.asset_type == AssetType.heic_photo:
+            asset.width, asset.height = image.size
+        else:
+            # transpose if necessary
+            asset.width, asset.height = get_size(image)  # image.size
+        _extract_exif_data(asset, image)
+    else:
+        md = exiftool.get_metadata(path)
+        asset.video_preview_generated = False
+        asset.video_fullscreen_transcoding_status = TranscodingStatus.NONE
+        asset.video_fullscreen_generated_progress = 0
+        
+        asset.width = md.get("QuickTime:ImageWidth")
+        asset.height = md.get("QuickTime:ImageHeight")
+
+        if md.get('Composite:Rotation') == 90 or md.get('Composite:Rotation') == 270:
+            asset.width, asset.height = asset.height, asset.width
+
+        lat = md.get("Composite:GPSLatitude")
+        long = md.get("Composite:GPSLongitude")
+        if lat and long:
+            gps = GPS()
+            asset.gps = gps
+            asset.gps.latitude, asset.gps.longitude = lat, long
+
+        dateStr = md.get("QuickTime:MediaCreateDate")
+        if dateStr:
+            try:
+                dt = parse_exif_date(dateStr)
+                asset.created = dt
+                asset.no_creation_date = False
+            except ValueError:
+                logger.info("Could not parse Date for Video")
+                asset.created = datetime.today()
+                asset.no_creation_date = True
 
     # db.session.rollback()
     asset = populate_asset(asset, result)
@@ -114,6 +178,63 @@ def extract_exif_data(asset_id, overwrite):
         _extract_image_exif_data(asset)
     db.session.commit()
     logger.debug(f"Extract Exif for {asset_id} is done")
+
+
+def _extract_exif_data(asset, image=None):
+
+    logger.debug("Extract Exif Data for asset %s", asset.path)
+    if not image:
+        path = get_full_path(asset.path)
+
+        try:
+            image = Image.open(path)
+        except UnidentifiedImageError:
+            logger.error("Invalid Image Format for %s", path)
+            return None
+        except FileNotFoundError:
+            logger.error("File not found: %s", path)
+            return None
+
+    exif_raw = image.getexif()
+    exif_data = get_labeled_exif(exif_raw)
+    geotags = get_geotagging(exif_raw)
+    gps_data = get_lat_lon(geotags)
+    if gps_data:
+        gps = GPS()
+        asset.gps = gps
+        asset.gps.latitude, asset.gps.longitude = gps_data
+
+    asset.exif = []
+    for key in exif_data.keys():
+        raw_value = exif_data[key]
+        try:
+            value = get_exif_value(key, raw_value)
+            if value is not None:
+                exif = Exif()
+                asset.exif.append(exif)
+
+                exif.key, exif.value = key, str(value)
+
+        except UnicodeDecodeError:
+            logger.error("%s", asset.path)
+
+        # User either DateTimeOriginal or not available any other DateTime
+        # or (key.startswith("DateTime") and asset.created is None):
+        if key == 'DateTimeOriginal':
+            try:
+                # set asset date
+                dt = parse_exif_date(value)
+                asset.created = dt
+                asset.no_creation_date = False
+            except ValueError:
+                logger.error("%s can not be parsed as Date for %s",
+                             str(value), asset.path)
+
+    if not asset.created:
+        # there is either no exif date or it can't be parsed for the asset date, so we assumme it is old
+        asset.created = datetime.today()
+        asset.no_creation_date = True
+        # they will be moved to the end later
 
 
 def insert_asset_into_section(asset):
