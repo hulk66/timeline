@@ -2,13 +2,17 @@ data
 .env
 .idea
 .history/
-backend/models/facial
-backend/models/thing
 
 **/.DS_Store
-backend/occurance2.csv
-backend/occurance.csv
 .history/
 /*.session.sql
 /ssd.tgz
 /package-lock.json
+
+backend/models/facial
+backend/models/thing
+backend/occurance2.csv
+backend/occurance.csv
+backend/.env_generated
+backend/nas
+backend/WD

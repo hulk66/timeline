@@ -32,7 +32,7 @@ def new_asset(path):
         logger.debug(
             "Not taking %s into account as this is some QNAP or Synology related file", path)
     else:
-        logger.debug("Start processing new asset %s", path)
+        logger.debug("Start processing asset %s", path)
         result : AssetCreationResult = create_asset(path)
         if result.asset_id and result.created_in_db:
             logger.debug("Scheduling consequent tasks for asset %s", path)

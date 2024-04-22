@@ -71,6 +71,7 @@ def run_detector(image_path):
     os.remove(jpg_file)
     return result
 
+
 @celery.task(autoretry_for=(OperationalError,), name="Object Detection", ignore_result=True)
 def object_detection(asset_id):
     asset = Asset.query.get(asset_id)
@@ -91,7 +92,8 @@ def object_detection(asset_id):
         asset.things.append(thing)
     # asset.status = "analyzed"
     db.session.commit()
-    logger.debug("Analyze asset %s ok. Found %i classes", asset.path, len(detected_objects))
+    logger.debug("Analyze asset %s is done. Found %i classes", asset.path, len(detected_objects))
+    
 
 def load_and_resize_image(fname, max_dim=1280):
     _, filename = tempfile.mkstemp(suffix=".jpg")

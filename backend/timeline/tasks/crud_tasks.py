@@ -53,15 +53,18 @@ def create_asset(path: str, commit=True) -> AssetCreationResult:
     img_path = get_rel_path(path)
 
     asset = Asset.query.filter(Asset.path == img_path).first()
+    result.asset = asset
     result.exists_in_db = asset != None
-    if asset:         
+    if asset:
         result.version_in_db = asset.version
         if asset.version >= CURRENT_VERSION:
-            logger.info("asset already exists %s. Skipping", img_path)
+            logger.info("Asset already exists %s. Skipping", img_path)
             return result
         else:
-            logger.info(f"asset already exists %s, but version is lower than currently supported {asset.version} < {CURRENT_VERSION}", img_path)
-
+            logger.info("Asset already exists %s. Updating because version is lower than currently supported %d < %d", 
+                        img_path, asset.version, CURRENT_VERSION)
+    else:
+        logger.debug("Asset is new %s. Processing", path)
     if not os.path.exists(path):
         logger.error("File not found: %s", path)
         return None

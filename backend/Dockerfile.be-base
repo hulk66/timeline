@@ -19,7 +19,7 @@ ADD https://github.com/serengil/deepface_models/releases/download/v1.0/gender_mo
 
 ADD models/iq/weights_mobilenet_aesthetic_0.07.hdf5 /tmp/myapp/models/iq/
 ADD models/iq/weights_mobilenet_technical_0.11.hdf5 /tmp/myapp/models/iq/
-ADD ssd.tgz /tmp/myapp/models/thing
+ADD ssd.tgz /tmp/myapp/models/thing/ssd
 
 #RUN groupadd -g 999 celery && \
 #    useradd -r -u 999 -g celery celery

@@ -139,7 +139,7 @@ def find_faces2(asset_id, call_match_tasks = True):
                 #detect_gender.apply_async((face.id,), queue="analyze")
                 
 
-    logger.debug("Found %d faces in %s", num_faces, asset.path)
+    logger.debug("Found %d faces in %s . Task is done.", num_faces, asset.path)
 
 def _find_faces_in_image(image):
     face_pos = face_detector.detect_faces(image)
@@ -214,6 +214,8 @@ def detect_gender(face_id):
     face_image = _get_cropped_face(face)
     face.predicted_gender = age_gender.predict_gender(face_image)
     db.session.commit()
+    logger.debug("Detect Face Gender for Face %i . Task is done", face_id)
+    
 
 @celery.task(name="Detect Face Age", autoretry_for=(InternalError,), ignore_result=True)
 def detect_age(face_id):
@@ -227,6 +229,8 @@ def detect_age(face_id):
     age = age_gender.predict_age(face_image)
     face.predicted_age = int(age)
     db.session.commit()
+    logger.debug("Detect Face Age for Face %i . Task is done", face_id)
+    
 
 @celery.task(name="Detect Face Expression", autoretry_for=(InternalError,), ignore_result=True)
 def detect_facial_expression(face_id):
@@ -240,6 +244,8 @@ def detect_facial_expression(face_id):
     face_image = _get_cropped_face(face)
     face.emotion, face.emotion_confidence = face_expression.predict(face_image)
     db.session.commit()
+    logger.debug("Detect Face Expression for Face %i. Task is done", face_id)
+    
 
 @celery.task(name="Face Detection old", autoretry_for=(InternalError,), ignore_result=True)
 def find_faces(asset_id, call_match_tasks):

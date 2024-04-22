@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Init",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "timeline.manage",
             "cwd": "${workspaceFolder}/backend",
@@ -16,7 +16,7 @@
         },
         {
             "name": "Set initial DB Version",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "timeline.manage",
             "cwd": "${workspaceFolder}/backend",
@@ -29,7 +29,7 @@
 
         {
             "name": "DB Migrate",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "timeline.manage",
             "cwd": "${workspaceFolder}/backend",
@@ -41,7 +41,7 @@
 
         {
             "name": "DB Upgrade",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "timeline.manage",
             "cwd": "${workspaceFolder}/backend",
@@ -53,7 +53,7 @@
 
         {
             "name": "Watchdog",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "timeline.manage",
             "cwd": "${workspaceFolder}/backend",
@@ -63,7 +63,7 @@
         },
         {
             "name": "Worker",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "celery",
             "console": "integratedTerminal",
@@ -82,8 +82,37 @@
             ]
         },
         {
+            "name": "Worker - Secondary",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/backend",
+            "args": [
+                "-A",
+                "timeline.celery_process",
+                "worker",
+                "-P",
+                "prefork",
+                "--autoscale=3,1",
+                "-n",
+                "worker@%n",
+                "-l",
+                "INFO",
+                "-Q",
+                "process"
+            ],
+            "envFile": "${workspaceFolder}/backend/.env_generated",
+            "env": {
+                "WAIT_HOSTS": "localhost:5001",
+                "WAIT_HOSTS_TIMEOUT": "180",
+                "WAIT_SLEEP_INTERVAL": "3",
+                "WAIT_AFTER_HOSTS": "2",
+            }
+        },
+        {
             "name": "Worker - Video",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "celery",
             "console": "integratedTerminal",
@@ -103,15 +132,15 @@
         },
         {
             "name": "Webapp",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}/backend",
             "module": "flask",
             "env": {
-                "FLASK_APP": "timeline.app",
-                "FLASK_ENV": "development",
-                "FLASK_DEBUG": "1",
-                "APPLICATION_ROOT": "/timeline",
+                "WAIT_HOSTS": "localhost:5001",
+                "WAIT_HOSTS_TIMEOUT": "180",
+                "WAIT_SLEEP_INTERVAL": "3",
+                "WAIT_AFTER_HOSTS": "2",
             },
             "args": [
                 "run"
@@ -120,31 +149,16 @@
         },
         {
             "name": "Webapp - Secondary",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}/backend",
-            "envFile": "${workspaceFolder}/.env",
+            "envFile": "${workspaceFolder}/backend/.env_generated",
             "module": "flask",
             "env": {
-                "FLASK_APP": "timeline.app",
-                "FLASK_ENV": "development",
-                "FLASK_DEBUG": "1",
-                "APPLICATION_ROOT": "/timeline",
-                "FLASK_RUN_PORT": "5001",
-                "BE_PORT": "5001",
-                "SECRET_KEY": "changeme",
-                "SQLALCHEMY_DATABASE_URI": "mysql+pymysql://timeline:timeline@localhost:3306/timeline",
-                "CELERY_BROKER_URL": "pyamqp://guest:guest@localhost:5672",
-                "CELERY_RESULT_BACKEND": "rpc://",
-                "DB_HOST": "localhost:3306",
-                "DB_SUPER_USER": "root",
-                "DB_SUPER_USER_PW": "toor",
-                "COMPUTE_SECTIONS_EVERY_MINUTES": "0",
-                "MATCH_FACES_EVERY_MINUTES":"0",
-                "GROUP_FACES_EVERY_MINUTES":"0",
-                "OBJECT_DETECTION_MODEL_PATH": "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1",
-                "REDIS_HOST": "localhost",
-                "FLASK_CORS": "True"
+                "WAIT_HOSTS": "localhost:5001",
+                "WAIT_HOSTS_TIMEOUT": "180",
+                "WAIT_SLEEP_INTERVAL": "3",
+                "WAIT_AFTER_HOSTS": "2",
             },
 
             "args": [
@@ -159,7 +173,6 @@
             "cwd": "${workspaceFolder}/frontend",
             "type": "node-terminal",
             "env": {
-                "TIMELINE_BASEPATH": "/timeline",
             },
 
         },        
@@ -169,12 +182,8 @@
             "request": "launch",
             "cwd": "${workspaceFolder}/frontend",
             "type": "node-terminal",
-            "envFile": "${workspaceFolder}/.env",
+            "envFile": "${workspaceFolder}/backend/.env_generated",
             "env": {
-                "TIMELINE_BASEPATH": "http://192.168.0.81:5001/timeline",
-                "BE_HOST": "192.168.0.81",
-                "BE_PORT": "5001",
-                "VUE_APP_TIMELINE_BASEPATH": "http://192.168.0.81:5001/timeline",
                 "WAIT_HOSTS": "localhost:5001",
                 "WAIT_HOSTS_TIMEOUT": "180",
                 "WAIT_SLEEP_INTERVAL": "3",
@@ -185,7 +194,7 @@
         {
             "name": "Python: Debug Current File",
             "cwd": "${workspaceFolder}/backend",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
