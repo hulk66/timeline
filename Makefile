@@ -44,10 +44,7 @@ up:
 
 download-model:
 	# this is only required if you want to develop locally and only once in the beginning
-	wget -O ssd.tgz "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1?tf-hub-format=compressed"
-	mkdir -p backend/models/thing/ssd
-	tar -xzf ssd.tgz -C backend/models/thing/ssd
-	#rm ssd.tgz
+	wget -O backend/ssd.tgz "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1?tf-hub-format=compressed"
 
 	mkdir backend/models/facial
 

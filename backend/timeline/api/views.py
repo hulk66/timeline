@@ -210,7 +210,10 @@ def asset_preview(id, max_dim):
             os.makedirs(os.path.dirname(preview_path), exist_ok=True)
             ffmpeg.input(path).filter("scale", -2, max_dim).output(preview_path, map_metadata=0, threads=1, movflags="use_metadata_tags", vframes=1, loglevel="error").overwrite_output().run()
         image = Image.open(preview_path) 
-    return send_image(image, False)
+    try:
+        return send_image(image, False)
+    finally:
+        image.close()
 
 
 @blueprint.route('/asset/setFacesAllIdentified/<int:asset_id>/<string:all_identified>', methods=['GET'])

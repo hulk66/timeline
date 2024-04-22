@@ -20,66 +20,47 @@ import os
 import os.path
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import IO
 
 from celery import chain
 from flask import current_app
-from PIL import Image, UnidentifiedImageError
-from timeline.api.util import parse_exif_date
+from PIL import Image
 
-from timeline.domain import Album, GPS, Exif, Person, Asset, Section, Status, DateRange, AssetType, TranscodingStatus
+from timeline.domain import Album, Person, Asset, Section, Status, DateRange, AssetType
 from timeline.extensions import celery, db
-from timeline.util.gps import (get_exif_value, get_geotagging, get_gps_data,
-                               get_labeled_exif, get_lat_lon)
 from timeline.util.image_ops import read_and_transpose
 from timeline.util.path_util import (get_full_path, get_preview_path,
                                      get_rel_path)
+from timeline.util.asset_creation_result import AssetCreationResult
+from timeline.util.asset_utils import CURRENT_VERSION, _extract_image_exif_data, populate_asset
 from sqlalchemy import and_
 from celery import signature
 from celery import chain
-from pillow_heif import register_heif_opener
-import exiftool
 from celery.exceptions import SoftTimeLimitExceeded
 from distutils.util import strtobool
 
 logger = logging.getLogger(__name__)
-register_heif_opener()
-
-exiftool = exiftool.ExifTool()
-exiftool.start()
 
 
-def get_size(image):
-    # return width and height considering a rotation
-    exif = image.getexif()
-    orientation = exif.get(0x0112)
-    method = {
-        2: Image.FLIP_LEFT_RIGHT,
-        3: Image.ROTATE_180,
-        4: Image.FLIP_TOP_BOTTOM,
-        5: Image.TRANSPOSE,
-        6: Image.ROTATE_270,
-        7: Image.TRANSVERSE,
-        8: Image.ROTATE_90,
-    }.get(orientation)
-    if method == Image.ROTATE_270 or method == Image.ROTATE_90:
-        return image.size[1], image.size[0]
-    return image.size
-
-
-def create_asset(path: str, commit=True):
+def create_asset(path: str, commit=True) -> AssetCreationResult:
     logger.debug("Reading asset %s", path)
-    # path = path.lower()
+    result = AssetCreationResult()
+    result.path = path
     if not Path(path).exists():
         logger.warning("File does not exist: %s", path)
-        return None
-
+        result.file_present = False
+        return result
+    result.file_present = True
     img_path = get_rel_path(path)
 
     asset = Asset.query.filter(Asset.path == img_path).first()
-    if asset:
-        logger.info("asset already exists %s. Skipping", img_path)
-        return None
+    result.exists_in_db = asset != None
+    if asset:         
+        result.version_in_db = asset.version
+        if asset.version >= CURRENT_VERSION:
+            logger.info("asset already exists %s. Skipping", img_path)
+            return result
+        else:
+            logger.info(f"asset already exists %s, but version is lower than currently supported {asset.version} < {CURRENT_VERSION}", img_path)
 
     if not os.path.exists(path):
         logger.error("File not found: %s", path)
@@ -108,6 +89,7 @@ def create_asset(path: str, commit=True):
         except UnidentifiedImageError:
             logger.error("Invalid Image Format for %s", path)
             return None
+          
         except FileNotFoundError:
             logger.error("File not found: %s", path)
             return None
@@ -149,21 +131,27 @@ def create_asset(path: str, commit=True):
                 asset.created = datetime.today()
                 asset.no_creation_date = True
 
+    # db.session.rollback()
+    asset = populate_asset(asset, result)
+   
+    new_asset = not asset.id
     # asset.directory = os.path.
-    db.session.add(asset)
     # sort_asset_into_date_range(asset, commit = False)
-    add_to_last_import(asset)
+    if new_asset:
+        db.session.add(asset)
+        add_to_last_import(asset)
+        if commit:
+            # perform already a commit, so that in case a parallel worker inserts something in
+            # the section and we get a duplicate error, the photo is already there
+            # and will be inserted in the next round
+            db.session.commit()
+        insert_asset_into_section(asset)
+
     if commit:
-        # perform already a commit, so that in case a parallel worker inserts something in
-        # the section and we get a duplicate error, the photo is already there
-        # and will be inserted in the next round
         db.session.commit()
 
-    insert_asset_into_section(asset)
-
-    if commit:
-        db.session.commit()
-    return asset.id
+    result.asset_id = asset.id
+    return result
 
 
 @celery.task(name="Extract Exif Data for all assets")
@@ -177,17 +165,20 @@ def extract_exif_all_assets(overwrite):
                       queue="analyze", immutable=True)
         )
         c.apply_async()
+    logger.debug("Extract Exif and GPS for all assets is done")
 
 
 @celery.task(name="Extract Exif")
 def extract_exif_data(asset_id, overwrite):
+    logger.debug(f"Extract Exif for {asset_id}")
     asset = Asset.query.get(asset_id)
     if not asset:
         logger.warning("asset with ID %d does not exist", asset_id)
         return
     if overwrite or not asset.exif:
-        _extract_exif_data(asset)
+        _extract_image_exif_data(asset)
     db.session.commit()
+    logger.debug(f"Extract Exif for {asset_id} is done")
 
 
 def _extract_exif_data(asset, image=None):
@@ -339,6 +330,7 @@ def delete_asset_by_path(img_path, commit=True):
     Status.query.first().sections_dirty = True
     if commit:
         db.session.commit()
+    logger.debug("Delete asset %s is done", img_path)
 
 
 @celery.task(mame="Modify asset")
@@ -348,6 +340,7 @@ def modify_asset(img_path):
     delete_asset(img_path)
     create_asset(img_path, commit=False)
     db.session.commit()
+    logger.debug("Modify asset %s id done", img_path)
 
 
 @celery.task(name="Move asset")
@@ -360,7 +353,7 @@ def move_asset(img_path_src, img_path_dest):
         assets[0].path = get_rel_path(img_path_dest)
     Status.query.first().sections_dirty = True
     db.session.commit()
-
+    logger.debug("Move asset from %s to %s is done", img_path_src, img_path_dest)
 
 def sort_asset_into_date_range_task(asset_id):
     asset = Asset.query.get(asset_id)
@@ -619,7 +612,7 @@ def compute_sections():
     status.in_sectioning = False
     status.sections_dirty = False
     db.session.commit()
-    logger.debug("Sectioning done - ok")
+    logger.debug("Sectioning is done - ok")
 
 
 @celery.task(ignore_result=True)
@@ -668,6 +661,8 @@ def create_jpg_preview(asset: Asset, max_dim: int, low_res=True):
         image.thumbnail((width/10, max_dim/10), Image.ANTIALIAS)
         image.save(preview_path_low_res, optimize=True,
                    quality=20, progressive=False)
+    
+    image.close()
 
 
 
@@ -687,6 +682,7 @@ def create_jpg_preview(asset: Asset, max_dim: int, low_res=True):
 
 @celery.task
 def create_preview(asset_id: int):
+    logger.debug("Create Preview for %s", asset_id)
     asset = Asset.query.get(asset_id)
     if asset.is_photo():
         create_jpg_preview(asset, 2160, False)
@@ -702,6 +698,7 @@ def create_preview(asset_id: int):
     else:
         logger.error(
             "create_preview: Something went wrong. Should be a photo or a video")
+    logger.debug("Create Preview for %s is done", asset_id)
 
 
 @celery.task(name="Recreate Previews")
@@ -709,6 +706,7 @@ def recreate_previews(dimension=400, low_res=True):
     logger.debug("Recreating Previews for size %d", dimension)
     for asset in Asset.query:
         create_preview.apply_async((asset.id,), queue='process')
+    logger.debug("Recreating Previews for size %d is done", dimension)
 
 
 @celery.task(name="Split path and filename")
@@ -717,11 +715,12 @@ def split_filename_and_path():
     for asset in Asset.query:
         asset.directory, asset.filename = os.path.split(asset.path)
     db.session.commit()
+    logger.debug("Splitting up filename and path for all assets again is done")
 
 
 @celery.task()
 def _resync_asset(asset_id):
-    # logger.debug("Resync asset")
+    logger.debug(f"Resync asset {asset_id}")
     asset = Asset.query.get(asset_id)
     if not asset:
         logger.error(
@@ -734,6 +733,7 @@ def _resync_asset(asset_id):
             "asset %s no longer exists. Remove it from the catalog", asset.path)
         delete_asset(asset)
     db.session.commit()
+    logger.debug(f"Resync asset {asset_id} is done")
 
 
 @celery.task(name="Resync assets")
@@ -742,6 +742,8 @@ def resync_assets():
         "Sync assets. Ensure the Database is reflecting the filesystem")
     for asset in Asset.query:
         _resync_asset.apply_async((asset.id,), queue="process")
+    logger.debug(
+        "Sync assets is done. Ensure the Database is reflecting the filesystem.")
 
 
 @celery.task(ignore_result=True, soft_time_limit=900)
@@ -813,7 +815,7 @@ def compute_sections_old2():
         status.sections_dirty = True
         logger.debug("Sectioning done - not ok")
     db.session.commit()
-
+    logger.debug("Sectioning assets is done")
 
 
 def compute_sections_old():
@@ -880,5 +882,5 @@ def compute_sections_old():
 
     status.sections_dirty = False
     db.session.commit()
-    logger.debug("Compute Sections - Done")
+    logger.debug("Compute Sections is done")
 
