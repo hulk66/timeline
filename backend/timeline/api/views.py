@@ -26,6 +26,7 @@ import ffmpeg
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
+from timeline.util.asset_utils import dedup_header
 from timeline.util.tags_util import parse_tags, find_new_tags
 from timeline.api.assets import send_image
 from timeline.api.util import list_as_json, refine_query, assets_from_smart_album
@@ -507,7 +508,7 @@ def forget_person(person_id):
     # just ignore the person for the time being
     person.ignore = True
     #  and do the rest of the cleaning in the background as it can consume some time
-    celery.send_task("timeline.tasks.match_tasks.reset_person", (person_id,), queue="beat")
+    celery.send_task("timeline.tasks.match_tasks.reset_person", (person_id,), queue="beat", headers=dedup_header(person_id, "reset-person"))
     db.session.commit()
 
     #for face in person.faces:

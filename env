@@ -83,6 +83,10 @@ EVENT_HOURS_EPSILON=24
 # loaded if a section becomes visible; 200-300 might be good
 SECTION_TARGET_SIZE=300
 
+# This is the treshold for processing queue (beat) which blocks the sectioning logic from
+# causing more jobs to be scheduled, until the existing jobs are processed
+PROCESSING_QUEUE_SECTIONING_TRESHOLD=1000
+
 # optional configure FFMPEG_HWACCEL 
 # Possible options
 # libx264 - this is the default, slow but good
