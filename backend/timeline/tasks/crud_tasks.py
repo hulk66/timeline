@@ -124,6 +124,63 @@ def extract_exif_data(asset_id, overwrite):
     logger.debug(f"Extract Exif for {asset_id} is done")
 
 
+def _extract_exif_data(asset, image=None):
+
+    logger.debug("Extract Exif Data for asset %s", asset.path)
+    if not image:
+        path = get_full_path(asset.path)
+
+        try:
+            image = Image.open(path)
+        except UnidentifiedImageError:
+            logger.error("Invalid Image Format for %s", path)
+            return None
+        except FileNotFoundError:
+            logger.error("File not found: %s", path)
+            return None
+
+    exif_raw = image.getexif()
+    exif_data = get_labeled_exif(exif_raw)
+    geotags = get_geotagging(exif_raw)
+    gps_data = get_lat_lon(geotags)
+    if gps_data:
+        gps = GPS()
+        asset.gps = gps
+        asset.gps.latitude, asset.gps.longitude = gps_data
+
+    asset.exif = []
+    for key in exif_data.keys():
+        raw_value = exif_data[key]
+        try:
+            value = get_exif_value(key, raw_value)
+            if value is not None:
+                exif = Exif()
+                asset.exif.append(exif)
+
+                exif.key, exif.value = key, str(value)
+
+        except UnicodeDecodeError:
+            logger.error("%s", asset.path)
+
+        # User either DateTimeOriginal or not available any other DateTime
+        # or (key.startswith("DateTime") and asset.created is None):
+        if key == 'DateTimeOriginal':
+            try:
+                # set asset date
+                dt = parse_exif_date(value)
+                asset.created = dt
+                asset.no_creation_date = False
+            except ValueError:
+                logger.error("%s can not be parsed as Date for %s",
+                             str(value), asset.path)
+
+    if not asset.created:
+        # there is either no exif date or it can't be parsed for the asset date, so we assumme it is old
+        asset.created = datetime.today()
+        asset.no_creation_date = True
+        # they will be moved to the end later
+
+
 def insert_asset_into_section(asset):
 
     if Status.query.first().in_sectioning:
