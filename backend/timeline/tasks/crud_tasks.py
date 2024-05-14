@@ -92,7 +92,6 @@ def create_asset(path: str, commit=True) -> AssetCreationResult:
         except UnidentifiedImageError:
             logger.error("Invalid Image Format for %s", path)
             return None
-          
         except FileNotFoundError:
             logger.error("File not found: %s", path)
             return None
