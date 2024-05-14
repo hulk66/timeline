@@ -37,6 +37,9 @@ RABBITMQ_DATA=/Users/johndoe/timeline/data/rabbitmq
 # footprint should reduce  
 WORKERS_PROCESS=2
 
+# The queues to be processed in worker app
+WORKER_QUEUES=beat,process,analyze,geo
+
 # This is the password to access adminer
 # under http://<machine>:9091/adminer
 # with the root user
@@ -82,6 +85,10 @@ EVENT_HOURS_EPSILON=24
 # This is the target size for one section. It detemines basically how many asset are 
 # loaded if a section becomes visible; 200-300 might be good
 SECTION_TARGET_SIZE=300
+
+# This is the treshold for processing queue (beat) which blocks the sectioning logic from
+# causing more jobs to be scheduled, until the existing jobs are processed
+PROCESSING_QUEUE_SECTIONING_TRESHOLD=1000
 
 # optional configure FFMPEG_HWACCEL 
 # Possible options

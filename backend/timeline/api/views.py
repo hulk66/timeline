@@ -26,6 +26,7 @@ import ffmpeg
 from flask import Blueprint, request
 from PIL import Image, ImageDraw
 from sqlalchemy import and_, or_
+from timeline.util.asset_utils import dedup_header
 from timeline.util.tags_util import parse_tags, find_new_tags
 from timeline.api.assets import send_image
 from timeline.api.util import list_as_json, refine_query, assets_from_smart_album
@@ -379,10 +380,12 @@ def asset_by_section(id):
 
     q = amend_query(request, q)
     assets = q.filter(Asset.section_id == id).order_by(Asset.created.desc())
-    return list_as_json(
+    result = list_as_json(
             assets, 
             excludes=("-exif", "-gps", "-faces", 
             "-things", "-section", "-albums"))
+    logger.debug("Get section %i is done", id)
+    return result
 
 
 def face_assigned_by_human(face):
@@ -507,7 +510,7 @@ def forget_person(person_id):
     # just ignore the person for the time being
     person.ignore = True
     #  and do the rest of the cleaning in the background as it can consume some time
-    celery.send_task("timeline.tasks.match_tasks.reset_person", (person_id,), queue="beat")
+    celery.send_task("timeline.tasks.match_tasks.reset_person", (person_id,), queue="beat", headers=dedup_header(person_id, "reset-person"))
     db.session.commit()
 
     #for face in person.faces:

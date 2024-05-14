@@ -74,11 +74,11 @@ def populate_asset(asset: Asset, result: AssetCreationResult):
 
     if asset.version < 1:
         result.versions_applied.append(1)
-        populate_asset_v1(asset)
+        populate_asset_v1(asset, result)
     
     if asset.version < 2:
         result.versions_applied.append(2)
-        populate_asset_v2(asset)
+        populate_asset_v2(asset, result)
     
     # upgrading asset to the current version
     asset.version = CURRENT_VERSION
@@ -100,17 +100,17 @@ def identify_type(asset: Asset):
         asset.asset_type = AssetType.mp4_video
 
     
-def populate_asset_v1(asset: Asset):
+def populate_asset_v1(asset: Asset, result: AssetCreationResult):
     asset.directory, asset.filename = os.path.split(asset.path)
     identify_type(asset)
 
     if asset.is_photo():
-        _extract_image_exif_data(asset)
+        _extract_image_exif_data(asset, result)
     else:
-        _extract_video_exif_data(asset)
+        _extract_video_exif_data(asset, result)
 
 
-def populate_asset_v2(asset: Asset):
+def populate_asset_v2(asset: Asset, result: AssetCreationResult):
     path = get_full_path(asset.path)
     stats = os.stat(path)
     asset.file_size = stats.st_size
@@ -118,7 +118,7 @@ def populate_asset_v2(asset: Asset):
     asset.checksum_type = 'MD5'
 
 
-def _extract_video_exif_data(asset):
+def _extract_video_exif_data(asset, result: AssetCreationResult):
     logger.debug("Extract Video Exif Data for asset %s", asset.path)
     path = get_full_path(asset.path)
     md = exiftool.get_metadata(path)
@@ -168,7 +168,7 @@ def _get_exif_date(exif_data, key: str, path: str):
                     str(value), path)
 
     
-def _extract_image_exif_data(asset):
+def _extract_image_exif_data(asset: Asset, result: AssetCreationResult):
     logger.debug("Extract Image Exif Data for asset %s", asset.path)
     path = get_full_path(asset.path)
 
@@ -203,9 +203,11 @@ def _extract_image_exif_data(asset):
         image.close()
     except UnidentifiedImageError:
         logger.error("Invalid Image Format for %s", path)
+        result.invalid = True
         return None
     except FileNotFoundError:
         logger.error("File not found: %s", path)
+        result.file_present = False
         return None
     finally:
         if not asset.created:
@@ -216,3 +218,11 @@ def _extract_image_exif_data(asset):
         else:
             asset.no_creation_date = False
 
+def dedup_header(id: str, queue_name: str):
+    # RabbitMQ Deduplication plugin
+    # https://github.com/noxdafox/rabbitmq-message-deduplication/tree/main
+    
+    return {
+        "x-deduplication-header": f"{queue_name}:{id}"
+    }
+    

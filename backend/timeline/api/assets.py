@@ -16,6 +16,7 @@ GNU General Public License for more details.
 '''
 
 import datetime
+from timeline.util.asset_utils import dedup_header
 from timeline.util.gps import get_labeled_exif
 import flask
 import io
@@ -141,7 +142,7 @@ def transcode(asset_id):
             else:
                 asset.video_fullscreen_transcoding_status = TranscodingStatus.WAITING
                 db.session.commit()
-                celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode_prio")
+                celery.send_task("Create Fullscreen Video", (asset_id,), queue="transcode_prio", headers=dedup_header(asset.path, "transcode-video-full-prio"))
         else:
             logger.warn("Transcoding is only for videos. Asset %d is a photo", asset_id)
     return flask.jsonify(asset.video_fullscreen_transcoding_status.value)
