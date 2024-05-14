@@ -81,10 +81,12 @@ def create_preview_video(asset_id, max_dim: int) -> None:
 
     asset.video_preview_generated = True
     db.session.commit()
+    logger.debug("Create jpg preview %s is done", asset.path)
 
 @celery.task(name="Create Fullscreen Video")
 def create_fullscreen_video(asset_id) -> None:
     asset = Asset.query.get(asset_id)
+    logger.debug("Create video preview %s", asset.path)
 
     logger.debug("Convert to browser compatible mp4 %s", asset.path)
 
@@ -112,5 +114,7 @@ def create_fullscreen_video(asset_id) -> None:
     asset.video_fullscreen_transcoding_status = TranscodingStatus.DONE
     asset.video_fullscreen_generated_progress = 100 # replace this later when we have a progress
     db.session.commit()
+    logger.debug("Create video preview %s is done", asset.path)
+
 
 flask_app = create_app()
